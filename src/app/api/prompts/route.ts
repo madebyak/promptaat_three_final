@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth/next"
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
 import { authOptions } from "@/lib/auth/options"
+import { Prisma } from "@prisma/client"
 
 export async function GET(req: Request) {
   try {
@@ -21,7 +22,7 @@ export async function GET(req: Request) {
     const skip = (page - 1) * limit
 
     // Build where clause
-    const where = {
+    const where: Prisma.PromptWhereInput = {
       deletedAt: null,
       ...(category && {
         categories: {
@@ -41,10 +42,10 @@ export async function GET(req: Request) {
       ...(type === 'free' && { isPro: false }),
       ...(search && {
         OR: [
-          { titleEn: { contains: search, mode: 'insensitive' } },
-          { titleAr: { contains: search, mode: 'insensitive' } },
-          { promptTextEn: { contains: search, mode: 'insensitive' } },
-          { promptTextAr: { contains: search, mode: 'insensitive' } }
+          { titleEn: { contains: search, mode: Prisma.QueryMode.insensitive } },
+          { titleAr: { contains: search, mode: Prisma.QueryMode.insensitive } },
+          { promptTextEn: { contains: search, mode: Prisma.QueryMode.insensitive } },
+          { promptTextAr: { contains: search, mode: Prisma.QueryMode.insensitive } }
         ]
       })
     }
@@ -62,9 +63,16 @@ export async function GET(req: Request) {
       const [prompts, total] = await Promise.all([
         prisma.prompt.findMany({
           where,
-          include: {
+          select: {
+            id: true,
+            titleEn: true,
+            titleAr: true,
+            promptTextEn: true,
+            promptTextAr: true,
+            isPro: true,
+            copyCount: true,
             categories: {
-              include: {
+              select: {
                 category: {
                   select: {
                     id: true,
@@ -75,7 +83,7 @@ export async function GET(req: Request) {
               }
             },
             tools: {
-              include: {
+              select: {
                 tool: {
                   select: {
                     id: true,
@@ -189,32 +197,43 @@ export async function POST(req: Request) {
             ],
           },
           isPro,
-          userId: session.user.id,
         },
-        include: {
+        select: {
+          id: true,
+          titleEn: true,
+          titleAr: true,
+          promptTextEn: true,
+          promptTextAr: true,
+          isPro: true,
+          copyCount: true,
           categories: {
-            include: {
-              category: true,
-            },
+            select: {
+              category: {
+                select: {
+                  id: true,
+                  nameEn: true,
+                  nameAr: true
+                }
+              }
+            }
           },
           tools: {
-            include: {
-              tool: true,
-            },
-          },
-          user: {
             select: {
-              id: true,
-              firstName: true,
-              lastName: true,
-            },
-          },
-        },
+              tool: {
+                select: {
+                  id: true,
+                  name: true
+                }
+              }
+            }
+          }
+        }
       })
 
-      console.log('Created prompt:', prompt)
-
-      return NextResponse.json({ prompt })
+      return NextResponse.json({
+        message: "Prompt created successfully",
+        prompt
+      })
 
     } catch (dbError) {
       console.error('Database error:', dbError)
@@ -228,7 +247,7 @@ export async function POST(req: Request) {
       console.error('Error stack:', error.stack)
     }
     return NextResponse.json(
-      { error: "Error creating prompt" },
+      { error: 'Failed to create prompt' },
       { status: 500 }
     )
   }
