@@ -60,16 +60,10 @@ const categorySchema = z.object({
     }),
   iconName: z.string().min(1, "Icon is required"),
   parentId: z.string().nullable(),
-  sortOrder: z.coerce.number().int().optional(),
+  sortOrder: z.number().int().default(0),
 })
 
-export interface CategoryFormValues {
-  nameEn: string
-  nameAr: string
-  iconName: string
-  parentId: string | null
-  sortOrder: number
-}
+export type CategoryFormValues = z.infer<typeof categorySchema>
 
 export interface CategoryFormProps {
   initialData?: {
@@ -327,4 +321,4 @@ export function CategoryForm({ initialData, onSubmit, isSubmitting }: CategoryFo
   )
 }
 
-export default CategoryForm;
+export default CategoryForm
