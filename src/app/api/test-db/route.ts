@@ -27,10 +27,15 @@ export async function GET() {
     })
   } catch (error) {
     console.error('[Database Test Error]:', error)
+    
+    const errorMessage = error instanceof Error 
+      ? error.message 
+      : 'Unknown database error'
+
     return NextResponse.json({
       success: false,
       message: 'Database connection test failed',
-      error: error.message
+      error: errorMessage
     }, { status: 500 })
   }
 }
