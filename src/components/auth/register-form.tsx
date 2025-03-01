@@ -156,10 +156,12 @@ export function RegisterForm({ countries = [], locale = 'en' }: RegisterFormProp
       <div className="space-y-2">
         <Label htmlFor="country">Country</Label>
         <SearchableSelect
-          id="country"
-          options={countries}
           value={watch('country')}
-          onChange={(value) => setValue('country', value)}
+          onValueChange={(value) => setValue('country', value)}
+          options={countries}
+          placeholder="Select a country"
+          searchPlaceholder="Search countries..."
+          isRtl={locale === 'ar'}
           disabled={isLoading}
         />
         {errors.country && (
