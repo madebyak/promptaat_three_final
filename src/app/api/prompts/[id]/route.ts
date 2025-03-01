@@ -12,24 +12,6 @@ export async function GET(
 
     const prompt = await prisma.prompt.findUnique({
       where: { id },
-      include: {
-        categories: {
-          include: {
-            category: true,
-            subcategory: true,
-          }
-        },
-        tools: {
-          include: {
-            tool: true,
-          }
-        },
-        _count: {
-          select: {
-            bookmarks: true,
-          },
-        },
-      },
       select: {
         id: true,
         titleEn: true,
@@ -44,6 +26,42 @@ export async function GET(
         promptTextAr: true,
         createdAt: true,
         updatedAt: true,
+        categories: {
+          select: {
+            category: {
+              select: {
+                id: true,
+                nameEn: true,
+                nameAr: true,
+                iconName: true,
+              }
+            },
+            subcategory: {
+              select: {
+                id: true,
+                nameEn: true,
+                nameAr: true,
+                iconName: true,
+              }
+            }
+          }
+        },
+        tools: {
+          select: {
+            tool: {
+              select: {
+                id: true,
+                name: true,
+                iconUrl: true,
+              }
+            }
+          }
+        },
+        _count: {
+          select: {
+            bookmarks: true,
+          }
+        }
       }
     })
 
