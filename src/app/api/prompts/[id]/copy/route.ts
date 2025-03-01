@@ -23,25 +23,21 @@ export async function POST(
     const id = pathParts[pathParts.length - 2];
 
     // Increment copy count
-    await prisma.prompt.update({
+    const updatedPrompt = await prisma.prompt.update({
       where: { id },
       data: {
         copyCount: {
           increment: 1,
         },
       },
-    })
-
-    // Create copy record
-    await prisma.promptCopy.create({
-      data: {
-        promptId: id,
-        userId: session.user.id,
-      },
+      select: {
+        copyCount: true,
+      }
     })
 
     return NextResponse.json({
       message: "Prompt copied successfully",
+      copyCount: updatedPrompt.copyCount
     })
   } catch (error) {
     console.error("Copy prompt error:", error)
