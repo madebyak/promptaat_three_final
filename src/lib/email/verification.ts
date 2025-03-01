@@ -1,5 +1,4 @@
 import { Resend } from 'resend';
-import Handlebars from 'handlebars';
 import { verificationTemplate, passwordResetTemplate } from './templates';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -22,13 +21,11 @@ export async function sendVerificationEmail({ email, name, token }: Verification
   console.log(`Verification link: ${verificationLink}`);
 
   try {
-    // Compile template with data
-    const template = Handlebars.compile(verificationTemplate);
-    const html = template({ 
-      name, 
-      verificationLink,
-      year: new Date().getFullYear()
-    });
+    // Replace template variables
+    const html = verificationTemplate
+      .replace(/\{\{name\}\}/g, name)
+      .replace(/\{\{verificationLink\}\}/g, verificationLink)
+      .replace(/\{\{year\}\}/g, new Date().getFullYear().toString());
 
     const { data, error } = await resend.emails.send({
       from: 'Promptaat <noreply@verify.promptaat.com>',
@@ -68,13 +65,11 @@ export async function sendPasswordResetEmail({ email, name, token }: PasswordRes
   const resetLink = `${baseUrl}/en/auth/reset-password?token=${token}`;
   
   try {
-    // Compile template with data
-    const template = Handlebars.compile(passwordResetTemplate);
-    const html = template({ 
-      name, 
-      resetLink,
-      year: new Date().getFullYear()
-    });
+    // Replace template variables
+    const html = passwordResetTemplate
+      .replace(/\{\{name\}\}/g, name)
+      .replace(/\{\{resetLink\}\}/g, resetLink)
+      .replace(/\{\{year\}\}/g, new Date().getFullYear().toString());
 
     const { data, error } = await resend.emails.send({
       from: 'Promptaat <noreply@verify.promptaat.com>',
