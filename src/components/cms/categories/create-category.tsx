@@ -4,16 +4,8 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Plus } from "lucide-react"
-import { CategoryForm } from "./category-form"
+import { CategoryForm, CategoryFormValues } from "./category-form"
 import { toast } from "sonner"
-
-interface Category {
-  id: string
-  nameEn: string
-  nameAr: string
-  parentId: string | null
-  order: number
-}
 
 interface CreateCategoryProps {
   onSuccess?: () => void;
@@ -23,7 +15,7 @@ export function CreateCategory({ onSuccess }: CreateCategoryProps) {
   const [open, setOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const handleSubmit = async (data: Category) => {
+  const handleSubmit = async (data: CategoryFormValues) => {
     try {
       setIsSubmitting(true)
       const response = await fetch("/api/cms/categories", {
