@@ -26,7 +26,11 @@ export async function sendVerificationEmail({ email, name, token }: Verification
       from: 'Promptaat <noreply@verify.promptaat.com>',
       to: email,
       subject: 'Verify your email address',
-      html: await compileEmailTemplate('verification', { name, verificationLink }),
+      html: await compileEmailTemplate('verification', { 
+        name, 
+        verificationLink,
+        year: new Date().getFullYear()
+      }),
     });
 
     if (error) {
@@ -64,7 +68,11 @@ export async function sendPasswordResetEmail({ email, name, token }: PasswordRes
       from: 'Promptaat <noreply@verify.promptaat.com>',
       to: email,
       subject: 'Reset your password',
-      html: await compileEmailTemplate('password-reset', { name, resetLink }),
+      html: await compileEmailTemplate('password-reset', { 
+        name, 
+        resetLink,
+        year: new Date().getFullYear()
+      }),
     });
 
     if (error) {
@@ -87,11 +95,16 @@ export async function sendPasswordResetEmail({ email, name, token }: PasswordRes
 
 export async function compileEmailTemplate(templateName: string, data: Record<string, any>) {
   // Dynamic import of Handlebars to avoid webpack issues
-  const Handlebars = (await import('handlebars')).default
+  const Handlebars = (await import('handlebars')).default;
   
-  const templatePath = join(process.cwd(), `src/emails/${templateName}.hbs`)
-  const templateContent = readFileSync(templatePath, "utf-8")
-  const template = Handlebars.compile(templateContent)
-  
-  return template(data)
+  try {
+    const templatePath = join(process.cwd(), `src/emails/${templateName}.hbs`);
+    const templateContent = readFileSync(templatePath, "utf-8");
+    const template = Handlebars.compile(templateContent);
+    
+    return template(data);
+  } catch (error) {
+    console.error(`Error compiling email template ${templateName}:`, error);
+    throw new Error(`Failed to compile email template: ${error.message}`);
+  }
 }
