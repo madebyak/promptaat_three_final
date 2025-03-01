@@ -26,31 +26,10 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { formatDate } from "@/lib/utils";
+import { CategoryItem } from "./categories-management";
 
-// Interface for category data
-export interface Category {
-  id: string;
-  nameEn: string;
-  nameAr: string;
-  iconName: string;
-  sortOrder: number;
-  parentId: string | null;
-  parent?: {
-    id: string;
-    nameEn: string;
-    nameAr: string;
-  } | null;
-  createdAt: string;
-  updatedAt: string;
-  _count?: {
-    prompts: number;
-    subcategories: number;
-  };
-}
-
-// Props for the EditCategory component
 export interface EditCategoryProps {
-  category: Category;
+  category: CategoryItem;
   onSuccess?: () => void;
   buttonVariant?: "default" | "outline" | "secondary" | "ghost" | "link";
   buttonSize?: "default" | "sm" | "lg" | "icon";
