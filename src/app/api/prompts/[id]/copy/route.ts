@@ -26,7 +26,7 @@ export async function POST(
     await prisma.prompt.update({
       where: { id },
       data: {
-        copies: {
+        copyCount: {
           increment: 1,
         },
       },
