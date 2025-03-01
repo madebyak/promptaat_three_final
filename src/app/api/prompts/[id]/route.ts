@@ -24,12 +24,6 @@ export async function GET(
             tool: true,
           }
         },
-        user: {
-          select: {
-            name: true,
-            image: true,
-          },
-        },
         _count: {
           select: {
             bookmarks: true,
