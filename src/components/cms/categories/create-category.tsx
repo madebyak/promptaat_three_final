@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Plus } from "lucide-react"
 import { CategoryForm } from "./category-form"
-import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 
 interface Category {
@@ -16,12 +15,15 @@ interface Category {
   order: number
 }
 
-export function CreateCategory() {
+interface CreateCategoryProps {
+  onSuccess?: () => void;
+}
+
+export function CreateCategory({ onSuccess }: CreateCategoryProps) {
   const [open, setOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const router = useRouter()
 
-  const handleSubmit = async (data: any) => {
+  const handleSubmit = async (data: Category) => {
     try {
       setIsSubmitting(true)
       const response = await fetch("/api/cms/categories", {
@@ -37,7 +39,7 @@ export function CreateCategory() {
       }
 
       toast.success("Category created successfully")
-      router.refresh()
+      onSuccess?.()
       setOpen(false)
     } catch (error) {
       console.error("Error creating category:", error)
