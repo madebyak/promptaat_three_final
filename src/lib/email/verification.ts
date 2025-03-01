@@ -1,6 +1,6 @@
 import { Resend } from 'resend';
-import { readFileSync } from "fs"
-import { join } from "path"
+import Handlebars from 'handlebars';
+import { verificationTemplate, passwordResetTemplate } from './templates';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 // Use a more robust way to determine the base URL
@@ -22,15 +22,19 @@ export async function sendVerificationEmail({ email, name, token }: Verification
   console.log(`Verification link: ${verificationLink}`);
 
   try {
+    // Compile template with data
+    const template = Handlebars.compile(verificationTemplate);
+    const html = template({ 
+      name, 
+      verificationLink,
+      year: new Date().getFullYear()
+    });
+
     const { data, error } = await resend.emails.send({
       from: 'Promptaat <noreply@verify.promptaat.com>',
       to: email,
       subject: 'Verify your email address',
-      html: await compileEmailTemplate('verification', { 
-        name, 
-        verificationLink,
-        year: new Date().getFullYear()
-      }),
+      html,
     });
 
     if (error) {
@@ -64,15 +68,19 @@ export async function sendPasswordResetEmail({ email, name, token }: PasswordRes
   const resetLink = `${baseUrl}/en/auth/reset-password?token=${token}`;
   
   try {
+    // Compile template with data
+    const template = Handlebars.compile(passwordResetTemplate);
+    const html = template({ 
+      name, 
+      resetLink,
+      year: new Date().getFullYear()
+    });
+
     const { data, error } = await resend.emails.send({
       from: 'Promptaat <noreply@verify.promptaat.com>',
       to: email,
       subject: 'Reset your password',
-      html: await compileEmailTemplate('password-reset', { 
-        name, 
-        resetLink,
-        year: new Date().getFullYear()
-      }),
+      html,
     });
 
     if (error) {
@@ -90,21 +98,5 @@ export async function sendPasswordResetEmail({ email, name, token }: PasswordRes
       console.error('Error stack:', error.stack);
     }
     throw error;
-  }
-}
-
-export async function compileEmailTemplate(templateName: string, data: Record<string, any>) {
-  // Dynamic import of Handlebars to avoid webpack issues
-  const Handlebars = (await import('handlebars')).default;
-  
-  try {
-    const templatePath = join(process.cwd(), `src/emails/${templateName}.hbs`);
-    const templateContent = readFileSync(templatePath, "utf-8");
-    const template = Handlebars.compile(templateContent);
-    
-    return template(data);
-  } catch (error) {
-    console.error(`Error compiling email template ${templateName}:`, error);
-    throw new Error(`Failed to compile email template: ${error.message}`);
   }
 }
