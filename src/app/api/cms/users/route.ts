@@ -3,6 +3,8 @@ import { prisma } from "@/lib/db";
 import { getCurrentAdmin } from "@/lib/cms/auth/server-auth";
 import { Prisma } from "@prisma/client";
 
+export const runtime = 'nodejs';
+
 export async function GET(request: NextRequest) {
   try {
     const admin = await getCurrentAdmin();
@@ -39,23 +41,30 @@ export async function GET(request: NextRequest) {
           firstName: true,
           lastName: true,
           email: true,
-          image: true,
+          profileImageUrl: true,
           createdAt: true,
           updatedAt: true,
           isActive: true,
           _count: {
             select: {
-              prompts: true,
-              subscriptions: true,
+              bookmarks: true,
+              history: true,
+              catalogs: true,
             },
           },
-          subscriptions: {
+          subscription: {
             where: {
               status: "active",
+              endDate: {
+                gt: new Date(),
+              },
             },
-            take: 1,
-            orderBy: {
-              createdAt: "desc",
+            select: {
+              id: true,
+              status: true,
+              startDate: true,
+              endDate: true,
+              planId: true,
             },
           },
         },
