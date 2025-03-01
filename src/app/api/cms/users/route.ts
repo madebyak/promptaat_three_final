@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
             select: {
               bookmarks: true,
               history: true,
-              catalogs: true,
+              catalogs: true,  // Updated field names to match Prisma schema
             },
           },
           subscription: {
