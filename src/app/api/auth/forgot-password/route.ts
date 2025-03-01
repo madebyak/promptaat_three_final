@@ -3,14 +3,29 @@ import { prisma } from "@/lib/db";
 import { randomBytes } from "crypto";
 import { sendPasswordResetEmail } from "@/lib/email/verification";
 
+export const runtime = 'nodejs';
+
 export async function POST(req: Request) {
   try {
     const { email } = await req.json();
+
+    if (!email || typeof email !== 'string') {
+      return NextResponse.json(
+        { error: "Invalid email provided" },
+        { status: 400 }
+      );
+    }
 
     const user = await prisma.user.findUnique({
       where: {
         email: email.toLowerCase(),
       },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+      }
     });
 
     if (!user) {
@@ -50,9 +65,11 @@ export async function POST(req: Request) {
     });
   } catch (error) {
     console.error("Password reset request error:", error);
+    
+    // Don't expose internal errors to the client
     return NextResponse.json(
       {
-        error: "Error processing request",
+        error: "An error occurred while processing your request",
       },
       { status: 500 }
     );
