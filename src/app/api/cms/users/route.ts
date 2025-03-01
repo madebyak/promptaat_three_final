@@ -25,7 +25,8 @@ export async function GET(request: NextRequest) {
     
     if (search) {
       where.OR = [
-        { name: { contains: search, mode: "insensitive" } },
+        { firstName: { contains: search, mode: "insensitive" } },
+        { lastName: { contains: search, mode: "insensitive" } },
         { email: { contains: search, mode: "insensitive" } },
       ];
     }
@@ -35,7 +36,8 @@ export async function GET(request: NextRequest) {
         where,
         select: {
           id: true,
-          name: true,
+          firstName: true,
+          lastName: true,
           email: true,
           image: true,
           createdAt: true,
