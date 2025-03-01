@@ -37,6 +37,11 @@ import {
   type LucideIcon
 } from 'lucide-react'
 
+export interface IconInfo {
+  name: string;
+  icon: JSX.Element;
+}
+
 // Group icons by category for better organization
 export const categoryIconGroups = {
   "Business & Finance": {
@@ -165,9 +170,16 @@ export const categoryIconGroups = {
 };
 
 // Flat map of all icons for easy lookup
-export const categoryIcons: Record<string, LucideIcon> = Object.entries(categoryIconGroups)
-  .reduce((acc, [_, icons]) => {
-    return { ...acc, ...icons };
+export const categoryIcons: Record<string, IconInfo> = Object.entries(categoryIconGroups)
+  .reduce((acc, [category, icons]) => {
+    const iconEntries = Object.entries(icons).map(([key, Icon]) => [
+      key,
+      {
+        name: key,
+        icon: <Icon className="h-4 w-4" />,
+      },
+    ]);
+    return { ...acc, ...Object.fromEntries(iconEntries) };
   }, {});
 
 // Get recently used icons from localStorage (if available)
@@ -200,7 +212,9 @@ export function addToRecentlyUsedIcons(iconName: string): void {
   }
 }
 
-export function getCategoryIcon(iconName: string | null) {
+// Get a specific icon by name
+export function getCategoryIcon(iconName: string | null): JSX.Element | null {
   if (!iconName) return null;
-  return categoryIcons[iconName] || null;
+  const IconComponent = categoryIcons[iconName]?.icon;
+  return IconComponent || null;
 }

@@ -51,7 +51,7 @@ export function IconPicker({ value, onChange }: IconPickerProps) {
           <CommandInput placeholder={t("form.searchIcons")} />
           <CommandEmpty>{t("form.noIconsFound")}</CommandEmpty>
           <CommandGroup>
-            {Object.entries(categoryIcons).map(([key, { icon, name }]) => (
+            {Object.entries(categoryIcons).map(([key, info]) => (
               <CommandItem
                 key={key}
                 value={key}
@@ -67,8 +67,8 @@ export function IconPicker({ value, onChange }: IconPickerProps) {
                   )}
                 />
                 <div className="flex items-center gap-2">
-                  {icon}
-                  <span>{name}</span>
+                  {info.icon}
+                  <span>{info.name}</span>
                 </div>
               </CommandItem>
             ))}
