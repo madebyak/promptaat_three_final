@@ -169,11 +169,20 @@ export async function POST(req: Request) {
       contentEn,
       contentAr,
       categoryId,
+      subcategoryId,
       toolId,
       isPro = false,
     } = body
 
-    console.log('Request body:', { titleEn, titleAr, contentEn, contentAr, categoryId, toolId, isPro })
+    // Validate required fields
+    if (!titleEn || !titleAr || !contentEn || !contentAr || !categoryId || !subcategoryId || !toolId) {
+      return NextResponse.json(
+        { error: "Missing required fields" },
+        { status: 400 }
+      )
+    }
+
+    console.log('Request body:', { titleEn, titleAr, contentEn, contentAr, categoryId, subcategoryId, toolId, isPro })
 
     try {
       const prompt = await prisma.prompt.create({
@@ -186,6 +195,7 @@ export async function POST(req: Request) {
             create: [
               {
                 categoryId,
+                subcategoryId,
               },
             ],
           },
