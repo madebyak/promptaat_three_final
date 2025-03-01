@@ -1,13 +1,9 @@
 export const runtime = 'nodejs'
 
 import { NextResponse } from "next/server"
-import { prisma } from "@/lib/prisma/client"
+import { prisma } from "@/lib/db"
 import { generateToken } from "@/lib/auth/token"
-import { Resend } from "resend"
-import { compileEmailTemplate } from "@/lib/email/verification"
-
-// Initialize Resend with API key
-const resend = new Resend(process.env.RESEND_API_KEY)
+import { sendVerificationEmail } from "@/lib/email/verification"
 
 export async function GET(req: Request) {
   try {
@@ -106,14 +102,10 @@ export async function POST(request: Request) {
     })
 
     // Send verification email
-    const verificationUrl = `${process.env.NEXT_PUBLIC_APP_URL}/auth/verify?token=${token}`
-    const html = await compileEmailTemplate('verify-email', { verificationUrl })
-
-    await resend.emails.send({
-      from: "Promptaat <no-reply@promptaat.com>",
-      to: email,
-      subject: "Verify your email address",
-      html
+    await sendVerificationEmail({
+      email: user.email,
+      name: `${user.firstName} ${user.lastName}`,
+      token
     })
 
     return NextResponse.json({ message: "Verification email sent" })
