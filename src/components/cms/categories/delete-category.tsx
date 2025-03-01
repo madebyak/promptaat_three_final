@@ -15,21 +15,20 @@ import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
+import { CategoryItem } from "./categories-management";
 
 interface DeleteCategoryProps {
-  id: string;
-  name: string;
+  category: CategoryItem;
+  onSuccess?: () => void;
 }
 
-export function DeleteCategory({ id, name }: DeleteCategoryProps) {
+export function DeleteCategory({ category, onSuccess }: DeleteCategoryProps) {
   const [isDeleting, setIsDeleting] = useState(false);
-  const router = useRouter();
 
   const handleDelete = async () => {
     try {
       setIsDeleting(true);
-      const response = await fetch(`/api/cms/categories/${id}`, {
+      const response = await fetch(`/api/cms/categories/${category.id}`, {
         method: "DELETE",
       });
 
@@ -38,7 +37,7 @@ export function DeleteCategory({ id, name }: DeleteCategoryProps) {
       }
 
       toast.success("Category deleted successfully");
-      router.refresh();
+      onSuccess?.();
     } catch (error) {
       console.error("Error deleting category:", error);
       toast.error("Failed to delete category");
@@ -58,7 +57,7 @@ export function DeleteCategory({ id, name }: DeleteCategoryProps) {
         <AlertDialogHeader>
           <AlertDialogTitle>Delete Category</AlertDialogTitle>
           <AlertDialogDescription>
-            Are you sure you want to delete the category "{name}"? This action
+            Are you sure you want to delete the category "{category.nameEn}"? This action
             cannot be undone.
           </AlertDialogDescription>
         </AlertDialogHeader>
