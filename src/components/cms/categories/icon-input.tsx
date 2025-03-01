@@ -23,7 +23,6 @@ export default function IconInput({
         <IconPicker 
           value={value} 
           onChange={onChange} 
-          error={error}
         />
       </FormControl>
       {error && <FormMessage>{error}</FormMessage>}
