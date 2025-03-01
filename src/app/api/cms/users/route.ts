@@ -64,11 +64,7 @@ export async function GET(request: NextRequest) {
               status: true,
               startDate: true,
               endDate: true,
-              plan: {
-                select: {
-                  id: true,
-                },
-              },
+              planId: true,
             },
           },
         },
