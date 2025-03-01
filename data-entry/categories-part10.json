@@ -1,0 +1,105 @@
+{
+  "categories": [
+    {
+      "nameEn": "Media and Entertainment",
+      "nameAr": "الإعلام والترفيه",
+      "iconName": "film",
+      "sortOrder": 21,
+      "subcategories": [
+        {
+          "nameEn": "Film & Television",
+          "nameAr": "الأفلام والتلفزيون",
+          "sortOrder": 1
+        },
+        {
+          "nameEn": "Screenwriting & Script Development",
+          "nameAr": "كتابة السيناريو وتطوير النصوص",
+          "sortOrder": 2
+        },
+        {
+          "nameEn": "Music & Audio",
+          "nameAr": "الموسيقى والصوت",
+          "sortOrder": 3
+        },
+        {
+          "nameEn": "Broadcasting & Journalism",
+          "nameAr": "البث والصحافة",
+          "sortOrder": 4
+        },
+        {
+          "nameEn": "Podcasting & Storytelling",
+          "nameAr": "البودكاست ورواية القصص",
+          "sortOrder": 5
+        },
+        {
+          "nameEn": "Events & Live Entertainment",
+          "nameAr": "الفعاليات والترفيه الحي",
+          "sortOrder": 6
+        },
+        {
+          "nameEn": "Advertising & Brand Entertainment",
+          "nameAr": "الإعلان وترفيه العلامات التجارية",
+          "sortOrder": 7
+        },
+        {
+          "nameEn": "Public Relations & Media",
+          "nameAr": "العلاقات العامة والإعلام",
+          "sortOrder": 8
+        }
+      ]
+    },
+    {
+      "nameEn": "Real Estate",
+      "nameAr": "العقارات",
+      "iconName": "building",
+      "sortOrder": 22,
+      "subcategories": [
+        {
+          "nameEn": "Investment Strategies",
+          "nameAr": "استراتيجيات الاستثمار",
+          "sortOrder": 1
+        },
+        {
+          "nameEn": "Buying & Selling Homes",
+          "nameAr": "شراء وبيع المنازل",
+          "sortOrder": 2
+        },
+        {
+          "nameEn": "Property Management",
+          "nameAr": "إدارة العقارات",
+          "sortOrder": 3
+        },
+        {
+          "nameEn": "Contracts & Legalities",
+          "nameAr": "العقود والجوانب القانونية",
+          "sortOrder": 4
+        },
+        {
+          "nameEn": "Market Analysis & Financing",
+          "nameAr": "تحليل السوق والتمويل",
+          "sortOrder": 5
+        },
+        {
+          "nameEn": "Building a Portfolio",
+          "nameAr": "بناء محفظة عقارية",
+          "sortOrder": 6
+        },
+        {
+          "nameEn": "Commercial Real Estate",
+          "nameAr": "العقارات التجارية",
+          "sortOrder": 7
+        },
+        {
+          "nameEn": "Marketing Ideas & Negotiations",
+          "nameAr": "أفكار التسويق والمفاوضات",
+          "sortOrder": 8
+        },
+        {
+          "nameEn": "Property Taxes & Deductions",
+          "nameAr": "ضرائب العقارات والخصومات",
+          "sortOrder": 9
+        }
+      ]
+    }
+  ]
+}

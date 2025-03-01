@@ -1,0 +1,105 @@
+{
+  "categories": [
+    {
+      "nameEn": "Travel",
+      "nameAr": "السفر",
+      "iconName": "map",
+      "sortOrder": 15,
+      "subcategories": [
+        {
+          "nameEn": "Travel Planning & Research",
+          "nameAr": "تخطيط وبحث السفر",
+          "sortOrder": 1
+        },
+        {
+          "nameEn": "Accommodation & Lodging",
+          "nameAr": "الإقامة والسكن",
+          "sortOrder": 2
+        },
+        {
+          "nameEn": "Transportation",
+          "nameAr": "النقل والمواصلات",
+          "sortOrder": 3
+        },
+        {
+          "nameEn": "Packing & Essentials",
+          "nameAr": "التعبئة والأساسيات",
+          "sortOrder": 4
+        },
+        {
+          "nameEn": "Exploration & Outdoor Travel",
+          "nameAr": "الاستكشاف والسفر الخارجي",
+          "sortOrder": 5
+        },
+        {
+          "nameEn": "Solo & Remote Travel",
+          "nameAr": "السفر الفردي والبعيد",
+          "sortOrder": 6
+        },
+        {
+          "nameEn": "Luxury Travel",
+          "nameAr": "السفر الفاخر",
+          "sortOrder": 7
+        },
+        {
+          "nameEn": "Travel Photography & Blogging",
+          "nameAr": "تصوير السفر والتدوين",
+          "sortOrder": 8
+        },
+        {
+          "nameEn": "Travel Deals & Discounts",
+          "nameAr": "عروض وخصومات السفر",
+          "sortOrder": 9
+        }
+      ]
+    },
+    {
+      "nameEn": "Social Media",
+      "nameAr": "وسائل التواصل الاجتماعي",
+      "iconName": "share-2",
+      "sortOrder": 16,
+      "subcategories": [
+        {
+          "nameEn": "Strategy & Planning",
+          "nameAr": "الاستراتيجية والتخطيط",
+          "sortOrder": 1
+        },
+        {
+          "nameEn": "Content Creation & Design",
+          "nameAr": "إنشاء المحتوى والتصميم",
+          "sortOrder": 2
+        },
+        {
+          "nameEn": "Engagement & Community",
+          "nameAr": "التفاعل والمجتمع",
+          "sortOrder": 3
+        },
+        {
+          "nameEn": "Influencer Marketing & Campaigns",
+          "nameAr": "تسويق المؤثرين والحملات",
+          "sortOrder": 4
+        },
+        {
+          "nameEn": "Paid Advertising & Analytics",
+          "nameAr": "الإعلانات المدفوعة والتحليلات",
+          "sortOrder": 5
+        },
+        {
+          "nameEn": "Branding & Identity",
+          "nameAr": "العلامة التجارية والهوية",
+          "sortOrder": 6
+        },
+        {
+          "nameEn": "Trends & Tools",
+          "nameAr": "الاتجاهات والأدوات",
+          "sortOrder": 7
+        },
+        {
+          "nameEn": "Social Media for Business",
+          "nameAr": "وسائل التواصل الاجتماعي للأعمال",
+          "sortOrder": 8
+        }
+      ]
+    }
+  ]
+}

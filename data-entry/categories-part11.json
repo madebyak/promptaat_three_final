@@ -1,0 +1,67 @@
+{
+  "categories": [
+    {
+      "nameEn": "Other Industries",
+      "nameAr": "صناعات أخرى",
+      "iconName": "layers",
+      "sortOrder": 23,
+      "subcategories": [
+        {
+          "nameEn": "Manufacturing & Engineering",
+          "nameAr": "التصنيع والهندسة",
+          "sortOrder": 1
+        },
+        {
+          "nameEn": "Construction",
+          "nameAr": "البناء والتشييد",
+          "sortOrder": 2
+        },
+        {
+          "nameEn": "Transportation & Logistics",
+          "nameAr": "النقل والخدمات اللوجستية",
+          "sortOrder": 3
+        },
+        {
+          "nameEn": "Automotive & Aerospace",
+          "nameAr": "السيارات والفضاء",
+          "sortOrder": 4
+        },
+        {
+          "nameEn": "Hospitality & Tourism",
+          "nameAr": "الضيافة والسياحة",
+          "sortOrder": 5
+        },
+        {
+          "nameEn": "Telecommunications",
+          "nameAr": "الاتصالات",
+          "sortOrder": 6
+        },
+        {
+          "nameEn": "Agriculture & Agribusiness",
+          "nameAr": "الزراعة والأعمال الزراعية",
+          "sortOrder": 7
+        },
+        {
+          "nameEn": "HR & Recruitment",
+          "nameAr": "الموارد البشرية والتوظيف",
+          "sortOrder": 8
+        },
+        {
+          "nameEn": "Environment & Sustainability",
+          "nameAr": "البيئة والاستدامة",
+          "sortOrder": 9
+        },
+        {
+          "nameEn": "Science & Research",
+          "nameAr": "العلوم والبحث",
+          "sortOrder": 10
+        },
+        {
+          "nameEn": "Security & Cybersecurity",
+          "nameAr": "الأمن والأمن السيبراني",
+          "sortOrder": 11
+        }
+      ]
+    }
+  ]
+}

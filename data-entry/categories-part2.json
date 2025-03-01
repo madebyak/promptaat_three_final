@@ -1,0 +1,110 @@
+{
+  "categories": [
+    {
+      "nameEn": "IT & Tech",
+      "nameAr": "تكنولوجيا المعلومات والتقنية",
+      "iconName": "code",
+      "sortOrder": 5,
+      "subcategories": [
+        {
+          "nameEn": "Software & Web Development",
+          "nameAr": "تطوير البرمجيات والويب",
+          "sortOrder": 1
+        },
+        {
+          "nameEn": "Mobile App Development",
+          "nameAr": "تطوير تطبيقات الهاتف المحمول",
+          "sortOrder": 2
+        },
+        {
+          "nameEn": "Cloud Computing & Security",
+          "nameAr": "الحوسبة السحابية والأمان",
+          "sortOrder": 3
+        },
+        {
+          "nameEn": "Data Science & Analytics",
+          "nameAr": "علوم البيانات والتحليلات",
+          "sortOrder": 4
+        },
+        {
+          "nameEn": "Networking & IT Infrastructure",
+          "nameAr": "الشبكات والبنية التحتية لتكنولوجيا المعلومات",
+          "sortOrder": 5
+        },
+        {
+          "nameEn": "IT Support & Management",
+          "nameAr": "دعم وإدارة تكنولوجيا المعلومات",
+          "sortOrder": 6
+        },
+        {
+          "nameEn": "DevOps & Automation",
+          "nameAr": "عمليات التطوير والأتمتة",
+          "sortOrder": 7
+        },
+        {
+          "nameEn": "Database Management",
+          "nameAr": "إدارة قواعد البيانات",
+          "sortOrder": 8
+        }
+      ]
+    },
+    {
+      "nameEn": "Artificial Intelligence (AI)",
+      "nameAr": "الذكاء الاصطناعي",
+      "iconName": "brain-circuit",
+      "sortOrder": 6,
+      "subcategories": [
+        {
+          "nameEn": "Machine & Deep Learning",
+          "nameAr": "تعلم الآلة والتعلم العميق",
+          "sortOrder": 1
+        },
+        {
+          "nameEn": "Natural Language Processing (NLP)",
+          "nameAr": "معالجة اللغة الطبيعية",
+          "sortOrder": 2
+        },
+        {
+          "nameEn": "Vision & Image AI",
+          "nameAr": "الذكاء الاصطناعي للرؤية والصور",
+          "sortOrder": 3
+        },
+        {
+          "nameEn": "Generative AI",
+          "nameAr": "الذكاء الاصطناعي التوليدي",
+          "sortOrder": 4
+        },
+        {
+          "nameEn": "Conversational AI",
+          "nameAr": "الذكاء الاصطناعي المحادثي",
+          "sortOrder": 5
+        },
+        {
+          "nameEn": "Predictive Analytics",
+          "nameAr": "التحليلات التنبؤية",
+          "sortOrder": 6
+        },
+        {
+          "nameEn": "AI Agents",
+          "nameAr": "وكلاء الذكاء الاصطناعي",
+          "sortOrder": 7
+        },
+        {
+          "nameEn": "Reinforcement Learning & Robotics",
+          "nameAr": "التعلم المعزز والروبوتات",
+          "sortOrder": 8
+        },
+        {
+          "nameEn": "Data Annotation",
+          "nameAr": "تعليق البيانات",
+          "sortOrder": 9
+        },
+        {
+          "nameEn": "Workflow Automation",
+          "nameAr": "أتمتة سير العمل",
+          "sortOrder": 10
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,105 @@
+{
+  "categories": [
+    {
+      "nameEn": "Writing",
+      "nameAr": "الكتابة",
+      "iconName": "pen-tool",
+      "sortOrder": 9,
+      "subcategories": [
+        {
+          "nameEn": "Storytelling",
+          "nameAr": "سرد القصص",
+          "sortOrder": 1
+        },
+        {
+          "nameEn": "Poetry & Lyrics",
+          "nameAr": "الشعر وكتابة الأغاني",
+          "sortOrder": 2
+        },
+        {
+          "nameEn": "Blogging",
+          "nameAr": "التدوين",
+          "sortOrder": 3
+        },
+        {
+          "nameEn": "Content & Copywriting",
+          "nameAr": "كتابة المحتوى والنصوص الإعلانية",
+          "sortOrder": 4
+        },
+        {
+          "nameEn": "Business Writing",
+          "nameAr": "الكتابة التجارية",
+          "sortOrder": 5
+        },
+        {
+          "nameEn": "Academic & Technical Writing",
+          "nameAr": "الكتابة الأكاديمية والتقنية",
+          "sortOrder": 6
+        },
+        {
+          "nameEn": "Screenwriting & Scriptwriting",
+          "nameAr": "كتابة السيناريو والنصوص",
+          "sortOrder": 7
+        },
+        {
+          "nameEn": "Proofreading & Editing",
+          "nameAr": "التدقيق والتحرير",
+          "sortOrder": 8
+        },
+        {
+          "nameEn": "Publishing",
+          "nameAr": "النشر",
+          "sortOrder": 9
+        }
+      ]
+    },
+    {
+      "nameEn": "Music",
+      "nameAr": "الموسيقى",
+      "iconName": "music",
+      "sortOrder": 10,
+      "subcategories": [
+        {
+          "nameEn": "Music Theory & Composition",
+          "nameAr": "نظرية الموسيقى والتأليف",
+          "sortOrder": 1
+        },
+        {
+          "nameEn": "Songwriting",
+          "nameAr": "كتابة الأغاني",
+          "sortOrder": 2
+        },
+        {
+          "nameEn": "Production & Recording",
+          "nameAr": "الإنتاج والتسجيل",
+          "sortOrder": 3
+        },
+        {
+          "nameEn": "Mixing & Mastering",
+          "nameAr": "المزج والماسترينغ",
+          "sortOrder": 4
+        },
+        {
+          "nameEn": "DJing & Electronic Music",
+          "nameAr": "الدي جي والموسيقى الإلكترونية",
+          "sortOrder": 5
+        },
+        {
+          "nameEn": "Music Business & Marketing",
+          "nameAr": "أعمال وتسويق الموسيقى",
+          "sortOrder": 6
+        },
+        {
+          "nameEn": "Streaming & Distribution",
+          "nameAr": "البث والتوزيع",
+          "sortOrder": 7
+        },
+        {
+          "nameEn": "Copyright & Licensing",
+          "nameAr": "حقوق النشر والترخيص",
+          "sortOrder": 8
+        }
+      ]
+    }
+  ]
+}

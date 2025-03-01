@@ -1,0 +1,100 @@
+{
+  "categories": [
+    {
+      "nameEn": "Banking",
+      "nameAr": "الخدمات المصرفية",
+      "iconName": "building-bank",
+      "sortOrder": 3,
+      "subcategories": [
+        {
+          "nameEn": "Retail & Commercial Banking",
+          "nameAr": "الخدمات المصرفية للأفراد والشركات",
+          "sortOrder": 1
+        },
+        {
+          "nameEn": "Investment Banking",
+          "nameAr": "الخدمات المصرفية الاستثمارية",
+          "sortOrder": 2
+        },
+        {
+          "nameEn": "Central Banking & Policy",
+          "nameAr": "البنوك المركزية والسياسات",
+          "sortOrder": 3
+        },
+        {
+          "nameEn": "Transactions & Digital Banking",
+          "nameAr": "المعاملات والخدمات المصرفية الرقمية",
+          "sortOrder": 4
+        },
+        {
+          "nameEn": "Banking Regulations & Compliance",
+          "nameAr": "اللوائح المصرفية والامتثال",
+          "sortOrder": 5
+        },
+        {
+          "nameEn": "Lending & Credit Services",
+          "nameAr": "خدمات الإقراض والائتمان",
+          "sortOrder": 6
+        },
+        {
+          "nameEn": "Wealth & Private Banking",
+          "nameAr": "الخدمات المصرفية الخاصة وإدارة الثروات",
+          "sortOrder": 7
+        },
+        {
+          "nameEn": "Risk & Cybersecurity",
+          "nameAr": "المخاطر والأمن السيبراني",
+          "sortOrder": 8
+        }
+      ]
+    },
+    {
+      "nameEn": "Crypto & Blockchain",
+      "nameAr": "العملات المشفرة وتقنية البلوكتشين",
+      "iconName": "bitcoin",
+      "sortOrder": 4,
+      "subcategories": [
+        {
+          "nameEn": "Crypto Basics",
+          "nameAr": "أساسيات العملات المشفرة",
+          "sortOrder": 1
+        },
+        {
+          "nameEn": "Trading & Investment",
+          "nameAr": "التداول والاستثمار",
+          "sortOrder": 2
+        },
+        {
+          "nameEn": "Decentralized Finance",
+          "nameAr": "التمويل اللامركزي",
+          "sortOrder": 3
+        },
+        {
+          "nameEn": "NFTs",
+          "nameAr": "الرموز غير القابلة للاستبدال",
+          "sortOrder": 4
+        },
+        {
+          "nameEn": "Blockchain",
+          "nameAr": "تقنية البلوكتشين",
+          "sortOrder": 5
+        },
+        {
+          "nameEn": "Crypto Security",
+          "nameAr": "أمن العملات المشفرة",
+          "sortOrder": 6
+        },
+        {
+          "nameEn": "Crypto Regulations & Compliance",
+          "nameAr": "لوائح وامتثال العملات المشفرة",
+          "sortOrder": 7
+        },
+        {
+          "nameEn": "Stablecoins & Meme coins",
+          "nameAr": "العملات المستقرة وعملات الميم",
+          "sortOrder": 8
+        }
+      ]
+    }
+  ]
+}

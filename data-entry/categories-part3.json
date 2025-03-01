@@ -1,0 +1,105 @@
+{
+  "categories": [
+    {
+      "nameEn": "Gaming",
+      "nameAr": "الألعاب",
+      "iconName": "gamepad-2",
+      "sortOrder": 7,
+      "subcategories": [
+        {
+          "nameEn": "Engines & Frameworks",
+          "nameAr": "محركات وأطر عمل الألعاب",
+          "sortOrder": 1
+        },
+        {
+          "nameEn": "Design & Mechanics",
+          "nameAr": "تصميم وميكانيكا الألعاب",
+          "sortOrder": 2
+        },
+        {
+          "nameEn": "Character & Asset Creation",
+          "nameAr": "إنشاء الشخصيات والأصول",
+          "sortOrder": 3
+        },
+        {
+          "nameEn": "AI & Simulation",
+          "nameAr": "الذكاء الاصطناعي والمحاكاة",
+          "sortOrder": 4
+        },
+        {
+          "nameEn": "Multiplayer & Networking",
+          "nameAr": "اللعب الجماعي والشبكات",
+          "sortOrder": 5
+        },
+        {
+          "nameEn": "VR & AR Development",
+          "nameAr": "تطوير الواقع الافتراضي والمعزز",
+          "sortOrder": 6
+        },
+        {
+          "nameEn": "Modding & Customization",
+          "nameAr": "التعديل والتخصيص",
+          "sortOrder": 7
+        },
+        {
+          "nameEn": "Mobile Game Development",
+          "nameAr": "تطوير ألعاب الهاتف المحمول",
+          "sortOrder": 8
+        },
+        {
+          "nameEn": "Game Testing & Debugging",
+          "nameAr": "اختبار وتصحيح الألعاب",
+          "sortOrder": 9
+        }
+      ]
+    },
+    {
+      "nameEn": "Education",
+      "nameAr": "التعليم",
+      "iconName": "graduation-cap",
+      "sortOrder": 8,
+      "subcategories": [
+        {
+          "nameEn": "E-Learning & Online Courses",
+          "nameAr": "التعلم الإلكتروني والدورات عبر الإنترنت",
+          "sortOrder": 1
+        },
+        {
+          "nameEn": "Teaching & Classroom",
+          "nameAr": "التدريس والفصول الدراسية",
+          "sortOrder": 2
+        },
+        {
+          "nameEn": "Languages & Translation",
+          "nameAr": "اللغات والترجمة",
+          "sortOrder": 3
+        },
+        {
+          "nameEn": "Curriculum Development",
+          "nameAr": "تطوير المناهج",
+          "sortOrder": 4
+        },
+        {
+          "nameEn": "EdTech & Tools",
+          "nameAr": "تكنولوجيا التعليم والأدوات",
+          "sortOrder": 5
+        },
+        {
+          "nameEn": "Test Prep & Exams",
+          "nameAr": "التحضير للاختبارات والامتحانات",
+          "sortOrder": 6
+        },
+        {
+          "nameEn": "Academic Writing & Research",
+          "nameAr": "الكتابة الأكاديمية والبحث",
+          "sortOrder": 7
+        },
+        {
+          "nameEn": "Development & Certifications",
+          "nameAr": "التطوير والشهادات",
+          "sortOrder": 8
+        }
+      ]
+    }
+  ]
+}

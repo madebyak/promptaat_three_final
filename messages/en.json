@@ -1,0 +1,15 @@
+{
+  "MyPrompts": {
+    "title": "My Prompts",
+    "description": "Manage your prompts",
+    "noPrompts": "You haven't created any prompts yet",
+    "createPrompt": "Create a Prompt"
+  },
+  "Profile": {
+    "title": "Profile",
+    "description": "Manage your profile settings",
+    "personalInfo": "Personal Information",
+    "name": "Name",
+    "email": "Email"
+  }
+}

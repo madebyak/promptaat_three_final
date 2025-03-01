@@ -1,0 +1,115 @@
+{
+  "categories": [
+    {
+      "nameEn": "Beauty",
+      "nameAr": "الجمال",
+      "iconName": "sparkles",
+      "sortOrder": 13,
+      "subcategories": [
+        {
+          "nameEn": "Skincare & Dermatology",
+          "nameAr": "العناية بالبشرة والأمراض الجلدية",
+          "sortOrder": 1
+        },
+        {
+          "nameEn": "Makeup Artistry",
+          "nameAr": "فن المكياج",
+          "sortOrder": 2
+        },
+        {
+          "nameEn": "Haircare & Styling",
+          "nameAr": "العناية بالشعر والتصفيف",
+          "sortOrder": 3
+        },
+        {
+          "nameEn": "Nail, Lashes, Brows",
+          "nameAr": "الأظافر والرموش والحواجب",
+          "sortOrder": 4
+        },
+        {
+          "nameEn": "Fragrance & Perfumery",
+          "nameAr": "العطور وصناعة العطور",
+          "sortOrder": 5
+        },
+        {
+          "nameEn": "Cosmetic & DIY",
+          "nameAr": "مستحضرات التجميل والصناعة المنزلية",
+          "sortOrder": 6
+        },
+        {
+          "nameEn": "Clean & Organic Beauty",
+          "nameAr": "الجمال النظيف والعضوي",
+          "sortOrder": 7
+        },
+        {
+          "nameEn": "SFX & Event Beauty",
+          "nameAr": "المؤثرات الخاصة وجمال المناسبات",
+          "sortOrder": 8
+        },
+        {
+          "nameEn": "Blogging & Vlogging",
+          "nameAr": "التدوين والتدوين المرئي",
+          "sortOrder": 9
+        },
+        {
+          "nameEn": "Beauty Business & Marketing",
+          "nameAr": "أعمال وتسويق الجمال",
+          "sortOrder": 10
+        }
+      ]
+    },
+    {
+      "nameEn": "Food & Beverages",
+      "nameAr": "الطعام والمشروبات",
+      "iconName": "utensils",
+      "sortOrder": 14,
+      "subcategories": [
+        {
+          "nameEn": "Cooking Methods & Recipes",
+          "nameAr": "طرق الطبخ والوصفات",
+          "sortOrder": 1
+        },
+        {
+          "nameEn": "Baking, Pastry, Desserts",
+          "nameAr": "الخبز والمعجنات والحلويات",
+          "sortOrder": 2
+        },
+        {
+          "nameEn": "Healthy Eating & Diets",
+          "nameAr": "الأكل الصحي والحميات",
+          "sortOrder": 3
+        },
+        {
+          "nameEn": "Food Business & Catering",
+          "nameAr": "أعمال الطعام وخدمات التموين",
+          "sortOrder": 4
+        },
+        {
+          "nameEn": "Vegan Cooking",
+          "nameAr": "الطبخ النباتي",
+          "sortOrder": 5
+        },
+        {
+          "nameEn": "Blogging & Photography",
+          "nameAr": "التدوين والتصوير",
+          "sortOrder": 6
+        },
+        {
+          "nameEn": "Sauces & Seasoning",
+          "nameAr": "الصلصات والتوابل",
+          "sortOrder": 7
+        },
+        {
+          "nameEn": "BBQ & Grilling",
+          "nameAr": "الشواء والشوي",
+          "sortOrder": 8
+        },
+        {
+          "nameEn": "Beverages",
+          "nameAr": "المشروبات",
+          "sortOrder": 9
+        }
+      ]
+    }
+  ]
+}

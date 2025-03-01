@@ -1,0 +1,137 @@
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+import { decrypt, refreshAccessToken } from '@/lib/cms/auth/admin-auth';
+
+// Paths that don't require admin authentication
+const publicPaths = [
+  '/cms/auth/login',
+];
+
+export async function middleware(request: NextRequest) {
+  const pathname = request.nextUrl.pathname;
+
+  // Skip middleware if not accessing admin routes
+  if (!pathname.startsWith('/cms')) {
+    return NextResponse.next();
+  }
+
+  // Allow access to public paths
+  if (publicPaths.some(path => pathname.startsWith(path))) {
+    return NextResponse.next();
+  }
+
+  // Check for admin token
+  const token = request.cookies.get('admin_token')?.value;
+  
+  if (!token) {
+    // No token, try to use refresh token
+    const refreshResult = await refreshAccessToken(request);
+    
+    if (refreshResult) {
+      // Successfully refreshed token
+      const response = NextResponse.next();
+      
+      response.cookies.set({
+        name: "admin_token",
+        value: refreshResult.token,
+        httpOnly: true,
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        maxAge: 15 * 60, // 15 minutes
+      });
+      
+      return response;
+    }
+    
+    // No token and refresh failed, redirect to login
+    return NextResponse.redirect(new URL('/cms/auth/login', request.url));
+  }
+
+  try {
+    // Verify token
+    const payload = await decrypt(token);
+    
+    if (!payload || !payload.adminId) {
+      // Invalid token, try refresh token
+      const refreshResult = await refreshAccessToken(request);
+      
+      if (refreshResult) {
+        // Successfully refreshed token
+        const response = NextResponse.next();
+        
+        response.cookies.set({
+          name: "admin_token",
+          value: refreshResult.token,
+          httpOnly: true,
+          path: "/",
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "strict",
+          maxAge: 15 * 60, // 15 minutes
+        });
+        
+        return response;
+      }
+      
+      // Refresh failed, redirect to login
+      const response = NextResponse.redirect(new URL('/cms/auth/login', request.url));
+      
+      // Clear cookies
+      response.cookies.set({
+        name: "admin_token",
+        value: "",
+        httpOnly: true,
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        maxAge: 0,
+      });
+      
+      response.cookies.set({
+        name: "admin_refresh_token",
+        value: "",
+        httpOnly: true,
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        maxAge: 0,
+      });
+      
+      return response;
+    }
+  } catch (error) {
+    // Token verification failed, redirect to login
+    const response = NextResponse.redirect(new URL('/cms/auth/login', request.url));
+    
+    // Clear cookies
+    response.cookies.set({
+      name: "admin_token",
+      value: "",
+      httpOnly: true,
+      path: "/",
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 0,
+    });
+    
+    response.cookies.set({
+      name: "admin_refresh_token",
+      value: "",
+      httpOnly: true,
+      path: "/",
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 0,
+    });
+    
+    return response;
+  }
+
+  return NextResponse.next();
+}
+
+export const config = {
+  matcher: [
+    '/cms/:path*',
+  ],
+};

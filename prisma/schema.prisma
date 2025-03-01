@@ -1,0 +1,238 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                     String         @id @default(uuid())
+  firstName              String         @map("first_name")
+  lastName               String         @map("last_name")
+  email                  String         @unique
+  passwordHash           String?        @map("password_hash")
+  country                String
+  occupation             String?
+  profileImageUrl        String?        @map("profile_image_url")
+  emailVerified          Boolean        @default(false) @map("email_verified")
+  googleId               String?        @unique @map("google_id")
+  verificationToken      String?        @map("verification_token")
+  verificationTokenExpires DateTime?    @map("verification_token_expires")
+  resetPasswordToken     String?        @map("reset_password_token")
+  resetPasswordExpires   DateTime?      @map("reset_password_expires")
+  createdAt              DateTime       @default(now()) @map("created_at")
+  updatedAt              DateTime       @updatedAt @map("updated_at")
+  lastLogin              DateTime?      @map("last_login")
+  lastLoginAt            DateTime?      @map("last_login_at")
+  isActive               Boolean        @default(true) @map("is_active")
+  deletedAt              DateTime?      @map("deleted_at")
+  catalogs               Catalog[]
+  subscription           Subscription?
+  bookmarks              UserBookmark[]
+  history                UserHistory[]
+  otpVerification        OtpVerification?
+
+  @@map("users")
+}
+
+model Category {
+  id                  String           @id @default(uuid())
+  parentId            String?          @map("parent_id")
+  nameEn              String           @map("name_en")
+  nameAr              String           @map("name_ar")
+  iconName            String           @map("icon_name")
+  sortOrder           Int              @default(0) @map("sort_order")
+  createdAt           DateTime         @default(now()) @map("created_at")
+  updatedAt           DateTime         @updatedAt @map("updated_at")
+  deletedAt           DateTime?        @map("deleted_at")
+  parent              Category?        @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children            Category[]       @relation("CategoryHierarchy")
+  promptCategories    PromptCategory[] @relation("CategoryPrompts")
+  promptSubcategories PromptCategory[] @relation("Subcategory")
+
+  @@map("categories")
+}
+
+model Tool {
+  id          String       @id @default(uuid())
+  name        String       @unique
+  iconUrl     String?      @map("icon_url")
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+  deletedAt   DateTime?    @map("deleted_at")
+  promptTools PromptTool[]
+
+  @@map("tools")
+}
+
+model Prompt {
+  id               String           @id @default(uuid())
+  titleEn          String           @map("title_en")
+  titleAr          String           @map("title_ar")
+  isPro            Boolean          @default(false) @map("is_pro")
+  createdAt        DateTime         @default(now()) @map("created_at")
+  updatedAt        DateTime         @updatedAt @map("updated_at")
+  deletedAt        DateTime?        @map("deleted_at")
+  copyCount        Int              @default(0) @map("copy_count")
+  descriptionAr    String?          @map("description_ar")
+  descriptionEn    String?          @map("description_en")
+  initialCopyCount Int              @default(0) @map("initial_copy_count")
+  instructionAr    String?          @map("instruction_ar")
+  instructionEn    String?          @map("instruction_en")
+  promptTextAr     String           @map("prompt_text_ar")
+  promptTextEn     String           @map("prompt_text_en")
+  version          Int              @default(1)
+  catalogs         CatalogPrompt[]
+  categories       PromptCategory[]
+  keywords         PromptKeyword[]
+  tools            PromptTool[]
+  bookmarks        UserBookmark[]
+  history          UserHistory[]
+
+  @@map("prompts")
+}
+
+model PromptCategory {
+  promptId      String   @map("prompt_id")
+  categoryId    String   @map("category_id")
+  subcategoryId String   @map("subcategory_id")
+  category      Category @relation("CategoryPrompts", fields: [categoryId], references: [id])
+  prompt        Prompt   @relation(fields: [promptId], references: [id])
+  subcategory   Category @relation("Subcategory", fields: [subcategoryId], references: [id])
+
+  @@id([promptId, categoryId, subcategoryId])
+  @@map("prompt_categories")
+}
+
+model PromptTool {
+  promptId String @map("prompt_id")
+  toolId   String @map("tool_id")
+  prompt   Prompt @relation(fields: [promptId], references: [id])
+  tool     Tool   @relation(fields: [toolId], references: [id])
+
+  @@id([promptId, toolId])
+  @@map("prompt_tools")
+}
+
+model PromptKeyword {
+  promptId String @map("prompt_id")
+  keyword  String
+  prompt   Prompt @relation(fields: [promptId], references: [id])
+
+  @@id([promptId, keyword])
+  @@map("prompt_keywords")
+}
+
+model UserBookmark {
+  userId    String   @map("user_id")
+  promptId  String   @map("prompt_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  prompt    Prompt   @relation(fields: [promptId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@id([userId, promptId])
+  @@map("user_bookmarks")
+}
+
+model UserHistory {
+  userId    String   @map("user_id")
+  promptId  String   @map("prompt_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  prompt    Prompt   @relation(fields: [promptId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@id([userId, promptId])
+  @@map("user_history")
+}
+
+model Catalog {
+  id        String          @id @default(uuid())
+  userId    String          @map("user_id")
+  name      String
+  createdAt DateTime        @default(now()) @map("created_at")
+  updatedAt DateTime        @updatedAt @map("updated_at")
+  deletedAt DateTime?       @map("deleted_at")
+  prompts   CatalogPrompt[]
+  user      User            @relation(fields: [userId], references: [id])
+
+  @@map("catalogs")
+}
+
+model CatalogPrompt {
+  catalogId String   @map("catalog_id")
+  promptId  String   @map("prompt_id")
+  addedAt   DateTime @default(now()) @map("added_at")
+  catalog   Catalog  @relation(fields: [catalogId], references: [id])
+  prompt    Prompt   @relation(fields: [promptId], references: [id])
+
+  @@id([catalogId, promptId])
+  @@map("catalog_prompts")
+}
+
+model Subscription {
+  id        String   @id @default(uuid())
+  userId    String   @unique @map("user_id")
+  status    String
+  startDate DateTime @map("start_date")
+  endDate   DateTime @map("end_date")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  planId    String   @map("plan_id")
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@map("subscriptions")
+}
+
+// Admin-related models
+model AdminUser {
+  id            String     @id @default(uuid())
+  email         String     @unique
+  passwordHash  String     @map("password_hash")
+  firstName     String     @map("first_name")
+  lastName      String     @map("last_name")
+  role          String     // "admin" or "super_admin"
+  lastLogin     DateTime?  @map("last_login")
+  createdAt     DateTime   @default(now()) @map("created_at")
+  updatedAt     DateTime   @updatedAt @map("updated_at")
+  isActive      Boolean    @default(true) @map("is_active")
+  auditLogs     AuditLog[]
+
+  @@map("admin_users")
+}
+
+model AuditLog {
+  id          String    @id @default(uuid())
+  adminId     String    @map("admin_id")
+  action      String    // "create", "update", "delete"
+  entityType  String    @map("entity_type") // "prompt", "category", "tool", "user"
+  entityId    String    @map("entity_id")
+  details     Json?
+  createdAt   DateTime  @default(now()) @map("created_at")
+  admin       AdminUser @relation(fields: [adminId], references: [id])
+
+  @@map("audit_logs")
+}
+
+model AdminSetting {
+  id          String    @id @default(uuid())
+  key         String    @unique
+  value       String
+  description String?
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  @@map("admin_settings")
+}
+
+model OtpVerification {
+  userId    String   @id @map("user_id")
+  code      String
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@map("otp_verifications")
+}

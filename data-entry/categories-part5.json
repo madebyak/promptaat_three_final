@@ -1,0 +1,115 @@
+{
+  "categories": [
+    {
+      "nameEn": "Design",
+      "nameAr": "التصميم",
+      "iconName": "palette",
+      "sortOrder": 11,
+      "subcategories": [
+        {
+          "nameEn": "Graphic & Branding Design",
+          "nameAr": "تصميم الجرافيك والعلامات التجارية",
+          "sortOrder": 1
+        },
+        {
+          "nameEn": "UI/UX Design",
+          "nameAr": "تصميم واجهة المستخدم وتجربة المستخدم",
+          "sortOrder": 2
+        },
+        {
+          "nameEn": "Web & Mobile App Design",
+          "nameAr": "تصميم الويب وتطبيقات الهاتف المحمول",
+          "sortOrder": 3
+        },
+        {
+          "nameEn": "Typography",
+          "nameAr": "فن الطباعة",
+          "sortOrder": 4
+        },
+        {
+          "nameEn": "Motion Graphics & Animation",
+          "nameAr": "الرسوم المتحركة والأنيميشن",
+          "sortOrder": 5
+        },
+        {
+          "nameEn": "3D Design & Modeling",
+          "nameAr": "التصميم والنمذجة ثلاثية الأبعاد",
+          "sortOrder": 6
+        },
+        {
+          "nameEn": "Illustration & Digital Art",
+          "nameAr": "الرسم التوضيحي والفن الرقمي",
+          "sortOrder": 7
+        },
+        {
+          "nameEn": "Interior Design",
+          "nameAr": "التصميم الداخلي",
+          "sortOrder": 8
+        },
+        {
+          "nameEn": "Architectural Design",
+          "nameAr": "التصميم المعماري",
+          "sortOrder": 9
+        },
+        {
+          "nameEn": "Photography & Photo Editing",
+          "nameAr": "التصوير وتحرير الصور",
+          "sortOrder": 10
+        }
+      ]
+    },
+    {
+      "nameEn": "Fashion",
+      "nameAr": "الأزياء",
+      "iconName": "shirt",
+      "sortOrder": 12,
+      "subcategories": [
+        {
+          "nameEn": "Fashion Design & Illustration",
+          "nameAr": "تصميم ورسم الأزياء",
+          "sortOrder": 1
+        },
+        {
+          "nameEn": "Clothing & Textile",
+          "nameAr": "الملابس والمنسوجات",
+          "sortOrder": 2
+        },
+        {
+          "nameEn": "Urban & Luxury Fashion",
+          "nameAr": "الأزياء الحضرية والفاخرة",
+          "sortOrder": 3
+        },
+        {
+          "nameEn": "Sketching & Sewing",
+          "nameAr": "الرسم والخياطة",
+          "sortOrder": 4
+        },
+        {
+          "nameEn": "Fashion Styling & Trends",
+          "nameAr": "تنسيق الأزياء والاتجاهات",
+          "sortOrder": 5
+        },
+        {
+          "nameEn": "Fashion Business",
+          "nameAr": "أعمال الأزياء",
+          "sortOrder": 6
+        },
+        {
+          "nameEn": "Merchandising & Retail",
+          "nameAr": "التسويق والبيع بالتجزئة",
+          "sortOrder": 7
+        },
+        {
+          "nameEn": "Textile & Fabric Tech",
+          "nameAr": "تقنية المنسوجات والأقمشة",
+          "sortOrder": 8
+        },
+        {
+          "nameEn": "Color Theory & Palettes",
+          "nameAr": "نظرية الألوان والألواح",
+          "sortOrder": 9
+        }
+      ]
+    }
+  ]
+}

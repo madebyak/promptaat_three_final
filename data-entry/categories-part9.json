@@ -1,0 +1,105 @@
+{
+  "categories": [
+    {
+      "nameEn": "Career Development and Personal Growth",
+      "nameAr": "تطوير المهنة والنمو الشخصي",
+      "iconName": "rocket",
+      "sortOrder": 19,
+      "subcategories": [
+        {
+          "nameEn": "Career Planning & Goals",
+          "nameAr": "تخطيط المسار المهني والأهداف",
+          "sortOrder": 1
+        },
+        {
+          "nameEn": "Job Search & Resume",
+          "nameAr": "البحث عن وظيفة والسيرة الذاتية",
+          "sortOrder": 2
+        },
+        {
+          "nameEn": "Interview & Networking",
+          "nameAr": "المقابلات والتواصل المهني",
+          "sortOrder": 3
+        },
+        {
+          "nameEn": "Personal Branding & Communication",
+          "nameAr": "العلامة الشخصية والتواصل",
+          "sortOrder": 4
+        },
+        {
+          "nameEn": "Public Speaking",
+          "nameAr": "الخطابة العامة",
+          "sortOrder": 5
+        },
+        {
+          "nameEn": "Leadership & Management",
+          "nameAr": "القيادة والإدارة",
+          "sortOrder": 6
+        },
+        {
+          "nameEn": "Entrepreneurship & Freelancing",
+          "nameAr": "ريادة الأعمال والعمل الحر",
+          "sortOrder": 7
+        },
+        {
+          "nameEn": "Remote Work & Learning",
+          "nameAr": "العمل عن بعد والتعلم",
+          "sortOrder": 8
+        },
+        {
+          "nameEn": "Emotional Intelligence & Skills",
+          "nameAr": "الذكاء العاطفي والمهارات",
+          "sortOrder": 9
+        }
+      ]
+    },
+    {
+      "nameEn": "Civic",
+      "nameAr": "المدني",
+      "iconName": "landmark",
+      "sortOrder": 20,
+      "subcategories": [
+        {
+          "nameEn": "Civic Engagement & Activism",
+          "nameAr": "المشاركة المدنية والنشاط",
+          "sortOrder": 1
+        },
+        {
+          "nameEn": "Government & Public Policy",
+          "nameAr": "الحكومة والسياسة العامة",
+          "sortOrder": 2
+        },
+        {
+          "nameEn": "Law & Legal Systems",
+          "nameAr": "القانون والأنظمة القانونية",
+          "sortOrder": 3
+        },
+        {
+          "nameEn": "Human Rights & Justice",
+          "nameAr": "حقوق الإنسان والعدالة",
+          "sortOrder": 4
+        },
+        {
+          "nameEn": "Community Development & Planning",
+          "nameAr": "تنمية وتخطيط المجتمع",
+          "sortOrder": 5
+        },
+        {
+          "nameEn": "Regulations & Compliance",
+          "nameAr": "اللوائح والامتثال",
+          "sortOrder": 6
+        },
+        {
+          "nameEn": "Elections & Voting",
+          "nameAr": "الانتخابات والتصويت",
+          "sortOrder": 7
+        },
+        {
+          "nameEn": "Nonprofits & Advocacy",
+          "nameAr": "المنظمات غير الربحية والدعوة",
+          "sortOrder": 8
+        }
+      ]
+    }
+  ]
+}
