@@ -15,8 +15,10 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function CMSLayout({
   children,
+  params: { locale = 'en' }
 }: {
   children: React.ReactNode
+  params: { locale?: string }
 }) {
   // Check if user is authenticated and is admin
   const session = await getServerSession(authOptions)
@@ -26,7 +28,7 @@ export default async function CMSLayout({
 
   return (
     <div className="flex h-screen">
-      <Sidebar />
+      <Sidebar locale={locale} />
       <main className="flex-1 overflow-y-auto bg-muted/10">
         <div className="container py-8">{children}</div>
       </main>
