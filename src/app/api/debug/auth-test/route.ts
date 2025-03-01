@@ -15,14 +15,7 @@ export async function GET(request: NextRequest) {
     const maskedCookies = cookies.map(c => ({
       name: c.name,
       value: c.name.includes('token') ? `${c.value.substring(0, 10)}...` : c.value,
-      attributes: {
-        path: c.path,
-        domain: c.domain,
-        expires: c.expires,
-        httpOnly: c.httpOnly,
-        secure: c.secure,
-        sameSite: c.sameSite,
-      }
+      // Only include name and masked value for security
     }));
     
     return NextResponse.json({
