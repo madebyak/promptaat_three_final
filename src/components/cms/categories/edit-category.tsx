@@ -13,7 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { CategoryForm } from "./category-form";
+import { CategoryForm, CategoryFormValues } from "./category-form";
 import { updateCategory, deleteCategory } from "@/lib/api/cms/categories";
 import { 
   AlertDialog,
@@ -42,6 +42,10 @@ export interface Category {
   } | null;
   createdAt: string;
   updatedAt: string;
+  _count?: {
+    prompts: number;
+    subcategories: number;
+  };
 }
 
 // Props for the EditCategory component
@@ -66,7 +70,7 @@ export function EditCategory({
 
   // Mutation for updating a category
   const { mutate: updateMutate, isPending: isUpdatePending } = useMutation({
-    mutationFn: (data: any) => updateCategory(category.id, data),
+    mutationFn: (data: CategoryFormValues) => updateCategory(category.id, data),
     onSuccess: () => {
       toast.success("Category updated successfully");
       queryClient.invalidateQueries({ queryKey: ["cms-categories"] });
@@ -96,7 +100,7 @@ export function EditCategory({
   });
 
   // Handle form submission
-  const handleSubmit = (data: any) => {
+  const handleSubmit = (data: CategoryFormValues) => {
     updateMutate(data);
   };
 
@@ -198,5 +202,4 @@ export function EditCategory({
   );
 }
 
-// Also export as default for backward compatibility
 export default EditCategory;
