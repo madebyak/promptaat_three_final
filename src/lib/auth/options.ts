@@ -20,6 +20,14 @@ export const authOptions: NextAuthOptions = {
           where: {
             email: credentials.email,
           },
+          select: {
+            id: true,
+            email: true,
+            password: true,
+            name: true,
+            role: true,
+            emailVerified: true,
+          },
         });
 
         if (!user || !user.password) {
@@ -40,6 +48,7 @@ export const authOptions: NextAuthOptions = {
           name: user.name,
           email: user.email,
           role: user.role,
+          emailVerified: user.emailVerified,
         };
       },
     }),
@@ -56,6 +65,7 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.id = user.id;
         token.role = user.role;
+        token.emailVerified = user.emailVerified;
       }
       return token;
     },
@@ -63,6 +73,7 @@ export const authOptions: NextAuthOptions = {
       if (session.user) {
         session.user.id = token.id as string;
         session.user.role = token.role as string;
+        session.user.emailVerified = token.emailVerified as Date | null;
       }
       return session;
     },
