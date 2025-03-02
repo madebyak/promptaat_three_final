@@ -7,50 +7,35 @@ import { useToast } from "@/components/ui/use-toast"
 import { Heart, Copy, Share2 } from "lucide-react"
 import Link from "next/link"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Category, Tool } from "@/types/prompts"
 
 interface PromptCardProps {
+  id: string
   title: string
-  description: string
-  likes: number
-  isLiked: boolean
-  user: {
-    name: string
-    image?: string
-  }
-  onLike?: () => void
+  preview: string
+  isPro: boolean
+  copyCount: number
+  categories: Category[]
+  tools: Tool[]
+  isRTL?: boolean
 }
 
 export function PromptCard({
+  id,
   title,
-  description,
-  likes,
-  isLiked,
-  user,
-  onLike,
+  preview,
+  isPro,
+  copyCount,
+  categories,
+  tools,
+  isRTL = false,
 }: PromptCardProps) {
   const [isLoading, setIsLoading] = useState(false)
   const { toast } = useToast()
 
-  const handleLike = async () => {
-    if (!onLike) return
-
-    try {
-      setIsLoading(true)
-      await onLike()
-    } catch {
-      toast({
-        title: "Error",
-        description: "Failed to like prompt",
-        variant: "destructive",
-      })
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(description)
+      await navigator.clipboard.writeText(preview)
       toast({
         title: "Success",
         description: "Prompt copied to clipboard",
@@ -68,7 +53,7 @@ export function PromptCard({
     try {
       await navigator.share({
         title,
-        text: description,
+        text: preview,
         url: window.location.href,
       })
     } catch {
@@ -85,51 +70,54 @@ export function PromptCard({
       <CardHeader>
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <Avatar>
-              {user.image ? (
-                <AvatarImage src={user.image} alt={user.name} />
-              ) : (
-                <AvatarFallback>{user.name[0]}</AvatarFallback>
-              )}
-            </Avatar>
             <div>
               <CardTitle className="text-lg">{title}</CardTitle>
-              <Link
-                href={`/profile/${user.name}`}
-                className="text-sm text-muted-foreground hover:underline"
-              >
-                {user.name}
-              </Link>
+              <div className="flex flex-wrap gap-2 mt-2">
+                {categories.map((category) => (
+                  <Link
+                    key={category.id}
+                    href={`/category/${category.id}`}
+                    className="text-xs text-muted-foreground hover:underline"
+                  >
+                    {category.name}
+                  </Link>
+                ))}
+              </div>
             </div>
           </div>
-          <div className="flex items-center space-x-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleLike}
-              disabled={isLoading || !onLike}
-            >
-              <Heart
-                className={isLiked ? "fill-current text-red-500" : ""}
-                size={20}
-              />
-              <span className="sr-only">Like</span>
-            </Button>
-            <span className="text-sm text-muted-foreground">{likes}</span>
-          </div>
+          {isPro && (
+            <div className="px-2 py-1 text-xs font-medium text-accent-purple bg-accent-purple/10 rounded">
+              PRO
+            </div>
+          )}
         </div>
       </CardHeader>
       <CardContent>
-        <p className="text-sm text-muted-foreground">{description}</p>
-        <div className="mt-4 flex justify-end space-x-2">
-          <Button variant="ghost" size="icon" onClick={handleCopy}>
-            <Copy size={20} />
-            <span className="sr-only">Copy</span>
-          </Button>
-          <Button variant="ghost" size="icon" onClick={handleShare}>
-            <Share2 size={20} />
-            <span className="sr-only">Share</span>
-          </Button>
+        <p className={`text-sm text-muted-foreground ${isRTL ? 'text-right' : 'text-left'}`}>
+          {preview}
+        </p>
+        <div className="mt-4 flex justify-between items-center">
+          <div className="flex flex-wrap gap-2">
+            {tools.map((tool) => (
+              <span
+                key={tool.id}
+                className="px-2 py-1 text-xs font-medium text-muted-foreground bg-muted rounded"
+              >
+                {tool.name}
+              </span>
+            ))}
+          </div>
+          <div className="flex items-center space-x-2">
+            <Button variant="ghost" size="icon" onClick={handleCopy}>
+              <Copy size={20} />
+              <span className="sr-only">Copy</span>
+            </Button>
+            <Button variant="ghost" size="icon" onClick={handleShare}>
+              <Share2 size={20} />
+              <span className="sr-only">Share</span>
+            </Button>
+            <span className="text-sm text-muted-foreground">{copyCount} copies</span>
+          </div>
         </div>
       </CardContent>
     </Card>
