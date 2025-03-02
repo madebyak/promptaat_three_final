@@ -42,11 +42,22 @@ export function PromptModal({
       const url = `/api/prompts/${promptId}?locale=${locale}`
       console.log('Fetching prompt details from:', url)
       const response = await fetch(url)
+      console.log('Response status:', response.status)
+      
       if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Failed to fetch prompt details')
+        const errorText = await response.text()
+        console.error('Error response:', errorText)
+        let errorData
+        try {
+          errorData = JSON.parse(errorText)
+        } catch (e) {
+          console.error('Failed to parse error response as JSON:', e)
+        }
+        throw new Error(errorData?.error || `Failed to fetch prompt details: ${response.status}`)
       }
+      
       const data = await response.json()
+      console.log('Prompt data received:', data)
       setPrompt(data)
     } catch (err) {
       console.error('Error fetching prompt:', err)
