@@ -5,6 +5,7 @@ const JWT_SECRET = process.env.JWT_SECRET!
 interface TokenPayload {
   userId: string
   email: string
+  [key: string]: string | number | boolean | null
 }
 
 export async function generateToken(payload: TokenPayload): Promise<string> {
