@@ -6,7 +6,6 @@ import { authOptions } from "@/lib/auth"
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
 ) {
   try {
     // Get user session for bookmark status
@@ -15,7 +14,8 @@ export async function GET(
     // Extract locale from URL and ID from params
     const url = new URL(request.url)
     const locale = url.searchParams.get('locale') || 'en'
-    const { id } = params // Get ID from route params
+    const segments = url.pathname.split('/')
+    const id = segments[segments.length - 1] // Get last segment as ID
 
     console.log('Fetching prompt with ID:', id)
 
@@ -132,7 +132,6 @@ export async function GET(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -143,7 +142,9 @@ export async function DELETE(
       )
     }
 
-    const { id } = params // Get ID from route params
+    const url = new URL(request.url)
+    const segments = url.pathname.split('/')
+    const id = segments[segments.length - 1] // Get last segment as ID
 
     await prisma.prompt.delete({
       where: { id }
