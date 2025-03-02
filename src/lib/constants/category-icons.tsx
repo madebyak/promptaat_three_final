@@ -36,10 +36,11 @@ import {
   // Type definition
   type LucideIcon
 } from 'lucide-react'
+import { ReactElement } from 'react';
 
 export interface IconInfo {
   name: string;
-  icon: JSX.Element;
+  icon: ReactElement;
 }
 
 // Group icons by category for better organization
@@ -213,7 +214,7 @@ export function addToRecentlyUsedIcons(iconName: string): void {
 }
 
 // Get a specific icon by name
-export function getCategoryIcon(iconName: string | null): JSX.Element | null {
+export function getCategoryIcon(iconName: string | null): ReactElement | null {
   if (!iconName) return null;
   const IconComponent = categoryIcons[iconName]?.icon;
   return IconComponent || null;
