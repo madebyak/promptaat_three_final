@@ -269,7 +269,7 @@ export function PromptModal({
 
           {/* Instructions */}
           {prompt.instruction && (
-            <Alert variant="secondary" className="mb-6">
+            <Alert variant="default" className="mb-6">
               <AlertDescription className="whitespace-pre-wrap text-sm">
                 {prompt.instruction}
               </AlertDescription>
