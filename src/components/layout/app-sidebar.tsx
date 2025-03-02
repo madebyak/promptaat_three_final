@@ -227,7 +227,7 @@ export function AppSidebar({ locale, className }: AppSidebarProps) {
             onClick={() => handleCategoryClick(category.id, category.nameEn)}
           >
             <span>{locale === "ar" ? category.nameAr : category.nameEn}</span>
-            {category.subcategories?.length > 0 && (
+            {(category.subcategories?.length ?? 0) > 0 && (
               <ChevronDown
                 className={cn(
                   "h-4 w-4 transition-transform",
@@ -237,9 +237,9 @@ export function AppSidebar({ locale, className }: AppSidebarProps) {
             )}
           </Button>
 
-          {activeCategory === category.id && category.subcategories?.length > 0 && (
+          {activeCategory === category.id && (category.subcategories?.length ?? 0) > 0 && (
             <div className={cn("ml-4", isRTL && "mr-4 ml-0")}>
-              {category.subcategories.map((subcategory) => (
+              {category.subcategories?.map((subcategory) => (
                 <Button
                   key={subcategory.id}
                   variant="ghost"
