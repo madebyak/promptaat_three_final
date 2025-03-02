@@ -1,6 +1,7 @@
 import { Metadata } from 'next'
 import { Geist } from 'next/font/google'
 import { Toaster } from "@/components/ui/toaster"
+import { SpeedInsights } from "@vercel/speed-insights/next"
 import './globals.css'
 
 const geistSans = Geist({
@@ -23,6 +24,7 @@ export default function RootLayout({
       <body className={`${geistSans.variable} font-sans antialiased`}>
         {children}
         <Toaster />
+        <SpeedInsights />
       </body>
     </html>
   )
