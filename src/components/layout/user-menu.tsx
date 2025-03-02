@@ -20,9 +20,9 @@ import { DefaultAvatar } from '@/components/ui/default-avatar'
 
 interface UserMenuProps {
   user?: {
-    name: string
-    email: string
-    image?: string
+    name?: string | null
+    email?: string | null
+    image?: string | null
   }
   locale: string
 }
@@ -35,7 +35,7 @@ export function UserMenu({ user, locale }: UserMenuProps) {
     await signOut({ callbackUrl: `/${locale}/auth/login` });
   };
 
-  if (!user) {
+  if (!user?.name || !user?.email) {
     return (
       <div className="flex items-center gap-4">
         <Button variant="outline" asChild className="text-sm">
