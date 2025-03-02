@@ -27,7 +27,7 @@ export const authOptions: NextAuthOptions = {
           select: {
             id: true,
             email: true,
-            passwordHash: true,
+            passwordHash: true, // Using passwordHash from Prisma schema
             firstName: true,
             lastName: true,
             emailVerified: true,
