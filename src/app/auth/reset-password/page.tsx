@@ -1,25 +1,21 @@
 'use client';
 
-import { useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { Suspense } from 'react';
+import { ResetPasswordRedirect } from './reset-password-redirect';
 import { Spinner } from '@/components/ui/spinner';
 
 export default function ResetPasswordRedirectPage() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const token = searchParams.get('token');
-
-  useEffect(() => {
-    // Default to English locale, but could detect from browser settings
-    const locale = 'en';
-    router.replace(`/${locale}/auth/reset-password${token ? `?token=${token}` : ''}`);
-  }, [router, token]);
-
   return (
     <div className="flex items-center justify-center h-screen">
       <div className="text-center">
-        <Spinner size="lg" className="mx-auto" />
-        <p className="mt-4 text-muted-foreground">Redirecting to password reset page...</p>
+        <Suspense fallback={
+          <>
+            <Spinner size="lg" className="mx-auto" />
+            <p className="mt-4 text-muted-foreground">Loading password reset page...</p>
+          </>
+        }>
+          <ResetPasswordRedirect />
+        </Suspense>
       </div>
     </div>
   );
