@@ -62,6 +62,8 @@ export function PromptsGrid({ locale, sort, category, tool, search, type }: Prom
     );
   }
 
+  const hasPrompts = data?.pages[0]?.prompts.length ?? 0;
+
   return (
     <div className="w-full">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -98,14 +100,14 @@ export function PromptsGrid({ locale, sort, category, tool, search, type }: Prom
       )}
 
       {/* No more prompts */}
-      {!hasNextPage && data?.pages[0].prompts.length > 0 && (
+      {!isLoading && !hasNextPage && hasPrompts > 0 && (
         <div className="text-center py-8 text-light-grey">
           <p>No more prompts to load</p>
         </div>
       )}
 
       {/* No prompts found */}
-      {!isLoading && data?.pages[0].prompts.length === 0 && (
+      {!isLoading && hasPrompts === 0 && (
         <div className="text-center py-8 text-light-grey">
           <p>No prompts found</p>
         </div>
