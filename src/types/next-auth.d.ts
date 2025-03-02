@@ -4,7 +4,11 @@ declare module "next-auth" {
   interface Session {
     user: {
       id: string
-      emailVerified: Date | null
+      emailVerified: boolean
+      firstName: string
+      lastName: string
+      country: string
+      needsProfileCompletion: boolean
     } & DefaultSession["user"]
   }
 }

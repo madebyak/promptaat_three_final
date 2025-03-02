@@ -81,7 +81,7 @@ export const authOptions: NextAuthOptions = {
           image: profile.picture,
           firstName: profile.given_name,
           lastName: profile.family_name,
-          emailVerified: new Date(),
+          emailVerified: true,
           googleId: profile.sub,
         }
       },
@@ -103,7 +103,7 @@ export const authOptions: NextAuthOptions = {
               data: { 
                 googleId: user.id,
                 lastLoginAt: new Date(),
-                emailVerified: new Date()
+                emailVerified: true
               }
             });
           } else {
@@ -122,7 +122,7 @@ export const authOptions: NextAuthOptions = {
               firstName: (profile as any).given_name || "",
               lastName: (profile as any).family_name || "",
               googleId: user.id,
-              emailVerified: new Date(),
+              emailVerified: true,
               country: "Unknown", // Will be updated later
               lastLoginAt: new Date(),
               profileImageUrl: user.image || "/profile_avatars/default_profile.jpg"
@@ -139,7 +139,7 @@ export const authOptions: NextAuthOptions = {
         session.user.name = token.name as string;
         session.user.email = token.email as string;
         session.user.image = token.picture as string | undefined;
-        session.user.emailVerified = token.emailVerified ? new Date(token.emailVerified as string) : null;
+        session.user.emailVerified = token.emailVerified;
         session.user.firstName = token.firstName as string;
         session.user.lastName = token.lastName as string;
         session.user.country = token.country as string;
