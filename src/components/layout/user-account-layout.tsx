@@ -16,7 +16,7 @@ export function UserAccountLayout({ children, locale, isRTL }: UserAccountLayout
   const { data: session } = useSession()
   
   // Check if the user is logged in but hasn't verified their email
-  const needsVerification = session?.user && session.user.email && session.user.emailVerified === false
+  const needsVerification = session?.user && session.user.email && !session.user.emailVerified
   
   return (
     <>
