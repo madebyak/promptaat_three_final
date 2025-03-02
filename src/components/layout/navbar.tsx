@@ -28,9 +28,9 @@ export function Navbar({ locale = 'en', user }: NavbarProps) {
         <div className="mx-auto flex h-16 items-center">
           {/* Left section: Logo */}
           <div className="flex items-center">
-            <Link href={`/${locale}`} className="flex items-center">
+            <div className="flex items-center">
               <Logo />
-            </Link>
+            </div>
           </div>
 
           {/* Right section: Navigation + Actions */}

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
-import { hash } from "bcryptjs";
+import { prisma } from "@/lib/prisma/client";
+import { hashPassword } from "@/lib/crypto";
 
 // Simple password validation
 function validatePassword(password: string) {
@@ -60,8 +60,8 @@ export async function POST(req: Request) {
       );
     }
 
-    // Hash new password
-    const hashedPassword = await hash(password, 10);
+    // Hash new password using Web Crypto API
+    const hashedPassword = await hashPassword(password);
 
     // Update user's password and clear reset token
     await prisma.user.update({

@@ -79,6 +79,13 @@ export async function GET(req: Request) {
                     nameEn: true,
                     nameAr: true
                   }
+                },
+                subcategory: {
+                  select: {
+                    id: true,
+                    nameEn: true,
+                    nameAr: true
+                  }
                 }
               }
             },
@@ -87,7 +94,8 @@ export async function GET(req: Request) {
                 tool: {
                   select: {
                     id: true,
-                    name: true
+                    name: true,
+                    iconUrl: true
                   }
                 }
               }
@@ -112,11 +120,16 @@ export async function GET(req: Request) {
         copyCount: prompt.copyCount,
         categories: prompt.categories.map(pc => ({
           id: pc.category.id,
-          name: locale === 'en' ? pc.category.nameEn : pc.category.nameAr
+          name: locale === 'en' ? pc.category.nameEn : pc.category.nameAr,
+          subcategory: {
+            id: pc.subcategory.id,
+            name: locale === 'en' ? pc.subcategory.nameEn : pc.subcategory.nameAr
+          }
         })),
         tools: prompt.tools.map(pt => ({
           id: pt.tool.id,
-          name: pt.tool.name
+          name: pt.tool.name,
+          iconUrl: pt.tool.iconUrl
         }))
       }))
 
@@ -224,6 +237,13 @@ export async function POST(req: Request) {
                   nameEn: true,
                   nameAr: true
                 }
+              },
+              subcategory: {
+                select: {
+                  id: true,
+                  nameEn: true,
+                  nameAr: true
+                }
               }
             }
           },
@@ -232,7 +252,8 @@ export async function POST(req: Request) {
               tool: {
                 select: {
                   id: true,
-                  name: true
+                  name: true,
+                  iconUrl: true
                 }
               }
             }

@@ -19,7 +19,6 @@ export function Logo({ className }: LogoProps) {
         alt="Promptaat Logo"
         width={120}
         height={32}
-        className="dark:invert"
       />
     </Link>
   );

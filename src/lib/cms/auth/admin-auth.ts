@@ -2,7 +2,7 @@ import { jwtVerify, SignJWT } from "jose";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { z } from "zod";
-import bcrypt from "bcryptjs";
+import { comparePasswords } from "@/lib/crypto";
 
 const secretKey = process.env.ADMIN_JWT_SECRET || "fallback-secret-key-for-admin";
 const key = new TextEncoder().encode(secretKey);
@@ -78,7 +78,7 @@ export async function validateAdminCredentials(email: string, password: string) 
     return null;
   }
 
-  const passwordMatch = await bcrypt.compare(password, admin.passwordHash);
+  const passwordMatch = await comparePasswords(password, admin.passwordHash);
   if (!passwordMatch) {
     return null;
   }

@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client';
-import * as bcrypt from 'bcrypt';
+import { hashPassword } from '../src/lib/crypto';
 
 const prisma = new PrismaClient();
 
@@ -7,8 +7,7 @@ async function main() {
   // Admin user data
   const email = 'admin@promptaat.com';
   const password = 'Admin123!';
-  const firstName = 'Admin';
-  const lastName = 'User';
+  const name = 'Admin User';
   const role = 'admin';
   
   try {
@@ -22,16 +21,16 @@ async function main() {
       return;
     }
     
-    // Hash the password
-    const passwordHash = await bcrypt.hash(password, 10);
+    // Hash password using Web Crypto API
+    const passwordHash = await hashPassword(password);
     
     // Create the admin user
     const admin = await prisma.adminUser.create({
       data: {
         email,
         passwordHash,
-        firstName,
-        lastName,
+        firstName: name.split(' ')[0],
+        lastName: name.split(' ')[1],
         role,
         isActive: true,
       },

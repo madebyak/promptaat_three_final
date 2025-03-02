@@ -1,5 +1,5 @@
 const { PrismaClient } = require('@prisma/client');
-const bcrypt = require('bcrypt');
+const { hashPassword } = require('../src/lib/crypto');
 
 const prisma = new PrismaClient();
 
@@ -7,8 +7,7 @@ async function main() {
   // Admin user data
   const email = 'admin@promptaat.com';
   const password = 'Admin123!';
-  const firstName = 'Admin';
-  const lastName = 'User';
+  const name = 'Admin User';
   const role = 'admin';
   
   try {
@@ -18,28 +17,26 @@ async function main() {
     });
     
     if (existingAdmin) {
-      console.log(`Admin user with email ${email} already exists.`);
+      console.log('Admin user already exists');
       return;
     }
     
-    // Hash the password
-    const passwordHash = await bcrypt.hash(password, 10);
+    // Hash password using Web Crypto API
+    const passwordHash = await hashPassword(password);
     
     // Create the admin user
     const admin = await prisma.adminUser.create({
       data: {
         email,
         passwordHash,
-        firstName,
-        lastName,
+        firstName: name.split(' ')[0],
+        lastName: name.split(' ')[1],
         role,
         isActive: true,
       },
     });
     
-    console.log(`Admin user created successfully with ID: ${admin.id}`);
-    console.log(`Email: ${email}`);
-    console.log(`Password: ${password}`);
+    console.log('Admin user created successfully:', admin);
   } catch (error) {
     console.error('Error creating admin user:', error);
   } finally {

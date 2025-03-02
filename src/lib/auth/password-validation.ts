@@ -1,3 +1,5 @@
+import { z } from 'zod';
+
 export interface PasswordValidationResult {
   isValid: boolean;
   hasMinLength: boolean;
@@ -8,7 +10,29 @@ export interface PasswordValidationResult {
   score: number; // 0-100
 }
 
+export const passwordSchema = z.string()
+  .min(8, 'Password must be at least 8 characters')
+  .max(100, 'Password must be less than 100 characters')
+  .regex(
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d\W_]{8,}$/,
+    'Password must contain at least one uppercase letter, one lowercase letter, and one number'
+  );
+
 export function validatePassword(password: string): PasswordValidationResult {
+  const result = passwordSchema.safeParse(password);
+  
+  if (!result.success) {
+    return {
+      isValid: false,
+      hasMinLength: false,
+      hasUpperCase: false,
+      hasLowerCase: false,
+      hasNumber: false,
+      hasSpecialChar: false,
+      score: 0,
+    };
+  }
+
   const hasMinLength = password.length >= 8;
   const hasUpperCase = /[A-Z]/.test(password);
   const hasLowerCase = /[a-z]/.test(password);

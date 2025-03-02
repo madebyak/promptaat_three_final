@@ -1,8 +1,8 @@
-import { hash } from "bcryptjs"
 import { NextResponse } from "next/server"
-import { prisma } from "@/lib/db"
+import { prisma } from "@/lib/prisma/client"
 import { randomBytes } from "crypto"
 import { sendVerificationEmail } from "@/lib/email/verification"
+import { hashPassword } from "@/lib/crypto"
 
 export async function POST(req: Request) {
   try {
@@ -26,8 +26,8 @@ export async function POST(req: Request) {
       )
     }
 
-    // Hash password
-    const hashedPassword = await hash(password, 10)
+    // Hash password using Web Crypto API
+    const hashedPassword = await hashPassword(password)
     
     // Generate verification token
     const verificationToken = randomBytes(32).toString('hex')
