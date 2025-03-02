@@ -179,8 +179,6 @@ export function CategoryForm({ initialData, onSubmit, isSubmitting }: CategoryFo
     return parent ? parent.nameEn : null
   }
 
-  const IconComponent = watchIconName ? categoryIcons[watchIconName] : null
-
   const t = useTranslations("Categories")
 
   return (
@@ -298,11 +296,11 @@ export function CategoryForm({ initialData, onSubmit, isSubmitting }: CategoryFo
                 <p className="font-medium">{watchNameEn || "Not set"}</p>
               </div>
 
-              {IconComponent && (
+              {watchIconName && (
                 <div>
                   <span className="text-sm text-muted-foreground">Icon:</span>
                   <div className="mt-1">
-                    <IconComponent className="h-5 w-5" />
+                    {categoryIcons[watchIconName]?.icon}
                   </div>
                 </div>
               )}
