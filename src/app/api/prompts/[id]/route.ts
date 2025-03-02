@@ -4,15 +4,9 @@ import { prisma } from "@/lib/prisma/client"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 
-interface RouteContext {
-  params: {
-    id: string;
-  };
-}
-
 export async function GET(
   request: NextRequest,
-  { params }: RouteContext
+  { params }: { params: { id: string } }
 ) {
   try {
     // Get user session for bookmark status
@@ -21,7 +15,7 @@ export async function GET(
     // Extract locale from URL and ID from params
     const url = new URL(request.url)
     const locale = url.searchParams.get('locale') || 'en'
-    const id = params.id // Get ID from route params
+    const { id } = params // Get ID from route params
 
     console.log('Fetching prompt with ID:', id)
 
@@ -138,7 +132,7 @@ export async function GET(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: RouteContext
+  { params }: { params: { id: string } }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -149,7 +143,7 @@ export async function DELETE(
       )
     }
 
-    const id = params.id // Get ID from route params
+    const { id } = params // Get ID from route params
 
     await prisma.prompt.delete({
       where: { id }
