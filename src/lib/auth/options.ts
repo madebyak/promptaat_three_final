@@ -1,7 +1,11 @@
-import { NextAuthOptions } from "next-auth";
+import { NextAuthOptions, User } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma } from "@/lib/prisma/client";
 import { comparePassword } from "./password-validation";
+
+interface ExtendedUser extends User {
+  emailVerified: boolean;
+}
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -50,7 +54,7 @@ export const authOptions: NextAuthOptions = {
           email: user.email,
           emailVerified: user.emailVerified,
           image: user.profileImageUrl,
-        };
+        } as ExtendedUser;
       },
     }),
   ],
@@ -65,7 +69,7 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
-        token.emailVerified = user.emailVerified;
+        token.emailVerified = (user as ExtendedUser).emailVerified;
       }
       return token;
     },
