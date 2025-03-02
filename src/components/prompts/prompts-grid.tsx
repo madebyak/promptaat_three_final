@@ -45,7 +45,7 @@ export function PromptsGrid({ locale, sort, category, tool, search, type }: Prom
     initialPageParam: 1,
     getNextPageParam: (lastPage) => lastPage.hasMore ? lastPage.nextPage : undefined,
     staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
-    cacheTime: 30 * 60 * 1000, // Keep cache for 30 minutes
+    gcTime: 30 * 60 * 1000, // Keep cache for 30 minutes
   });
 
   useEffect(() => {
