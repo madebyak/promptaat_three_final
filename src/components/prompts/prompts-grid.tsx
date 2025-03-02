@@ -33,8 +33,8 @@ export function PromptsGrid({ locale, sort, category, tool, search, type }: Prom
     error
   } = useInfiniteQuery({
     queryKey: ['prompts', locale, sort, category, tool, search, type],
-    queryFn: ({ pageParam = 1 }) => fetchPrompts({
-      page: pageParam,
+    queryFn: ({ pageParam }) => fetchPrompts({
+      page: pageParam as number ?? 1,
       limit: PROMPTS_PER_PAGE,
       sort,
       category,
@@ -42,6 +42,7 @@ export function PromptsGrid({ locale, sort, category, tool, search, type }: Prom
       search,
       type
     }, locale),
+    initialPageParam: 1,
     getNextPageParam: (lastPage) => lastPage.hasMore ? lastPage.nextPage : undefined,
     staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
     cacheTime: 30 * 60 * 1000, // Keep cache for 30 minutes
