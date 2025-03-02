@@ -23,20 +23,21 @@ export const authOptions: NextAuthOptions = {
           select: {
             id: true,
             email: true,
-            password: true,
-            name: true,
-            role: true,
+            passwordHash: true,
+            firstName: true,
+            lastName: true,
             emailVerified: true,
+            profileImageUrl: true,
           },
         });
 
-        if (!user || !user.password) {
+        if (!user || !user.passwordHash) {
           return null;
         }
 
         const isPasswordValid = await comparePassword(
           credentials.password,
-          user.password
+          user.passwordHash
         );
 
         if (!isPasswordValid) {
@@ -45,10 +46,10 @@ export const authOptions: NextAuthOptions = {
 
         return {
           id: user.id,
-          name: user.name,
+          name: `${user.firstName} ${user.lastName}`,
           email: user.email,
-          role: user.role,
           emailVerified: user.emailVerified,
+          image: user.profileImageUrl,
         };
       },
     }),
@@ -64,7 +65,6 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
-        token.role = user.role;
         token.emailVerified = user.emailVerified;
       }
       return token;
@@ -72,8 +72,7 @@ export const authOptions: NextAuthOptions = {
     async session({ session, token }) {
       if (session.user) {
         session.user.id = token.id as string;
-        session.user.role = token.role as string;
-        session.user.emailVerified = token.emailVerified as Date | null;
+        session.user.emailVerified = token.emailVerified as boolean;
       }
       return session;
     },
