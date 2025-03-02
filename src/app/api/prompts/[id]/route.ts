@@ -6,15 +6,18 @@ import { authOptions } from "@/lib/auth"
 
 export async function GET(
   request: NextRequest,
+  { params }: { params: { id: string } }
 ) {
   try {
     // Get user session for bookmark status
     const session = await getServerSession(authOptions)
     
-    // Extract locale and ID from URL
-    const url = new URL(request.url);
-    const locale = url.searchParams.get('locale') || 'en';
-    const id = url.pathname.split('/')[4] // /api/prompts/[id]
+    // Extract locale from URL and ID from params
+    const url = new URL(request.url)
+    const locale = url.searchParams.get('locale') || 'en'
+    const id = params.id // Get ID from route params instead of URL parsing
+
+    console.log('Fetching prompt with ID:', id)
 
     const prompt = await prisma.prompt.findUnique({
       where: { id },
@@ -73,6 +76,7 @@ export async function GET(
     })
 
     if (!prompt) {
+      console.log('Prompt not found:', id)
       return NextResponse.json(
         { error: "Prompt not found" },
         { status: 404 }
@@ -128,6 +132,7 @@ export async function GET(
 
 export async function DELETE(
   request: NextRequest,
+  { params }: { params: { id: string } }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -138,9 +143,7 @@ export async function DELETE(
       )
     }
 
-    // Extract ID from URL
-    const url = new URL(request.url)
-    const id = url.pathname.split('/')[4] // /api/prompts/[id]
+    const id = params.id // Get ID from route params
 
     await prisma.prompt.delete({
       where: { id }
