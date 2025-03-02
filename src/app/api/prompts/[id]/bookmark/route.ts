@@ -1,11 +1,11 @@
+import { NextRequest } from "next/server"
 import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma/client"
 
 export async function POST(
-  request: Request,
-  { params }: { params: { id: string } }
+  request: NextRequest,
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -16,11 +16,13 @@ export async function POST(
       )
     }
 
-    const promptId = params.id
+    // Extract ID from URL
+    const url = new URL(request.url)
+    const id = url.pathname.split('/')[4] // /api/prompts/[id]/bookmark
 
     // Check if prompt exists
     const prompt = await prisma.prompt.findUnique({
-      where: { id: promptId },
+      where: { id },
       select: { id: true }
     })
 
@@ -36,7 +38,7 @@ export async function POST(
       where: {
         userId_promptId: {
           userId: session.user.id,
-          promptId
+          promptId: id
         }
       }
     })
@@ -52,7 +54,7 @@ export async function POST(
     await prisma.userBookmark.create({
       data: {
         userId: session.user.id,
-        promptId
+        promptId: id
       }
     })
 
@@ -67,8 +69,7 @@ export async function POST(
 }
 
 export async function DELETE(
-  request: Request,
-  { params }: { params: { id: string } }
+  request: NextRequest,
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -79,14 +80,16 @@ export async function DELETE(
       )
     }
 
-    const promptId = params.id
+    // Extract ID from URL
+    const url = new URL(request.url)
+    const id = url.pathname.split('/')[4] // /api/prompts/[id]/bookmark
 
     // Delete bookmark
     await prisma.userBookmark.delete({
       where: {
         userId_promptId: {
           userId: session.user.id,
-          promptId
+          promptId: id
         }
       }
     })

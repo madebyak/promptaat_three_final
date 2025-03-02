@@ -1,10 +1,11 @@
+import { NextRequest } from "next/server"
 import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth/options"
+import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma/client"
 
 export async function POST(
-  request: Request
+  request: NextRequest,
 ) {
   try {
     // Get current session
@@ -17,10 +18,8 @@ export async function POST(
     }
 
     // Extract ID from URL
-    const url = new URL(request.url);
-    const pathParts = url.pathname.split('/');
-    // The ID is the second-to-last part in the path (before "copy")
-    const id = pathParts[pathParts.length - 2];
+    const url = new URL(request.url)
+    const id = url.pathname.split('/')[4] // /api/prompts/[id]/copy
 
     // Increment copy count
     const updatedPrompt = await prisma.prompt.update({

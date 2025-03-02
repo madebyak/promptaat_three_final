@@ -1,20 +1,20 @@
+import { NextRequest } from "next/server"
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma/client"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 
 export async function GET(
-  request: Request
+  request: NextRequest,
 ) {
   try {
     // Get user session for bookmark status
     const session = await getServerSession(authOptions)
     
-    // Extract ID and locale from URL
+    // Extract locale and ID from URL
     const url = new URL(request.url);
-    const pathParts = url.pathname.split('/');
-    const id = pathParts[pathParts.length - 1];
     const locale = url.searchParams.get('locale') || 'en';
+    const id = url.pathname.split('/')[4] // /api/prompts/[id]
 
     const prompt = await prisma.prompt.findUnique({
       where: { id },
@@ -63,22 +63,10 @@ export async function GET(
             }
           }
         },
-        keywords: {
-          select: {
-            keyword: true
-          }
-        },
-        bookmarks: session?.user?.id ? {
-          where: {
-            userId: session.user.id
-          },
-          select: {
-            userId: true
-          }
-        } : false,
+        keywords: true,
         _count: {
           select: {
-            bookmarks: true,
+            bookmarks: true
           }
         }
       }
@@ -91,35 +79,41 @@ export async function GET(
       )
     }
 
-    // Transform the data for the frontend
+    // Transform data based on locale
     const transformedPrompt = {
       id: prompt.id,
-      title: locale === 'en' ? prompt.titleEn : prompt.titleAr,
-      description: locale === 'en' ? prompt.descriptionEn : prompt.descriptionAr,
-      instruction: locale === 'en' ? prompt.instructionEn : prompt.instructionAr,
-      promptText: locale === 'en' ? prompt.promptTextEn : prompt.promptTextAr,
+      title: locale === 'ar' ? prompt.titleAr : prompt.titleEn,
+      description: locale === 'ar' ? prompt.descriptionAr : prompt.descriptionEn,
+      instruction: locale === 'ar' ? prompt.instructionAr : prompt.instructionEn,
+      promptText: locale === 'ar' ? prompt.promptTextAr : prompt.promptTextEn,
       isPro: prompt.isPro,
       copyCount: prompt.copyCount,
-      bookmarkCount: prompt._count.bookmarks,
-      isBookmarked: session?.user?.id ? prompt.bookmarks.length > 0 : false,
       createdAt: prompt.createdAt,
       updatedAt: prompt.updatedAt,
-      categories: prompt.categories.map(pc => ({
-        id: pc.category.id,
-        name: locale === 'en' ? pc.category.nameEn : pc.category.nameAr,
-        iconName: pc.category.iconName,
-        subcategory: pc.subcategory && {
-          id: pc.subcategory.id,
-          name: locale === 'en' ? pc.subcategory.nameEn : pc.subcategory.nameAr,
-          iconName: pc.subcategory.iconName,
+      categories: prompt.categories.map(cat => ({
+        id: cat.category.id,
+        name: locale === 'ar' ? cat.category.nameAr : cat.category.nameEn,
+        iconName: cat.category.iconName,
+        subcategory: cat.subcategory ? {
+          id: cat.subcategory.id,
+          name: locale === 'ar' ? cat.subcategory.nameAr : cat.subcategory.nameEn,
+          iconName: cat.subcategory.iconName,
+        } : null
+      })),
+      tools: prompt.tools.map(t => ({
+        id: t.tool.id,
+        name: t.tool.name,
+        iconUrl: t.tool.iconUrl,
+      })),
+      isBookmarked: session?.user?.id ? await prisma.userBookmark.findUnique({
+        where: {
+          userId_promptId: {
+            userId: session.user.id,
+            promptId: id
+          }
         }
-      })),
-      tools: prompt.tools.map(pt => ({
-        id: pt.tool.id,
-        name: pt.tool.name,
-        iconUrl: pt.tool.iconUrl
-      })),
-      keywords: prompt.keywords.map(k => k.keyword)
+      }) !== null : false,
+      bookmarkCount: prompt._count.bookmarks
     }
 
     return NextResponse.json(transformedPrompt)
@@ -133,12 +127,11 @@ export async function GET(
 }
 
 export async function DELETE(
-  request: Request
+  request: NextRequest,
 ) {
   try {
-    // Get user session for authorization
     const session = await getServerSession(authOptions)
-    if (!session?.user) {
+    if (!session?.user?.id) {
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 401 }
@@ -146,18 +139,14 @@ export async function DELETE(
     }
 
     // Extract ID from URL
-    const url = new URL(request.url);
-    const pathParts = url.pathname.split('/');
-    const id = pathParts[pathParts.length - 1];
-    
-    const prompt = await prisma.prompt.delete({
-      where: { id },
+    const url = new URL(request.url)
+    const id = url.pathname.split('/')[4] // /api/prompts/[id]
+
+    await prisma.prompt.delete({
+      where: { id }
     })
 
-    return NextResponse.json({
-      message: "Prompt deleted successfully",
-      prompt,
-    })
+    return NextResponse.json({ message: "Prompt deleted successfully" })
   } catch (error) {
     console.error("Delete prompt error:", error)
     return NextResponse.json(
