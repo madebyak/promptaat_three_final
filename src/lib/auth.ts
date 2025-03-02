@@ -88,9 +88,9 @@ export const authOptions: NextAuthOptions = {
     })
   ],
   callbacks: {
-    async signIn({ user, account }) {
+    async signIn({ user, account, profile }) {
       // For Google sign-in, we need to check if this is a new user
-      if (account?.provider === "google") {
+      if (account?.provider === "google" && profile) {
         const existingUser = await prisma.user.findUnique({
           where: { email: user.email! }
         });
@@ -119,8 +119,8 @@ export const authOptions: NextAuthOptions = {
           await prisma.user.create({
             data: {
               email: user.email!,
-              firstName: user.firstName || "",
-              lastName: user.lastName || "",
+              firstName: (profile as any).given_name || "",
+              lastName: (profile as any).family_name || "",
               googleId: user.id,
               emailVerified: true,
               country: "Unknown", // Will be updated later
