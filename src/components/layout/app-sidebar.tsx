@@ -157,7 +157,7 @@ export function AppSidebar({ locale, className }: AppSidebarProps) {
       <SidebarContent>
         <ScrollArea className="h-[calc(100vh-8rem)]">
           {isLoading ? (
-            <SidebarSkeleton />
+            <SidebarSkeleton locale={locale} />
           ) : error ? (
             <div className="flex flex-col items-center justify-center h-full p-4 text-center">
               <AlertCircle className="h-8 w-8 text-red-500 mb-2" />

@@ -1,10 +1,12 @@
 import { Skeleton } from "@/components/ui/skeleton"
-import { useTheme } from "next-themes"
 import { cn } from "@/lib/utils"
 
-export function SidebarSkeleton() {
-  const { direction } = useTheme()
-  const isRTL = direction === 'rtl'
+interface SidebarSkeletonProps {
+  locale?: string
+}
+
+export function SidebarSkeleton({ locale = 'en' }: SidebarSkeletonProps) {
+  const isRTL = locale === 'ar'
 
   return (
     <div className="p-2 space-y-2">
