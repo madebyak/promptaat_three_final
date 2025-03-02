@@ -60,7 +60,7 @@ const promptFormSchema = z.object({
   toolIds: z.array(z.string()).optional(),
 });
 
-type PromptFormValues = z.infer<typeof promptFormSchema>;
+export type PromptFormValues = z.infer<typeof promptFormSchema>;
 
 // Fetch categories
 async function getCategories() {
@@ -85,7 +85,7 @@ async function getTools() {
 }
 
 interface PromptFormProps {
-  initialData?: any;
+  initialData?: PromptFormValues;
   onSubmit: (data: PromptFormValues) => void;
   isSubmitting?: boolean;
 }
@@ -210,7 +210,6 @@ export default function PromptForm({
                   <FormControl>
                     <Textarea
                       placeholder="Enter prompt description"
-                      className="resize-none"
                       {...field}
                     />
                   </FormControl>
@@ -230,13 +229,12 @@ export default function PromptForm({
                   <FormLabel>Instructions (English)</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Enter usage instructions"
-                      className="resize-none"
+                      placeholder="Enter instructions for using this prompt"
                       {...field}
                     />
                   </FormControl>
                   <FormDescription>
-                    Instructions on how to use this prompt effectively.
+                    Instructions for how to use this prompt effectively.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -251,13 +249,13 @@ export default function PromptForm({
                   <FormLabel>Prompt Text (English)</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Enter the prompt text"
+                      placeholder="Enter the actual prompt text"
                       className="min-h-[200px]"
                       {...field}
                     />
                   </FormControl>
                   <FormDescription>
-                    The actual prompt text that users will copy.
+                    The actual text of the prompt that will be used.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -273,7 +271,11 @@ export default function PromptForm({
                 <FormItem>
                   <FormLabel>Title (Arabic)</FormLabel>
                   <FormControl>
-                    <Input placeholder="أدخل عنوان النموذج" {...field} dir="rtl" />
+                    <Input
+                      placeholder="أدخل عنوان القالب"
+                      dir="rtl"
+                      {...field}
+                    />
                   </FormControl>
                   <FormDescription>
                     The title of your prompt in Arabic.
@@ -291,10 +293,9 @@ export default function PromptForm({
                   <FormLabel>Description (Arabic)</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="أدخل وصف النموذج"
-                      className="resize-none"
-                      {...field}
+                      placeholder="أدخل وصف القالب"
                       dir="rtl"
+                      {...field}
                     />
                   </FormControl>
                   <FormDescription>
@@ -313,14 +314,13 @@ export default function PromptForm({
                   <FormLabel>Instructions (Arabic)</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="أدخل تعليمات الاستخدام"
-                      className="resize-none"
-                      {...field}
+                      placeholder="أدخل تعليمات استخدام هذا القالب"
                       dir="rtl"
+                      {...field}
                     />
                   </FormControl>
                   <FormDescription>
-                    Instructions on how to use this prompt effectively in Arabic.
+                    Instructions for how to use this prompt effectively in Arabic.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -335,14 +335,14 @@ export default function PromptForm({
                   <FormLabel>Prompt Text (Arabic)</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="أدخل نص النموذج"
+                      placeholder="أدخل نص القالب"
                       className="min-h-[200px]"
-                      {...field}
                       dir="rtl"
+                      {...field}
                     />
                   </FormControl>
                   <FormDescription>
-                    The actual prompt text that users will copy in Arabic.
+                    The actual text of the prompt that will be used in Arabic.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -351,217 +351,205 @@ export default function PromptForm({
           </TabsContent>
         </Tabs>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Card>
-            <CardContent className="pt-6">
-              <FormField
-                control={form.control}
-                name="categoryId"
-                render={({ field }) => (
-                  <FormItem className="mb-4">
-                    <FormLabel>Category</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                      value={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a category" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {isCategoriesLoading ? (
-                          <div className="flex justify-center p-2">
-                            <Spinner size="sm" />
-                          </div>
-                        ) : (
-                          categoriesData?.categories
-                            ?.filter((category: any) => !category.parentId)
-                            .map((category: any) => (
-                              <SelectItem key={category.id} value={category.id}>
-                                {category.nameEn}
-                              </SelectItem>
-                            ))
-                        )}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="subcategoryId"
-                render={({ field }) => (
-                  <FormItem className="mb-4">
-                    <FormLabel>Subcategory</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                      value={field.value}
-                      disabled={!selectedCategoryId || subcategories.length === 0}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a subcategory" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {subcategories.map((category: any) => (
-                          <SelectItem key={category.id} value={category.id}>
+        <div className="space-y-4">
+          <FormField
+            control={form.control}
+            name="categoryId"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Category</FormLabel>
+                <Select
+                  value={field.value}
+                  onValueChange={field.onChange}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a category" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {isCategoriesLoading ? (
+                      <div className="flex items-center justify-center p-4">
+                        <Spinner />
+                      </div>
+                    ) : (
+                      categoriesData?.categories
+                        ?.filter((cat: any) => !cat.parentId)
+                        .map((category: any) => (
+                          <SelectItem
+                            key={category.id}
+                            value={category.id}
+                          >
                             {category.nameEn}
                           </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="isPro"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                        ))
+                    )}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          
+          {selectedCategoryId && (
+            <FormField
+              control={form.control}
+              name="subcategoryId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Subcategory</FormLabel>
+                  <Select
+                    value={field.value}
+                    onValueChange={field.onChange}
+                  >
                     <FormControl>
-                      <Checkbox
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a subcategory" />
+                      </SelectTrigger>
                     </FormControl>
-                    <div className="space-y-1 leading-none">
-                      <FormLabel>Pro Prompt</FormLabel>
-                      <FormDescription>
-                        This prompt will only be available to Pro subscribers.
-                      </FormDescription>
-                    </div>
-                  </FormItem>
-                )}
-              />
-            </CardContent>
-          </Card>
+                    <SelectContent>
+                      {subcategories.map((category: any) => (
+                        <SelectItem
+                          key={category.id}
+                          value={category.id}
+                        >
+                          {category.nameEn}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
+          
+          <FormField
+            control={form.control}
+            name="isPro"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                <FormControl>
+                  <Checkbox
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+                <div className="space-y-1 leading-none">
+                  <FormLabel>Pro Feature</FormLabel>
+                  <FormDescription>
+                    This prompt will only be available to pro users.
+                  </FormDescription>
+                </div>
+              </FormItem>
+            )}
+          />
           
           <Card>
             <CardContent className="pt-6">
-              <div className="mb-4">
-                <FormLabel>Keywords</FormLabel>
-                <div className="flex mt-2">
-                  <Input
-                    placeholder="Add a keyword"
-                    value={keywordInput}
-                    onChange={(e) => setKeywordInput(e.target.value)}
-                    className="flex-1"
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        addKeyword();
-                      }
-                    }}
-                  />
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    className="ml-2"
-                    onClick={addKeyword}
-                  >
-                    Add
-                  </Button>
-                </div>
-                <FormDescription className="mt-2">
-                  Press Enter or click Add to add a keyword.
-                </FormDescription>
-                
-                <div className="flex flex-wrap gap-2 mt-3">
-                  {keywords.map((keyword) => (
-                    <Badge key={keyword} variant="secondary" className="text-sm">
-                      {keyword}
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="h-4 w-4 p-0 ml-1"
-                        onClick={() => removeKeyword(keyword)}
-                      >
-                        <X className="h-3 w-3" />
-                      </Button>
-                    </Badge>
-                  ))}
-                </div>
+              <FormLabel>Keywords</FormLabel>
+              <div className="flex gap-2 mt-2">
+                <Input
+                  placeholder="Add keywords"
+                  value={keywordInput}
+                  onChange={(e) => setKeywordInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      addKeyword();
+                    }
+                  }}
+                />
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={addKeyword}
+                >
+                  Add
+                </Button>
               </div>
-              
-              <div>
-                <FormLabel>Tools</FormLabel>
-                <div className="mt-2 border rounded-md p-4">
-                  {isToolsLoading ? (
-                    <div className="flex justify-center p-2">
-                      <Spinner size="sm" />
-                    </div>
-                  ) : toolsData?.tools?.length > 0 ? (
-                    <div className="grid grid-cols-2 gap-2">
-                      {toolsData.tools.map((tool: any) => (
-                        <FormField
-                          key={tool.id}
-                          control={form.control}
-                          name="toolIds"
-                          render={({ field }) => {
-                            return (
-                              <FormItem
-                                key={tool.id}
-                                className="flex flex-row items-start space-x-3 space-y-0"
-                              >
-                                <FormControl>
-                                  <Checkbox
-                                    checked={field.value?.includes(tool.id)}
-                                    onCheckedChange={(checked) => {
-                                      const currentValue = field.value || [];
-                                      if (checked) {
-                                        field.onChange([...currentValue, tool.id]);
-                                      } else {
-                                        field.onChange(
-                                          currentValue.filter((value) => value !== tool.id)
-                                        );
-                                      }
-                                    }}
-                                  />
-                                </FormControl>
-                                <FormLabel className="font-normal cursor-pointer">
-                                  {tool.name}
-                                </FormLabel>
-                              </FormItem>
-                            );
-                          }}
-                        />
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-sm text-muted-foreground">No tools available.</p>
-                  )}
-                </div>
-                <FormDescription className="mt-2">
-                  Select the tools that this prompt works with.
-                </FormDescription>
+              <div className="flex flex-wrap gap-2 mt-4">
+                {keywords.map((keyword) => (
+                  <Badge
+                    key={keyword}
+                    variant="secondary"
+                    className="px-3 py-1"
+                  >
+                    {keyword}
+                    <button
+                      type="button"
+                      onClick={() => removeKeyword(keyword)}
+                      className="ml-2 hover:text-destructive"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </Badge>
+                ))}
               </div>
             </CardContent>
           </Card>
+          
+          {!isToolsLoading && toolsData?.tools?.length > 0 && (
+            <FormField
+              control={form.control}
+              name="toolIds"
+              render={() => (
+                <FormItem>
+                  <FormLabel>Required Tools</FormLabel>
+                  <div className="grid grid-cols-2 gap-4 mt-2">
+                    {toolsData.tools.map((tool: any) => (
+                      <FormField
+                        key={tool.id}
+                        control={form.control}
+                        name="toolIds"
+                        render={({ field }) => {
+                          return (
+                            <FormItem
+                              key={tool.id}
+                              className="flex flex-row items-start space-x-3 space-y-0"
+                            >
+                              <FormControl>
+                                <Checkbox
+                                  checked={(field.value || []).includes(
+                                    tool.id
+                                  )}
+                                  onCheckedChange={(checked) => {
+                                    const currentTools = field.value || [];
+                                    const updatedTools = checked
+                                      ? [...currentTools, tool.id]
+                                      : currentTools.filter(
+                                          (id: string) => id !== tool.id
+                                        );
+                                    field.onChange(updatedTools);
+                                  }}
+                                />
+                              </FormControl>
+                              <FormLabel className="font-normal">
+                                {tool.name}
+                              </FormLabel>
+                            </FormItem>
+                          );
+                        }}
+                      />
+                    ))}
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
         </div>
         
-        <div className="flex justify-end">
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? (
-              <>
-                <Spinner size="sm" className="mr-2" />
-                Saving...
-              </>
-            ) : initialData ? (
-              "Update Prompt"
-            ) : (
-              "Create Prompt"
-            )}
-          </Button>
-        </div>
+        <Button type="submit" disabled={isSubmitting}>
+          {isSubmitting ? (
+            <>
+              <Spinner className="mr-2" />
+              Saving...
+            </>
+          ) : (
+            "Save Prompt"
+          )}
+        </Button>
       </form>
     </Form>
   );

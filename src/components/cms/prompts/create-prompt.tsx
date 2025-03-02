@@ -13,26 +13,30 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
-import PromptForm from "./prompt-form";
-
-// Define prompt data interface
-interface PromptData {
-  title: string;
-  content: string;
-  categoryIds: string[];
-  toolId?: string;
-  isPublished?: boolean;
-  [key: string]: any; // For any additional fields
-}
+import PromptForm, { PromptFormValues } from "./prompt-form";
 
 // Create prompt API function
-async function createPrompt(data: PromptData) {
+async function createPrompt(data: PromptFormValues) {
   const response = await fetch("/api/cms/prompts", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify(data),
+    body: JSON.stringify({
+      titleEn: data.titleEn,
+      titleAr: data.titleAr,
+      descriptionEn: data.descriptionEn,
+      descriptionAr: data.descriptionAr,
+      instructionEn: data.instructionEn,
+      instructionAr: data.instructionAr,
+      promptTextEn: data.promptTextEn,
+      promptTextAr: data.promptTextAr,
+      isPro: data.isPro,
+      categoryId: data.categoryId,
+      subcategoryId: data.subcategoryId,
+      keywords: data.keywords,
+      toolIds: data.toolIds,
+    }),
   });
   
   if (!response.ok) {
@@ -61,7 +65,7 @@ export default function CreatePrompt({ onSuccess }: { onSuccess?: () => void }) 
     },
   });
   
-  const handleSubmit = (data: PromptData) => {
+  const handleSubmit = (data: PromptFormValues) => {
     mutate(data);
   };
   
