@@ -12,7 +12,7 @@ import { useForm } from "react-hook-form"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import Link from "next/link"
-import { FiMail, FiLock, FiUser } from "react-icons/fi"
+import { FiMail, FiLock } from "react-icons/fi"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Spinner } from "@/components/ui/spinner"
 
