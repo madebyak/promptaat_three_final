@@ -28,7 +28,7 @@ import {
 import { formatDate } from "@/lib/utils";
 import { CategoryItem } from "./categories-management";
 
-export interface EditCategoryProps {
+type EditCategoryProps = {
   category: CategoryItem;
   onSuccess?: () => void;
   buttonVariant?: "default" | "outline" | "secondary" | "ghost" | "link";
@@ -36,7 +36,7 @@ export interface EditCategoryProps {
   showDeleteButton?: boolean;
 }
 
-export function EditCategory({
+function EditCategory({
   category,
   onSuccess,
   buttonVariant = "ghost",
@@ -57,7 +57,7 @@ export function EditCategory({
       setOpen(false);
       if (onSuccess) onSuccess();
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error.message || "Failed to update category");
     },
   });
@@ -73,7 +73,7 @@ export function EditCategory({
       setOpen(false);
       if (onSuccess) onSuccess();
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error.message || "Failed to delete category");
     },
   });

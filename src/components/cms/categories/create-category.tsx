@@ -7,11 +7,11 @@ import { Plus } from "lucide-react"
 import { CategoryForm, CategoryFormValues } from "./category-form"
 import { toast } from "sonner"
 
-interface CreateCategoryProps {
-  onSuccess?: () => void;
+type CreateCategoryProps = {
+  onSuccess?: () => void
 }
 
-export function CreateCategory({ onSuccess }: CreateCategoryProps) {
+function CreateCategory({ onSuccess }: CreateCategoryProps) {
   const [open, setOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
 

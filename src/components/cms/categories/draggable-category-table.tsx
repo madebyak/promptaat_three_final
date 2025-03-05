@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 
-interface Category {
+type Category = {
   id: string;
   name: string;
   nameEn?: string;
@@ -41,9 +41,9 @@ interface Category {
     prompts?: number;
     subcategories?: number;
   };
-}
+};
 
-interface DraggableCategoryTableProps {
+type DraggableCategoryTableProps = {
   categories: Category[];
   expandedCategories: Set<string>;
   toggleExpand: (categoryId: string) => void;
@@ -52,9 +52,9 @@ interface DraggableCategoryTableProps {
   onDragEnd: (result: any) => void;
   hasOrderChanged: boolean;
   saveOrder: () => void;
-}
+};
 
-export default function DraggableCategoryTable({
+function DraggableCategoryTable({
   categories,
   expandedCategories,
   toggleExpand,
@@ -213,3 +213,5 @@ export default function DraggableCategoryTable({
     </div>
   );
 }
+
+export default DraggableCategoryTable;

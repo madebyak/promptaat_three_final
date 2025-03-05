@@ -17,12 +17,12 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { CategoryItem } from "./categories-management";
 
-interface DeleteCategoryProps {
+type DeleteCategoryProps = {
   category: CategoryItem;
   onSuccess?: () => void;
-}
+};
 
-export function DeleteCategory({ category, onSuccess }: DeleteCategoryProps) {
+function DeleteCategory({ category, onSuccess }: DeleteCategoryProps) {
   const [isDeleting, setIsDeleting] = useState(false);
 
   const handleDelete = async () => {
@@ -71,3 +71,5 @@ export function DeleteCategory({ category, onSuccess }: DeleteCategoryProps) {
     </AlertDialog>
   );
 }
+
+export default DeleteCategory;
