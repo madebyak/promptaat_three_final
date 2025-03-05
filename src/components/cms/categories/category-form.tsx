@@ -64,23 +64,10 @@ const categorySchema = z.object({
   sortOrder: z.number().int().default(0),
 })
 
-type CategoryFormValues = {
-  nameEn: string
-  nameAr: string
-  iconName: string
-  parentId: string | null
-  sortOrder: number
-}
+type CategoryFormValues = z.infer<typeof categorySchema>
 
 type CategoryFormProps = {
-  initialData?: {
-    id?: string
-    nameEn: string
-    nameAr: string
-    iconName: string
-    parentId: string | null
-    sortOrder: number
-  }
+  initialData?: CategoryFormValues
   onSubmit: (data: CategoryFormValues) => void
   isSubmitting?: boolean
 }

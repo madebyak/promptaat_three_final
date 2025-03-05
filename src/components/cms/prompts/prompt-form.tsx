@@ -72,7 +72,7 @@ const promptFormSchema = z.object({
   toolIds: z.array(z.string()).optional(),
 });
 
-export type PromptFormValues = z.infer<typeof promptFormSchema>;
+type PromptFormValues = z.infer<typeof promptFormSchema>;
 
 // Fetch categories
 async function getCategories(): Promise<{ categories: Category[] }> {
@@ -569,4 +569,5 @@ function PromptForm({
   );
 }
 
+export type { PromptFormValues };
 export default PromptForm;

@@ -51,45 +51,43 @@ import {
 } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
 
-interface CategoryParent {
-  id: string;
-  nameEn: string;
-  nameAr: string;
+type Category = {
+  id: string
+  nameEn: string
+  nameAr: string
+  iconName: string
+  parentId: string | null
+  sortOrder: number
+  createdAt: string
+  updatedAt: string
+  children?: Category[]
+  subcategories?: Category[]
+  _count?: CategoryCount
 }
 
-interface CategoryCount {
-  promptCategories: number;
-  children: number;
-  prompts?: number;
-  subcategories?: number;
+type CategoryParent = {
+  id: string
+  nameEn: string
+  nameAr: string
 }
 
-interface Category {
-  id: string;
-  name: string;
-  nameEn: string;
-  nameAr: string;
-  iconName: string;
-  sortOrder: number;
-  parentId: string | null;
-  parent?: CategoryParent | null;
-  createdAt: string;
-  updatedAt: string;
-  children?: Category[];
-  subcategories?: Category[];
-  _count: CategoryCount;
+type CategoryCount = {
+  promptCategories: number
+  children: number
+  prompts?: number
+  subcategories?: number
 }
 
-interface SortableCategoryRowProps {
-  category: Category;
-  level?: number;
-  onToggleExpand: (id: string) => void;
-  isExpanded: boolean;
-  onCopyId: (id: string) => void;
-  copiedId: string | null;
-  onSortOrderChange: (id: string, order: number) => void;
-  queryClient: any;
-  children?: React.ReactNode;
+type SortableCategoryRowProps = {
+  category: Category
+  level?: number
+  onToggleExpand: (id: string) => void
+  isExpanded: boolean
+  onCopyId: (id: string) => void
+  copiedId: string | null
+  onSortOrderChange: (id: string, order: number) => void
+  queryClient: any
+  children?: React.ReactNode
 }
 
 async function fetchCategories(): Promise<Category[]> {
@@ -184,6 +182,7 @@ function SortableCategoryRow({
   };
 
   const hasChildren = category.children && category.children.length > 0;
+  const hasSubcategories = category.subcategories && category.subcategories.length > 0;
   
   const formatDate = (dateString: string) => {
     try {
@@ -267,7 +266,7 @@ function SortableCategoryRow({
       </TableCell>
       <TableCell className="text-xs text-gray-600">{formatDate(category.createdAt)}</TableCell>
       <TableCell className="text-xs text-gray-600">{formatDate(category.updatedAt)}</TableCell>
-      <TableCell>{category._count.prompts || category._count.promptCategories || 0}</TableCell>
+      <TableCell>{category._count?.prompts || category._count?.promptCategories || 0}</TableCell>
       <TableCell>
         <div className="flex space-x-2">
           <EditCategory 
@@ -522,17 +521,6 @@ function CategoriesManagement() {
       </Card>
     </div>
   );
-}
-
-type Category = {
-  id: string
-  nameEn: string
-  nameAr: string
-  icon: string
-  parentId: string | null
-  sortOrder: number
-  createdAt: string
-  updatedAt: string
 }
 
 export type { Category }
