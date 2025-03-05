@@ -66,31 +66,35 @@ import ViewPrompt from "./view-prompt";
 import EditPrompt from "./edit-prompt";
 import DeletePrompt from "./delete-prompt";
 
-interface Prompt {
-  id: string;
-  titleEn: string;
-  titleAr: string;
-  isPro: boolean;
-  createdAt: string;
-  updatedAt: string;
-  copyCount: number;
-  category?: {
-    id: string;
-    name: string;
-    slug: string;
-  };
+type Category = {
+  id: string
+  name: string
+  slug: string
 }
 
-interface PromptsResponse {
-  prompts: Prompt[];
-  pagination: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-    hasNextPage: boolean;
-    hasPrevPage: boolean;
-  };
+type Prompt = {
+  id: string
+  titleEn: string
+  titleAr: string
+  isPro: boolean
+  createdAt: string
+  updatedAt: string
+  copyCount: number
+  category?: Category
+}
+
+type Pagination = {
+  page: number
+  limit: number
+  total: number
+  totalPages: number
+  hasNextPage: boolean
+  hasPrevPage: boolean
+}
+
+type PromptsResponse = {
+  prompts: Prompt[]
+  pagination: Pagination
 }
 
 async function getPrompts(
@@ -125,7 +129,7 @@ async function getPrompts(
   return response.json();
 }
 
-async function getCategories() {
+async function getCategories(): Promise<{ categories: Category[] }> {
   const response = await fetch("/api/cms/categories");
   
   if (!response.ok) {
@@ -135,7 +139,7 @@ async function getCategories() {
   return response.json();
 }
 
-export default function PromptsManagement() {
+function PromptsManagement() {
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   const [page, setPage] = useState(1);
@@ -303,9 +307,9 @@ export default function PromptsManagement() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="">All Categories</SelectItem>
-                  {categoriesData?.categories?.map((category: any) => (
+                  {categoriesData?.categories?.map((category: Category) => (
                     <SelectItem key={category.id} value={category.id}>
-                      {category.nameEn}
+                      {category.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -541,3 +545,5 @@ export default function PromptsManagement() {
     </div>
   );
 }
+
+export default PromptsManagement;

@@ -31,6 +31,18 @@ import { Spinner } from "@/components/ui/spinner";
 import { Badge } from "@/components/ui/badge";
 import { X } from "lucide-react";
 
+type Category = {
+  id: string;
+  nameEn: string;
+  nameAr: string;
+  parentId: string | null;
+};
+
+type Tool = {
+  id: string;
+  name: string;
+};
+
 // Form schema
 const promptFormSchema = z.object({
   titleEn: z.string().min(3, {
@@ -63,42 +75,44 @@ const promptFormSchema = z.object({
 export type PromptFormValues = z.infer<typeof promptFormSchema>;
 
 // Fetch categories
-async function getCategories() {
+async function getCategories(): Promise<{ categories: Category[] }> {
   const response = await fetch("/api/cms/categories?simplified=true");
-  
+
   if (!response.ok) {
     throw new Error("Failed to fetch categories");
   }
-  
+
   return response.json();
 }
 
 // Fetch tools
-async function getTools() {
+async function getTools(): Promise<{ tools: Tool[] }> {
   const response = await fetch("/api/cms/tools");
-  
+
   if (!response.ok) {
     throw new Error("Failed to fetch tools");
   }
-  
+
   return response.json();
 }
 
-interface PromptFormProps {
+type PromptFormProps = {
   initialData?: PromptFormValues;
   onSubmit: (data: PromptFormValues) => void;
   isSubmitting?: boolean;
-}
+};
 
-export default function PromptForm({
+function PromptForm({
   initialData,
   onSubmit,
   isSubmitting = false,
 }: PromptFormProps) {
-  const [keywords, setKeywords] = useState<string[]>(initialData?.keywords || []);
+  const [keywords, setKeywords] = useState<string[]>(
+    initialData?.keywords || []
+  );
   const [keywordInput, setKeywordInput] = useState("");
   const [selectedTab, setSelectedTab] = useState("english");
-  
+
   // Initialize the form
   const form = useForm<PromptFormValues>({
     resolver: zodResolver(promptFormSchema),
@@ -118,31 +132,31 @@ export default function PromptForm({
       toolIds: [],
     },
   });
-  
+
   // Fetch categories
-  const { 
-    data: categoriesData, 
-    isLoading: isCategoriesLoading 
+  const {
+    data: categoriesData,
+    isLoading: isCategoriesLoading,
   } = useQuery({
     queryKey: ["categories"],
     queryFn: getCategories,
   });
-  
+
   // Fetch tools
-  const { 
-    data: toolsData, 
-    isLoading: isToolsLoading 
+  const {
+    data: toolsData,
+    isLoading: isToolsLoading,
   } = useQuery({
     queryKey: ["tools"],
     queryFn: getTools,
   });
-  
+
   // Get subcategories based on selected category
   const selectedCategoryId = form.watch("categoryId");
   const subcategories = categoriesData?.categories?.filter(
-    (category: any) => category.parentId === selectedCategoryId
+    (category: Category) => category.parentId === selectedCategoryId
   ) || [];
-  
+
   // Add keyword
   const addKeyword = () => {
     if (keywordInput.trim() && !keywords.includes(keywordInput.trim())) {
@@ -152,28 +166,28 @@ export default function PromptForm({
       setKeywordInput("");
     }
   };
-  
+
   // Remove keyword
   const removeKeyword = (keyword: string) => {
     const newKeywords = keywords.filter((k) => k !== keyword);
     setKeywords(newKeywords);
     form.setValue("keywords", newKeywords);
   };
-  
+
   // Handle form submission
   const handleSubmit = (values: PromptFormValues) => {
     // Include keywords in the submission
     values.keywords = keywords;
     onSubmit(values);
   };
-  
+
   // When category changes, reset subcategory
   useEffect(() => {
     if (selectedCategoryId) {
       form.setValue("subcategoryId", "");
     }
   }, [selectedCategoryId, form]);
-  
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
@@ -182,7 +196,7 @@ export default function PromptForm({
             <TabsTrigger value="english">English</TabsTrigger>
             <TabsTrigger value="arabic">Arabic</TabsTrigger>
           </TabsList>
-          
+
           <TabsContent value="english" className="space-y-4 mt-4">
             <FormField
               control={form.control}
@@ -200,7 +214,7 @@ export default function PromptForm({
                 </FormItem>
               )}
             />
-            
+
             <FormField
               control={form.control}
               name="descriptionEn"
@@ -220,7 +234,7 @@ export default function PromptForm({
                 </FormItem>
               )}
             />
-            
+
             <FormField
               control={form.control}
               name="instructionEn"
@@ -240,7 +254,7 @@ export default function PromptForm({
                 </FormItem>
               )}
             />
-            
+
             <FormField
               control={form.control}
               name="promptTextEn"
@@ -262,7 +276,7 @@ export default function PromptForm({
               )}
             />
           </TabsContent>
-          
+
           <TabsContent value="arabic" className="space-y-4 mt-4">
             <FormField
               control={form.control}
@@ -284,7 +298,7 @@ export default function PromptForm({
                 </FormItem>
               )}
             />
-            
+
             <FormField
               control={form.control}
               name="descriptionAr"
@@ -305,7 +319,7 @@ export default function PromptForm({
                 </FormItem>
               )}
             />
-            
+
             <FormField
               control={form.control}
               name="instructionAr"
@@ -326,7 +340,7 @@ export default function PromptForm({
                 </FormItem>
               )}
             />
-            
+
             <FormField
               control={form.control}
               name="promptTextAr"
@@ -350,7 +364,7 @@ export default function PromptForm({
             />
           </TabsContent>
         </Tabs>
-        
+
         <div className="space-y-4">
           <FormField
             control={form.control}
@@ -374,8 +388,8 @@ export default function PromptForm({
                       </div>
                     ) : (
                       categoriesData?.categories
-                        ?.filter((cat: any) => !cat.parentId)
-                        .map((category: any) => (
+                        ?.filter((cat: Category) => !cat.parentId)
+                        .map((category: Category) => (
                           <SelectItem
                             key={category.id}
                             value={category.id}
@@ -390,7 +404,7 @@ export default function PromptForm({
               </FormItem>
             )}
           />
-          
+
           {selectedCategoryId && (
             <FormField
               control={form.control}
@@ -408,7 +422,7 @@ export default function PromptForm({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {subcategories.map((category: any) => (
+                      {subcategories.map((category: Category) => (
                         <SelectItem
                           key={category.id}
                           value={category.id}
@@ -423,7 +437,7 @@ export default function PromptForm({
               )}
             />
           )}
-          
+
           <FormField
             control={form.control}
             name="isPro"
@@ -444,7 +458,7 @@ export default function PromptForm({
               </FormItem>
             )}
           />
-          
+
           <Card>
             <CardContent className="pt-6">
               <FormLabel>Keywords</FormLabel>
@@ -488,7 +502,7 @@ export default function PromptForm({
               </div>
             </CardContent>
           </Card>
-          
+
           {!isToolsLoading && toolsData?.tools?.length > 0 && (
             <FormField
               control={form.control}
@@ -497,7 +511,7 @@ export default function PromptForm({
                 <FormItem>
                   <FormLabel>Required Tools</FormLabel>
                   <div className="grid grid-cols-2 gap-4 mt-2">
-                    {toolsData.tools.map((tool: any) => (
+                    {toolsData.tools.map((tool: Tool) => (
                       <FormField
                         key={tool.id}
                         control={form.control}
@@ -539,7 +553,7 @@ export default function PromptForm({
             />
           )}
         </div>
-        
+
         <Button type="submit" disabled={isSubmitting}>
           {isSubmitting ? (
             <>
@@ -554,3 +568,5 @@ export default function PromptForm({
     </Form>
   );
 }
+
+export default PromptForm;
