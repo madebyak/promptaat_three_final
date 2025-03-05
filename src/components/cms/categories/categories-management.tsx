@@ -87,6 +87,7 @@ type SortableCategoryRowProps = {
   copiedId: string | null
   onSortOrderChange: (id: string, order: number) => void
   queryClient: any
+  categoriesData: Category[]
   children?: React.ReactNode
 }
 
@@ -164,6 +165,7 @@ function SortableCategoryRow({
   copiedId, 
   onSortOrderChange,
   queryClient,
+  categoriesData,
   children
 }: SortableCategoryRowProps) {
   const {
@@ -263,7 +265,7 @@ function SortableCategoryRow({
       <TableCell>
         {category.parentId ? (
           <span className="text-gray-600">
-            {categoriesData.find(c => c.id === category.parentId)?.nameEn}
+            {categoriesData.find((c: Category) => c.id === category.parentId)?.nameEn}
           </span>
         ) : (
           <span className="text-gray-400">-</span>
@@ -501,6 +503,7 @@ function CategoriesManagement() {
                           copiedId={copiedId}
                           onSortOrderChange={handleSortOrderChange}
                           queryClient={queryClient}
+                          categoriesData={categoriesData}
                         />
                         {expandedCategories.has(category.id) && category.children?.map((child) => (
                           <SortableCategoryRow
@@ -513,6 +516,7 @@ function CategoriesManagement() {
                             copiedId={copiedId}
                             onSortOrderChange={handleSortOrderChange}
                             queryClient={queryClient}
+                            categoriesData={categoriesData}
                           />
                         ))}
                       </React.Fragment>

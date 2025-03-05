@@ -26,10 +26,18 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { formatDate } from "@/lib/utils";
-import { Category } from "./categories-management";
+
+type CategoryData = {
+  id: string
+  nameEn: string
+  nameAr: string
+  iconName: string
+  parentId: string | null
+  sortOrder: number
+}
 
 type EditCategoryProps = {
-  category: Category;
+  category: CategoryData;
   onSuccess?: () => void;
   buttonVariant?: "default" | "outline" | "secondary" | "ghost" | "link";
   buttonSize?: "default" | "sm" | "lg" | "icon";
@@ -40,7 +48,7 @@ function EditCategory({
   category,
   onSuccess,
   buttonVariant = "ghost",
-  buttonSize = "icon",
+  buttonSize = "sm",
   showDeleteButton = true,
 }: EditCategoryProps) {
   const [open, setOpen] = useState(false);

@@ -60,7 +60,7 @@ const categorySchema = z.object({
     .max(50, {
       message: "Arabic name must not be longer than 50 characters.",
     }),
-  iconName: z.string().optional(),
+  iconName: z.string(),
   parentId: z.string().nullable(),
   sortOrder: z.number().int().default(0),
 })
