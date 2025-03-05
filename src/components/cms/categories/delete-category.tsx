@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { CategoryItem } from "./categories-management";
+import { CategoryItem } from "../categories-management";
 
 type DeleteCategoryProps = {
   category: CategoryItem;

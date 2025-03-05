@@ -31,9 +31,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { toast } from "sonner"
 import { format } from "date-fns"
 import { Spinner } from "@/components/ui/spinner"
-import { CreateCategory } from "./create-category"
-import EditCategory from "./edit-category"
-import { DeleteCategory } from "./delete-category"
+import CreateCategory from "./create-category";
+import EditCategory from "./edit-category";
+import DeleteCategory from "./delete-category";
 import {
   DndContext,
   closestCenter,
@@ -524,4 +524,16 @@ const CategoriesManagement: React.FC = () => {
   );
 };
 
+type CategoryItem = {
+  id: string
+  nameEn: string
+  nameAr: string
+  icon: string
+  parentId: string | null
+  sortOrder: number
+  createdAt: string
+  updatedAt: string
+}
+
+export type { CategoryItem }
 export default CategoriesManagement;

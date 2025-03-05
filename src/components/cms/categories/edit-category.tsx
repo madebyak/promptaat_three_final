@@ -13,7 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { CategoryForm, CategoryFormValues } from "./category-form";
+import CategoryForm, { CategoryFormValues } from "./category-form";
 import { updateCategory, deleteCategory } from "@/lib/api/cms/categories";
 import { 
   AlertDialog,

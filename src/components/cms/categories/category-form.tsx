@@ -64,9 +64,15 @@ const categorySchema = z.object({
   sortOrder: z.number().int().default(0),
 })
 
-export type CategoryFormValues = z.infer<typeof categorySchema>
+type CategoryFormValues = {
+  nameEn: string
+  nameAr: string
+  iconName: string
+  parentId: string | null
+  sortOrder: number
+}
 
-export type CategoryFormProps = {
+type CategoryFormProps = {
   initialData?: {
     id?: string
     nameEn: string
@@ -76,7 +82,7 @@ export type CategoryFormProps = {
     sortOrder: number
   }
   onSubmit: (data: CategoryFormValues) => void
-  isSubmitting: boolean
+  isSubmitting?: boolean
 }
 
 async function fetchCategories(): Promise<Category[]> {
@@ -105,7 +111,11 @@ function FormSection({ title, children }: FormSectionProps) {
   )
 }
 
-function CategoryForm({ initialData, onSubmit, isSubmitting }: CategoryFormProps) {
+function CategoryForm({
+  initialData,
+  onSubmit,
+  isSubmitting = false,
+}: CategoryFormProps) {
   const [nextAvailableSortOrder, setNextAvailableSortOrder] = useState<number | null>(null)
 
   const form = useForm<CategoryFormValues>({
@@ -325,4 +335,5 @@ function CategoryForm({ initialData, onSubmit, isSubmitting }: CategoryFormProps
   )
 }
 
+export type { CategoryFormValues }
 export default CategoryForm

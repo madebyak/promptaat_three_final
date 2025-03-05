@@ -503,7 +503,7 @@ function PromptForm({
             </CardContent>
           </Card>
 
-          {!isToolsLoading && toolsData?.tools?.length > 0 && (
+          {!isToolsLoading && toolsData?.tools && toolsData.tools.length > 0 && (
             <FormField
               control={form.control}
               name="toolIds"
