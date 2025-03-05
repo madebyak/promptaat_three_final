@@ -51,7 +51,20 @@ import {
 } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
 
-export interface CategoryItem {
+interface CategoryParent {
+  id: string;
+  nameEn: string;
+  nameAr: string;
+}
+
+interface CategoryCount {
+  promptCategories: number;
+  children: number;
+  prompts?: number;
+  subcategories?: number;
+}
+
+interface CategoryItem {
   id: string;
   name: string;
   nameEn: string;
@@ -59,24 +72,27 @@ export interface CategoryItem {
   iconName: string;
   sortOrder: number;
   parentId: string | null;
-  parent?: {
-    id: string;
-    nameEn: string;
-    nameAr: string;
-  } | null;
+  parent?: CategoryParent | null;
   createdAt: string;
   updatedAt: string;
   children?: CategoryItem[];
   subcategories?: CategoryItem[];
-  _count: {
-    promptCategories: number;
-    children: number;
-    prompts?: number;
-    subcategories?: number;
-  };
+  _count: CategoryCount;
 }
 
-async function fetchCategories() {
+interface SortableCategoryRowProps {
+  category: CategoryItem;
+  level?: number;
+  onToggleExpand: (id: string) => void;
+  isExpanded: boolean;
+  onCopyId: (id: string) => void;
+  copiedId: string | null;
+  onSortOrderChange: (id: string, order: number) => void;
+  queryClient: any;
+  children?: React.ReactNode;
+}
+
+async function fetchCategories(): Promise<CategoryItem[]> {
   const response = await fetch('/api/cms/categories');
   if (!response.ok) {
     throw new Error('Failed to fetch categories');
@@ -85,7 +101,7 @@ async function fetchCategories() {
   return data.data || [];
 }
 
-async function updateCategorySortOrder(id: string, sortOrder: number) {
+async function updateCategorySortOrder(id: string, sortOrder: number): Promise<CategoryItem> {
   const response = await fetch('/api/cms/categories', {
     method: 'PUT',
     headers: {
@@ -101,7 +117,7 @@ async function updateCategorySortOrder(id: string, sortOrder: number) {
   return response.json();
 }
 
-async function reorderCategories(categories: { id: string; sortOrder: number }[]) {
+async function reorderCategories(categories: { id: string; sortOrder: number }[]): Promise<CategoryItem[]> {
   const response = await fetch('/api/cms/categories/reorder', {
     method: 'POST',
     headers: {
@@ -117,8 +133,8 @@ async function reorderCategories(categories: { id: string; sortOrder: number }[]
   return response.json();
 }
 
-function organizeCategories(categories: any[]): CategoryItem[] {
-  const categoryMap = new Map<string | null, any[]>();
+function organizeCategories(categories: CategoryItem[]): CategoryItem[] {
+  const categoryMap = new Map<string | null, CategoryItem[]>();
   
   categoryMap.set(null, []);
   categories.forEach(category => {
@@ -138,7 +154,7 @@ function organizeCategories(categories: any[]): CategoryItem[] {
     category.children = categoryMap.get(category.id)!.sort((a, b) => a.sortOrder - b.sortOrder);
   });
   
-  return topLevelCategories as CategoryItem[];
+  return topLevelCategories;
 }
 
 function SortableCategoryRow({ 
@@ -151,17 +167,7 @@ function SortableCategoryRow({
   onSortOrderChange,
   queryClient,
   children
-}: { 
-  category: CategoryItem; 
-  level?: number; 
-  onToggleExpand: (id: string) => void; 
-  isExpanded: boolean; 
-  onCopyId: (id: string) => void; 
-  copiedId: string | null; 
-  onSortOrderChange: (id: string, order: number) => void;
-  queryClient: any;
-  children?: React.ReactNode;
-}) {
+}: SortableCategoryRowProps) {
   const {
     attributes,
     listeners,
@@ -203,11 +209,12 @@ function SortableCategoryRow({
             <button 
               onClick={() => onToggleExpand(category.id)}
               className="p-1 rounded-full hover:bg-gray-200"
+              aria-label={isExpanded ? "Collapse category" : "Expand category"}
             >
               {isExpanded ? (
-                <ChevronDown className="h-4 w-4 text-gray-600" />
+                <ChevronDown className="h-4 w-4 text-gray-600" aria-hidden="true" />
               ) : (
-                <ChevronRight className="h-4 w-4 text-gray-600" />
+                <ChevronRight className="h-4 w-4 text-gray-600" aria-hidden="true" />
               )}
             </button>
           )}
@@ -217,14 +224,16 @@ function SortableCategoryRow({
               {...attributes} 
               {...listeners}
               className="cursor-grab active:cursor-grabbing"
+              aria-label="Drag to reorder"
             >
-              <GripVertical className="h-4 w-4 text-gray-400" />
+              <GripVertical className="h-4 w-4 text-gray-400" aria-hidden="true" />
             </div>
             <Input
               type="number"
               value={category.sortOrder}
               onChange={(e) => onSortOrderChange(category.id, parseInt(e.target.value))}
               className="w-16 h-8 text-sm"
+              aria-label="Sort order"
             />
           </div>
         </div>
@@ -234,12 +243,14 @@ function SortableCategoryRow({
           className="flex items-center space-x-1 cursor-pointer"
           onClick={() => onCopyId(category.id)}
           title={category.id}
+          role="button"
+          aria-label="Copy category ID"
         >
           <span className="text-xs text-gray-600">{truncateId(category.id)}</span>
           {copiedId === category.id ? (
-            <Check className="h-3.5 w-3.5 text-green-500" />
+            <Check className="h-3.5 w-3.5 text-green-500" aria-hidden="true" />
           ) : (
-            <Copy className="h-3.5 w-3.5 text-gray-400" />
+            <Copy className="h-3.5 w-3.5 text-gray-400" aria-hidden="true" />
           )}
         </div>
       </TableCell>
@@ -273,7 +284,7 @@ function SortableCategoryRow({
   );
 }
 
-export function CategoriesManagement() {
+const CategoriesManagement: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("sortOrder");
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -336,234 +347,181 @@ export function CategoriesManagement() {
     });
   };
 
-  const filteredCategories = categoriesData.filter((category: any) => 
+  const filteredCategories = categoriesData.filter((category: CategoryItem) => 
     !searchQuery || 
     category.nameEn.toLowerCase().includes(searchQuery.toLowerCase()) ||
     category.nameAr.toLowerCase().includes(searchQuery.toLowerCase()) ||
     category.iconName.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const organizedCategories = React.useMemo(() => {
-    return organizeCategories(filteredCategories);
-  }, [filteredCategories]);
-
-  const sortedCategories = React.useMemo(() => {
-    return [...organizedCategories].sort((a, b) => {
-      switch (sortBy) {
-        case "sortOrder":
-          return a.sortOrder - b.sortOrder;
-        case "alphabetical":
-          return a.nameEn.localeCompare(b.nameEn);
-        case "recent":
-          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-        default:
-          return a.sortOrder - b.sortOrder;
-      }
-    });
-  }, [organizedCategories, sortBy]);
-
-  const handleSortOrderChange = (id: string, newOrder: number) => {
-    updateSortOrder({ id, sortOrder: newOrder });
-  };
-
-  const copyToClipboard = (id: string) => {
-    navigator.clipboard.writeText(id);
-    setCopiedId(id);
-    toast.success("Category ID copied to clipboard");
-  };
+  const organizedCategories = organizeCategories(filteredCategories);
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     
-    if (over && active.id !== over.id) {
-      const activeIndex = sortedCategories.findIndex(cat => cat.id === active.id);
-      const overIndex = sortedCategories.findIndex(cat => cat.id === over.id);
-      
-      if (activeIndex !== -1 && overIndex !== -1) {
-        const newOrder = [...sortedCategories];
-        const [movedItem] = newOrder.splice(activeIndex, 1);
-        newOrder.splice(overIndex, 0, movedItem);
-        
-        const updates = newOrder.map((category, index) => ({
-          id: category.id,
-          sortOrder: index + 1,
-        }));
-        
-        queryClient.setQueryData(['cms-categories'], (oldData: any) => {
-          if (!oldData) return oldData;
-          
-          return oldData.map((cat: any) => {
-            const update = updates.find(u => u.id === cat.id);
-            if (update) {
-              return { ...cat, sortOrder: update.sortOrder };
-            }
-            return cat;
-          });
-        });
-        
-        batchReorderCategories(updates);
+    if (!over || active.id === over.id) {
+      return;
+    }
+
+    const activeCategory = categoriesData.find((cat: CategoryItem) => cat.id === active.id);
+    const overCategory = categoriesData.find((cat: CategoryItem) => cat.id === over.id);
+    
+    if (!activeCategory || !overCategory) {
+      return;
+    }
+
+    const updatedCategories = categoriesData.map((cat: CategoryItem) => {
+      if (cat.id === activeCategory.id) {
+        return { ...cat, sortOrder: overCategory.sortOrder };
       }
+      if (cat.id === overCategory.id) {
+        return { ...cat, sortOrder: activeCategory.sortOrder };
+      }
+      return cat;
+    });
+
+    const sortOrderUpdates = [
+      { id: activeCategory.id, sortOrder: overCategory.sortOrder },
+      { id: overCategory.id, sortOrder: activeCategory.sortOrder }
+    ];
+
+    batchReorderCategories(sortOrderUpdates);
+  };
+
+  const handleCopyId = async (id: string) => {
+    try {
+      await navigator.clipboard.writeText(id);
+      setCopiedId(id);
+      setTimeout(() => setCopiedId(null), 2000);
+      toast.success("Category ID copied to clipboard");
+    } catch (error) {
+      toast.error("Failed to copy category ID");
     }
   };
 
-  const handleDragEndForSubcategories = (event: DragEndEvent, parentId: string) => {
-    const { active, over } = event;
-    
-    if (over && active.id !== over.id) {
-      const parentCategory = sortedCategories.find(cat => cat.id === parentId);
-      
-      if (parentCategory && parentCategory.children) {
-        const activeIndex = parentCategory.children.findIndex(cat => cat.id === active.id);
-        const overIndex = parentCategory.children.findIndex(cat => cat.id === over.id);
-        
-        if (activeIndex !== -1 && overIndex !== -1) {
-          const newOrder = [...parentCategory.children];
-          const [movedItem] = newOrder.splice(activeIndex, 1);
-          newOrder.splice(overIndex, 0, movedItem);
-          
-          const updates = newOrder.map((category, index) => ({
-            id: category.id,
-            sortOrder: index + 1,
-          }));
-          
-          queryClient.setQueryData(['cms-categories'], (oldData: any) => {
-            if (!oldData) return oldData;
-            
-            return oldData.map((cat: any) => {
-              const update = updates.find(u => u.id === cat.id);
-              if (update) {
-                return { ...cat, sortOrder: update.sortOrder };
-              }
-              return cat;
-            });
-          });
-          
-          batchReorderCategories(updates);
-        }
-      }
-    }
+  const handleSortOrderChange = (id: string, order: number) => {
+    if (isNaN(order)) return;
+    updateSortOrder({ id, sortOrder: order });
   };
 
-  const renderCategoryRow = (category: CategoryItem, level: number = 0) => {
-    const isExpanded = expandedCategories.has(category.id);
-    const hasChildren = category.children && category.children.length > 0;
-    
+  if (isLoading) {
     return (
-      <React.Fragment key={category.id}>
-        <SortableCategoryRow
-          category={category}
-          level={level}
-          onToggleExpand={toggleCategoryExpansion}
-          isExpanded={isExpanded}
-          onCopyId={copyToClipboard}
-          copiedId={copiedId}
-          onSortOrderChange={handleSortOrderChange}
-          queryClient={queryClient}
-        />
-        
-        {isExpanded && hasChildren && (
-          <>
-            {category.children!.map(child => {
-              return renderCategoryRow(child, level + 1);
-            })}
-          </>
-        )}
-      </React.Fragment>
+      <div className="flex justify-center items-center p-8">
+        <Spinner size="lg" />
+      </div>
     );
-  };
+  }
+
+  if (isError) {
+    return (
+      <div className="p-8 text-center text-red-500">
+        Error: {error instanceof Error ? error.message : 'Failed to load categories'}
+      </div>
+    );
+  }
 
   return (
-    <Card className="w-full shadow-sm">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-2xl font-bold">Categories Management</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center space-x-2 w-2/3">
-            <div className="relative w-full max-w-sm">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+    <div className="space-y-4">
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Categories</CardTitle>
+            </div>
+            <CreateCategory onSuccess={() => queryClient.invalidateQueries({ queryKey: ['cms-categories'] })} />
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="mb-4 flex space-x-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" aria-hidden="true" />
               <Input
-                type="text"
                 placeholder="Search categories..."
+                className="pl-8"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 w-full"
+                aria-label="Search categories"
               />
             </div>
-            <Select
-              value={sortBy}
-              onValueChange={setSortBy}
-            >
+            <Select value={sortBy} onValueChange={setSortBy}>
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Sort by" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="sortOrder">Sort Order</SelectItem>
-                <SelectItem value="alphabetical">A-Z</SelectItem>
-                <SelectItem value="recent">Recently Added</SelectItem>
+                <SelectItem value="nameEn">Name (English)</SelectItem>
+                <SelectItem value="nameAr">Name (Arabic)</SelectItem>
+                <SelectItem value="createdAt">Created Date</SelectItem>
               </SelectContent>
             </Select>
           </div>
-          <CreateCategory onSuccess={() => queryClient.invalidateQueries({ queryKey: ['cms-categories'] })} />
-        </div>
 
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-24">Sort Order</TableHead>
-                <TableHead className="w-28">id</TableHead>
-                <TableHead>nameEn</TableHead>
-                <TableHead>nameAr</TableHead>
-                <TableHead>iconName</TableHead>
-                <TableHead>Parent</TableHead>
-                <TableHead>createdAt</TableHead>
-                <TableHead>updatedAt</TableHead>
-                <TableHead>Prompts</TableHead>
-                <TableHead className="w-24">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading ? (
-                <TableRow>
-                  <TableCell colSpan={10} className="text-center py-10">
-                    <div className="flex justify-center items-center">
-                      <Spinner className="mr-2" /> Loading categories...
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ) : isError ? (
-                <TableRow>
-                  <TableCell colSpan={10} className="text-center py-10 text-red-500">
-                    Error loading categories: {error instanceof Error ? error.message : 'Unknown error'}
-                  </TableCell>
-                </TableRow>
-              ) : sortedCategories.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={10} className="text-center py-10">
-                    No categories found
-                  </TableCell>
-                </TableRow>
-              ) : (
-                <DndContext
-                  sensors={sensors}
-                  collisionDetection={closestCenter}
-                  onDragEnd={handleDragEnd}
-                >
+          <div className="rounded-md border">
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+            >
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[100px]">
+                      <div className="flex items-center space-x-1">
+                        <MoveVertical className="h-4 w-4" />
+                        <span>Order</span>
+                      </div>
+                    </TableHead>
+                    <TableHead>ID</TableHead>
+                    <TableHead>Name (EN)</TableHead>
+                    <TableHead>Name (AR)</TableHead>
+                    <TableHead>Icon</TableHead>
+                    <TableHead>Parent</TableHead>
+                    <TableHead>Created</TableHead>
+                    <TableHead>Updated</TableHead>
+                    <TableHead>Prompts</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                   <SortableContext
-                    items={sortedCategories.map(cat => cat.id)}
+                    items={organizedCategories.map(cat => cat.id)}
                     strategy={verticalListSortingStrategy}
                   >
-                    {sortedCategories.map(category => renderCategoryRow(category))}
+                    {organizedCategories.map((category) => (
+                      <React.Fragment key={category.id}>
+                        <SortableCategoryRow
+                          category={category}
+                          onToggleExpand={toggleCategoryExpansion}
+                          isExpanded={expandedCategories.has(category.id)}
+                          onCopyId={handleCopyId}
+                          copiedId={copiedId}
+                          onSortOrderChange={handleSortOrderChange}
+                          queryClient={queryClient}
+                        />
+                        {expandedCategories.has(category.id) && category.children?.map((child) => (
+                          <SortableCategoryRow
+                            key={child.id}
+                            category={child}
+                            level={1}
+                            onToggleExpand={toggleCategoryExpansion}
+                            isExpanded={expandedCategories.has(child.id)}
+                            onCopyId={handleCopyId}
+                            copiedId={copiedId}
+                            onSortOrderChange={handleSortOrderChange}
+                            queryClient={queryClient}
+                          />
+                        ))}
+                      </React.Fragment>
+                    ))}
                   </SortableContext>
-                </DndContext>
-              )}
-            </TableBody>
-          </Table>
-        </div>
-      </CardContent>
-    </Card>
+                </TableBody>
+              </Table>
+            </DndContext>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
-}
+};
 
 export default CategoriesManagement;
