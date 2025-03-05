@@ -31,14 +31,14 @@ async function deletePrompt(id: string) {
   return response.json();
 }
 
-interface DeletePromptProps {
-  promptId: string;
-  promptTitle: string;
-  trigger?: React.ReactNode;
-  onSuccess?: () => void;
+type DeletePromptProps = {
+  promptId: string
+  promptTitle: string
+  trigger?: React.ReactNode
+  onSuccess?: () => void
 }
 
-export default function DeletePrompt({ 
+function DeletePrompt({ 
   promptId, 
   promptTitle,
   trigger,
@@ -104,3 +104,5 @@ export default function DeletePrompt({
     </>
   );
 }
+
+export default DeletePrompt;

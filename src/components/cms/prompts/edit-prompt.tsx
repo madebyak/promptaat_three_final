@@ -14,10 +14,17 @@ import {
 import { Button } from "@/components/ui/button";
 import { Edit } from "lucide-react";
 import PromptForm from "./prompt-form";
+import { PromptFormValues } from "./prompt-form";
 import { Spinner } from "@/components/ui/spinner";
 
+type Prompt = PromptFormValues & {
+  id: string
+  createdAt: string
+  updatedAt: string
+}
+
 // Fetch prompt API function
-async function getPrompt(id: string) {
+async function getPrompt(id: string): Promise<{ prompt: Prompt }> {
   const response = await fetch(`/api/cms/prompts/${id}`);
   
   if (!response.ok) {
@@ -28,8 +35,8 @@ async function getPrompt(id: string) {
 }
 
 // Update prompt API function
-async function updatePrompt(data: any) {
-  const { id, ...rest } = data;
+async function updatePrompt(data: Prompt) {
+  const { id, createdAt, updatedAt, ...rest } = data;
   
   const response = await fetch(`/api/cms/prompts/${id}`, {
     method: "PATCH",
@@ -47,13 +54,13 @@ async function updatePrompt(data: any) {
   return response.json();
 }
 
-interface EditPromptProps {
-  promptId: string;
-  trigger?: React.ReactNode;
-  onSuccess?: () => void;
+type EditPromptProps = {
+  promptId: string
+  trigger?: React.ReactNode
+  onSuccess?: () => void
 }
 
-export default function EditPrompt({ 
+function EditPrompt({ 
   promptId, 
   trigger,
   onSuccess 
@@ -82,9 +89,11 @@ export default function EditPrompt({
     },
   });
   
-  const handleSubmit = (formData: any) => {
+  const handleSubmit = (formData: PromptFormValues) => {
     mutate({
       id: promptId,
+      createdAt: data?.prompt.createdAt || "",
+      updatedAt: data?.prompt.updatedAt || "",
       ...formData,
     });
   };
@@ -128,3 +137,5 @@ export default function EditPrompt({
     </>
   );
 }
+
+export default EditPrompt
