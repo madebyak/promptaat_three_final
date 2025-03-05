@@ -8,7 +8,6 @@ import { useParams } from "next/navigation"
 export default function Page() {
   const params = useParams();
   const locale = params.locale as string;
-  const isRTL = locale === 'ar'
 
   return (
     <div className="flex flex-col gap-6 p-6">

@@ -22,13 +22,18 @@ export default async function CMSLayout({
 }) {
   // Check if user is authenticated and is admin
   const session = await getServerSession(authOptions)
+  
+  // Get the default locale if none is provided
+  const currentLocale = locale || 'en';
+  
   if (!session?.user) {
-    redirect("/auth/login")
+    // Redirect to the localized auth login page
+    redirect(`/${currentLocale}/auth/login?callbackUrl=/cms/dashboard`)
   }
 
   return (
     <div className="flex h-screen">
-      <Sidebar locale={locale} />
+      <Sidebar locale={currentLocale} />
       <main className="flex-1 overflow-y-auto bg-muted/10">
         <div className="container py-8">{children}</div>
       </main>

@@ -20,7 +20,9 @@ export default function LocaleLayout({
 }) {
   const { locale } = React.use(params);
   const pathname = usePathname();
-  const isAuthRoute = pathname?.includes(`/${locale}/auth/`);
+  
+  // Improved auth route detection - check for exact path pattern
+  const isAuthRoute = pathname?.startsWith(`/${locale}/auth/`);
   const isUserAccountRoute = pathname?.includes(`/${locale}/profile`) || 
                            pathname?.includes(`/${locale}/my-prompts`) || 
                            pathname?.includes(`/${locale}/settings`);

@@ -3,20 +3,39 @@ import { cn } from "@/lib/utils"
 
 interface SidebarSkeletonProps {
   locale?: string
+  isCollapsed?: boolean
 }
 
-export function SidebarSkeleton({ locale = 'en' }: SidebarSkeletonProps) {
+export function SidebarSkeleton({ locale = 'en', isCollapsed = false }: SidebarSkeletonProps) {
   const isRTL = locale === 'ar'
 
+  if (isCollapsed) {
+    return (
+      <div className="py-2 space-y-4">
+        {/* All Categories Skeleton */}
+        <div className="flex justify-center p-2">
+          <Skeleton className="h-4 w-4 rounded-sm" /> {/* Icon */}
+        </div>
+
+        {/* Category Items */}
+        {[...Array(6)].map((_, i) => (
+          <div key={i} className="flex justify-center p-2">
+            <Skeleton className="h-4 w-4 rounded-sm" /> {/* Icon */}
+          </div>
+        ))}
+      </div>
+    )
+  }
+
   return (
-    <div className="p-2 space-y-2">
+    <div className="py-2 space-y-2">
       {/* All Categories Skeleton */}
       <div className={cn(
-        "flex items-center gap-3 p-2",
+        "flex items-center gap-3 p-2 rounded-md",
         isRTL ? "flex-row-reverse" : "flex-row"
       )}>
-        <Skeleton className="h-4 w-4" /> {/* Icon */}
-        <Skeleton className="h-4 flex-1" /> {/* Text */}
+        <Skeleton className="h-4 w-4 rounded-sm" /> {/* Icon */}
+        <Skeleton className="h-4 flex-1 rounded-sm" /> {/* Text */}
       </div>
 
       {/* Category Items */}
@@ -24,12 +43,12 @@ export function SidebarSkeleton({ locale = 'en' }: SidebarSkeletonProps) {
         <div key={i} className="space-y-2">
           {/* Category */}
           <div className={cn(
-            "flex items-center gap-3 p-2",
+            "flex items-center gap-3 p-2 rounded-md",
             isRTL ? "flex-row-reverse" : "flex-row"
           )}>
-            <Skeleton className="h-4 w-4" /> {/* Icon */}
-            <Skeleton className="h-4 flex-1" /> {/* Text */}
-            <Skeleton className="h-4 w-4" /> {/* Chevron */}
+            <Skeleton className="h-4 w-4 rounded-sm" /> {/* Icon */}
+            <Skeleton className="h-4 flex-1 rounded-sm" /> {/* Text */}
+            <Skeleton className="h-4 w-4 rounded-sm" /> {/* Chevron */}
           </div>
 
           {/* Subcategories - show for some categories */}
@@ -43,7 +62,8 @@ export function SidebarSkeleton({ locale = 'en' }: SidebarSkeletonProps) {
                   "flex items-center gap-3 p-2",
                   isRTL ? "flex-row-reverse" : "flex-row"
                 )}>
-                  <Skeleton className="h-3 flex-1" /> {/* Subcategory text */}
+                  <Skeleton className="h-3 w-3 rounded-sm" /> {/* Icon */}
+                  <Skeleton className="h-3 flex-1 rounded-sm" /> {/* Subcategory text */}
                 </div>
               ))}
             </div>

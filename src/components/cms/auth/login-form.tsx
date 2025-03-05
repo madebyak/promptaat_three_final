@@ -10,6 +10,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
+import { Checkbox } from "@/components/ui/checkbox";
+import { FiMail, FiLock, FiAlertCircle } from "react-icons/fi";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useLocale } from "next-intl";
 
 type FormData = z.infer<typeof loginSchema>;
 
@@ -17,11 +22,15 @@ export default function LoginForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+  const locale = useLocale();
+  const isRtl = locale === 'ar';
 
   const {
     register,
     handleSubmit,
     formState: { errors },
+    setValue,
+    watch,
   } = useForm<FormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -30,6 +39,8 @@ export default function LoginForm() {
       rememberMe: false,
     },
   });
+
+  const rememberMe = watch('rememberMe');
 
   const onSubmit = async (data: FormData) => {
     setIsLoading(true);
@@ -51,82 +62,115 @@ export default function LoginForm() {
     }
   };
 
+  const translations = {
+    title: locale === 'ar' ? 'تسجيل الدخول للوحة التحكم' : 'Admin Login',
+    subtitle: locale === 'ar' ? 'أدخل بياناتك للوصول إلى لوحة التحكم' : 'Enter your credentials to access the admin panel',
+    email: locale === 'ar' ? 'البريد الإلكتروني' : 'Email address',
+    emailPlaceholder: locale === 'ar' ? 'أدخل بريدك الإلكتروني' : 'Enter your email',
+    password: locale === 'ar' ? 'كلمة المرور' : 'Password',
+    passwordPlaceholder: locale === 'ar' ? 'أدخل كلمة المرور' : 'Enter your password',
+    rememberMe: locale === 'ar' ? 'تذكرني' : 'Remember me',
+    signIn: locale === 'ar' ? 'تسجيل الدخول' : 'Sign in',
+    signingIn: locale === 'ar' ? 'جاري تسجيل الدخول...' : 'Signing in...',
+    errorTitle: locale === 'ar' ? 'خطأ' : 'Error',
+  };
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-      {error && (
-        <div className="rounded-md bg-red-50 p-4">
-          <div className="flex">
-            <div className="ml-3">
-              <h3 className="text-sm font-medium text-red-800">{error}</h3>
+    <Card className="w-full max-w-md mx-auto shadow-md border-0">
+      <CardHeader className="space-y-2 pb-8">
+        <CardTitle className="text-2xl font-bold text-center">{translations.title}</CardTitle>
+        <CardDescription className="text-center text-base">{translations.subtitle}</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          {error && (
+            <Alert variant="destructive" className="mb-6">
+              <FiAlertCircle className="h-5 w-5" />
+              <AlertTitle className="text-base">{translations.errorTitle}</AlertTitle>
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+
+          <div className="space-y-2.5">
+            <Label htmlFor="email" className={`text-sm font-medium ${isRtl ? 'text-right block' : ''}`}>
+              {translations.email}
+            </Label>
+            <div className="relative">
+              <div className={`absolute inset-y-0 ${isRtl ? 'right-0 pr-3' : 'left-0 pl-3'} flex items-center pointer-events-none text-muted-foreground`}>
+                <FiMail className="h-5 w-5" />
+              </div>
+              <Input
+                id="email"
+                type="email"
+                autoComplete="email"
+                placeholder={translations.emailPlaceholder}
+                className={`${isRtl ? 'text-right pr-10' : 'pl-10'} h-12 text-base`}
+                dir={isRtl ? "rtl" : "ltr"}
+                {...register("email")}
+                disabled={isLoading}
+              />
             </div>
+            {errors.email && (
+              <p className={`text-sm text-destructive mt-1 ${isRtl ? 'text-right' : ''}`}>{errors.email.message}</p>
+            )}
           </div>
-        </div>
-      )}
 
-      <div>
-        <Label htmlFor="email" className="block text-sm font-medium text-gray-700">
-          Email address
-        </Label>
-        <div className="mt-1">
-          <Input
-            id="email"
-            type="email"
-            autoComplete="email"
-            className={`block w-full rounded-md ${
-              errors.email ? "border-red-300" : "border-gray-300"
-            }`}
-            {...register("email")}
-          />
-          {errors.email && (
-            <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
-          )}
-        </div>
-      </div>
+          <div className="space-y-2.5">
+            <Label htmlFor="password" className={`text-sm font-medium ${isRtl ? 'text-right block' : ''}`}>
+              {translations.password}
+            </Label>
+            <div className="relative">
+              <div className={`absolute inset-y-0 ${isRtl ? 'right-0 pr-3' : 'left-0 pl-3'} flex items-center pointer-events-none text-muted-foreground`}>
+                <FiLock className="h-5 w-5" />
+              </div>
+              <Input
+                id="password"
+                type="password"
+                autoComplete="current-password"
+                placeholder={translations.passwordPlaceholder}
+                className={`${isRtl ? 'text-right pr-10' : 'pl-10'} h-12 text-base`}
+                dir={isRtl ? "rtl" : "ltr"}
+                {...register("password")}
+                disabled={isLoading}
+              />
+            </div>
+            {errors.password && (
+              <p className={`text-sm text-destructive mt-1 ${isRtl ? 'text-right' : ''}`}>{errors.password.message}</p>
+            )}
+          </div>
 
-      <div>
-        <Label htmlFor="password" className="block text-sm font-medium text-gray-700">
-          Password
-        </Label>
-        <div className="mt-1">
-          <Input
-            id="password"
-            type="password"
-            autoComplete="current-password"
-            className={`block w-full rounded-md ${
-              errors.password ? "border-red-300" : "border-gray-300"
-            }`}
-            {...register("password")}
-          />
-          {errors.password && (
-            <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>
-          )}
-        </div>
-      </div>
+          <div className={`flex items-center ${isRtl ? 'flex-row-reverse justify-end' : 'justify-start'} space-x-2 ${isRtl ? 'space-x-reverse' : ''} mt-2`}>
+            <Checkbox 
+              id="rememberMe" 
+              checked={rememberMe}
+              onCheckedChange={(checked) => setValue('rememberMe', checked as boolean)}
+              disabled={isLoading}
+              className="h-5 w-5"
+            />
+            <Label 
+              htmlFor="rememberMe" 
+              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+            >
+              {translations.rememberMe}
+            </Label>
+          </div>
 
-      <div className="flex items-center justify-between">
-        <div className="flex items-center">
-          <input
-            id="remember-me"
-            type="checkbox"
-            className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"
-            {...register("rememberMe")}
-          />
-          <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
-            Remember me
-          </label>
-        </div>
-      </div>
-
-      <div>
-        <Button
-          type="submit"
-          disabled={isLoading}
-          className="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-        >
-          {isLoading ? <Spinner className="mr-2" /> : null}
-          Sign in
-        </Button>
-      </div>
-    </form>
+          <Button
+            type="submit"
+            disabled={isLoading}
+            className="w-full h-12 text-base mt-4"
+          >
+            {isLoading ? (
+              <span className="flex items-center justify-center gap-2">
+                <Spinner size="sm" />
+                {translations.signingIn}
+              </span>
+            ) : (
+              translations.signIn
+            )}
+          </Button>
+        </form>
+      </CardContent>
+    </Card>
   );
 }

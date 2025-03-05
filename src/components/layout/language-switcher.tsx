@@ -18,9 +18,23 @@ export function LanguageSwitcher({ locale }: LanguageSwitcherProps) {
   const pathname = usePathname()
 
   const switchLanguage = (newLocale: string) => {
-    const currentPath = pathname
-    const newPath = currentPath.replace(`/${locale}`, `/${newLocale}`)
-    router.push(newPath)
+    // Only switch if the locale is different
+    if (newLocale === locale) return
+    
+    // Handle the path conversion correctly
+    const segments = pathname.split('/')
+    
+    // Replace the locale segment (should be the first segment after the leading slash)
+    if (segments.length > 1) {
+      segments[1] = newLocale
+      const newPath = segments.join('/')
+      console.log(`Switching language from ${locale} to ${newLocale}, new path: ${newPath}`)
+      router.push(newPath)
+    } else {
+      // Fallback for unexpected path structure
+      console.log(`Unexpected path structure, redirecting to /${newLocale}`)
+      router.push(`/${newLocale}`)
+    }
   }
 
   return (

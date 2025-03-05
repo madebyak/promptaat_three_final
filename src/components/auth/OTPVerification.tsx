@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Spinner } from '@/components/ui/spinner';
+import { FiMail, FiCheckCircle, FiAlertCircle, FiRefreshCw } from 'react-icons/fi';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface OTPVerificationProps {
   email: string;
@@ -21,6 +23,7 @@ const translations = {
     resendTimer: 'Resend code in',
     seconds: 's',
     codePlaceholder: 'Enter verification code',
+    instructions: 'Enter the 6-digit code we sent to your email',
   },
   ar: {
     title: 'تأكيد بريدك الإلكتروني',
@@ -31,6 +34,7 @@ const translations = {
     resendTimer: 'إعادة إرسال الرمز خلال',
     seconds: 'ث',
     codePlaceholder: 'أدخل رمز التحقق',
+    instructions: 'أدخل الرمز المكون من 6 أرقام الذي أرسلناه إلى بريدك الإلكتروني',
   },
 };
 
@@ -41,6 +45,7 @@ export function OTPVerification({ email, onSuccess, locale = 'en' }: OTPVerifica
   const [timer, setTimer] = useState(60);
   const [canResend, setCanResend] = useState(false);
   const t = translations[locale as keyof typeof translations];
+  const isRtl = locale === 'ar';
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -116,18 +121,24 @@ export function OTPVerification({ email, onSuccess, locale = 'en' }: OTPVerifica
   };
 
   return (
-    <Card className="w-full">
-      <CardHeader>
+    <Card className="w-full shadow-md max-w-md mx-auto">
+      <CardHeader className="space-y-1">
+        <div className="mx-auto bg-primary/10 p-2 rounded-full w-12 h-12 flex items-center justify-center mb-2">
+          <FiMail className="h-6 w-6 text-primary" />
+        </div>
         <CardTitle className="text-2xl font-bold text-center">{t.title}</CardTitle>
-        <p className="text-center text-neutral-600 dark:text-neutral-400">
+        <CardDescription className="text-center">
           {t.subtitle}{' '}
-          <span className="font-medium text-neutral-900 dark:text-neutral-200">
+          <span className="font-medium text-foreground">
             {email}
           </span>
+        </CardDescription>
+        <p className={`text-sm text-muted-foreground text-center ${isRtl ? 'text-right' : ''}`}>
+          {t.instructions}
         </p>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4" dir={isRtl ? 'rtl' : 'ltr'}>
           <div className="space-y-2">
             <Input
               id="otp"
@@ -135,44 +146,51 @@ export function OTPVerification({ email, onSuccess, locale = 'en' }: OTPVerifica
               type="text"
               placeholder={t.codePlaceholder}
               required
-              className="text-center text-2xl tracking-wider"
+              className="text-center text-2xl tracking-wider h-14"
               maxLength={6}
               pattern="[0-9]{6}"
               disabled={isLoading}
+              autoComplete="one-time-code"
+              inputMode="numeric"
             />
           </div>
           {error && (
-            <div className="text-sm text-error p-2 bg-error/10 rounded-md text-center">
-              {error}
-            </div>
+            <Alert variant="destructive" className="flex items-center gap-2">
+              <FiAlertCircle className="h-4 w-4" />
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
           )}
           <Button
             type="submit"
-            className="w-full"
+            className="w-full h-10"
             disabled={isLoading}
           >
             {isLoading ? (
-              <span className="flex items-center gap-2">
+              <span className="flex items-center justify-center gap-2">
                 <Spinner size="sm" />
                 {t.verifying}
               </span>
             ) : (
-              t.verifyButton
+              <span className="flex items-center justify-center gap-2">
+                <FiCheckCircle className="h-4 w-4" />
+                {t.verifyButton}
+              </span>
             )}
           </Button>
-          <div className="text-center">
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={handleResendOTP}
-              disabled={!canResend || isLoading}
-              className="text-sm"
-            >
-              {canResend ? t.resendButton : `${t.resendTimer} ${timer}${t.seconds}`}
-            </Button>
-          </div>
         </form>
       </CardContent>
+      <CardFooter className="flex justify-center">
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={handleResendOTP}
+          disabled={!canResend || isLoading}
+          className="text-sm flex items-center gap-2"
+        >
+          <FiRefreshCw className={`h-4 w-4 ${!canResend && 'animate-spin'}`} />
+          {canResend ? t.resendButton : `${t.resendTimer} ${timer}${t.seconds}`}
+        </Button>
+      </CardFooter>
     </Card>
   );
 }

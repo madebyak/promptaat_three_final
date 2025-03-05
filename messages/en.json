@@ -11,5 +11,9 @@
     "personalInfo": "Personal Information",
     "name": "Name",
     "email": "Email"
+  },
+  "CMS": {
+    "title": "Admin Dashboard",
+    "description": "Manage your website content"
   }
 }

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { comparePasswords } from '@/lib/crypto';
 
 export interface PasswordValidationResult {
   isValid: boolean;
@@ -98,10 +99,8 @@ export function getPasswordStrengthText(score: number, locale: string = 'en'): s
 // Compare password function for authentication
 export async function comparePassword(password: string, hashedPassword: string): Promise<boolean> {
   try {
-    // In a real implementation, you would use bcrypt or a similar library
-    // For now, we'll use a simple comparison (this is just a placeholder)
-    // This should be replaced with proper password comparison logic
-    return password === hashedPassword;
+    // Use the comparePasswords function from crypto.ts for proper password comparison
+    return await comparePasswords(password, hashedPassword);
   } catch (error) {
     console.error('Error comparing passwords:', error);
     return false;
