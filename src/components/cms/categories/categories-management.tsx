@@ -64,7 +64,7 @@ interface CategoryCount {
   subcategories?: number;
 }
 
-interface CategoryItem {
+interface Category {
   id: string;
   name: string;
   nameEn: string;
@@ -75,13 +75,13 @@ interface CategoryItem {
   parent?: CategoryParent | null;
   createdAt: string;
   updatedAt: string;
-  children?: CategoryItem[];
-  subcategories?: CategoryItem[];
+  children?: Category[];
+  subcategories?: Category[];
   _count: CategoryCount;
 }
 
 interface SortableCategoryRowProps {
-  category: CategoryItem;
+  category: Category;
   level?: number;
   onToggleExpand: (id: string) => void;
   isExpanded: boolean;
@@ -92,7 +92,7 @@ interface SortableCategoryRowProps {
   children?: React.ReactNode;
 }
 
-async function fetchCategories(): Promise<CategoryItem[]> {
+async function fetchCategories(): Promise<Category[]> {
   const response = await fetch('/api/cms/categories');
   if (!response.ok) {
     throw new Error('Failed to fetch categories');
@@ -101,7 +101,7 @@ async function fetchCategories(): Promise<CategoryItem[]> {
   return data.data || [];
 }
 
-async function updateCategorySortOrder(id: string, sortOrder: number): Promise<CategoryItem> {
+async function updateCategorySortOrder(id: string, sortOrder: number): Promise<Category> {
   const response = await fetch('/api/cms/categories', {
     method: 'PUT',
     headers: {
@@ -117,7 +117,7 @@ async function updateCategorySortOrder(id: string, sortOrder: number): Promise<C
   return response.json();
 }
 
-async function reorderCategories(categories: { id: string; sortOrder: number }[]): Promise<CategoryItem[]> {
+async function reorderCategories(categories: { id: string; sortOrder: number }[]): Promise<Category[]> {
   const response = await fetch('/api/cms/categories/reorder', {
     method: 'POST',
     headers: {
@@ -133,8 +133,8 @@ async function reorderCategories(categories: { id: string; sortOrder: number }[]
   return response.json();
 }
 
-function organizeCategories(categories: CategoryItem[]): CategoryItem[] {
-  const categoryMap = new Map<string | null, CategoryItem[]>();
+function organizeCategories(categories: Category[]): Category[] {
+  const categoryMap = new Map<string | null, Category[]>();
   
   categoryMap.set(null, []);
   categories.forEach(category => {
@@ -284,7 +284,7 @@ function SortableCategoryRow({
   );
 }
 
-const CategoriesManagement: React.FC = () => {
+function CategoriesManagement() {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("sortOrder");
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -347,7 +347,7 @@ const CategoriesManagement: React.FC = () => {
     });
   };
 
-  const filteredCategories = categoriesData.filter((category: CategoryItem) => 
+  const filteredCategories = categoriesData.filter((category: Category) => 
     !searchQuery || 
     category.nameEn.toLowerCase().includes(searchQuery.toLowerCase()) ||
     category.nameAr.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -363,14 +363,14 @@ const CategoriesManagement: React.FC = () => {
       return;
     }
 
-    const activeCategory = categoriesData.find((cat: CategoryItem) => cat.id === active.id);
-    const overCategory = categoriesData.find((cat: CategoryItem) => cat.id === over.id);
+    const activeCategory = categoriesData.find((cat: Category) => cat.id === active.id);
+    const overCategory = categoriesData.find((cat: Category) => cat.id === over.id);
     
     if (!activeCategory || !overCategory) {
       return;
     }
 
-    const updatedCategories = categoriesData.map((cat: CategoryItem) => {
+    const updatedCategories = categoriesData.map((cat: Category) => {
       if (cat.id === activeCategory.id) {
         return { ...cat, sortOrder: overCategory.sortOrder };
       }
@@ -522,9 +522,9 @@ const CategoriesManagement: React.FC = () => {
       </Card>
     </div>
   );
-};
+}
 
-type CategoryItem = {
+type Category = {
   id: string
   nameEn: string
   nameAr: string
@@ -535,5 +535,5 @@ type CategoryItem = {
   updatedAt: string
 }
 
-export type { CategoryItem }
+export type { Category }
 export default CategoriesManagement;

@@ -26,10 +26,10 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { formatDate } from "@/lib/utils";
-import { CategoryItem } from "./categories-management";
+import { Category } from "./categories-management";
 
 type EditCategoryProps = {
-  category: CategoryItem;
+  category: Category;
   onSuccess?: () => void;
   buttonVariant?: "default" | "outline" | "secondary" | "ghost" | "link";
   buttonSize?: "default" | "sm" | "lg" | "icon";

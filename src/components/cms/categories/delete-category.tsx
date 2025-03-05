@@ -15,10 +15,10 @@ import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { CategoryItem } from "../categories-management";
+import { Category } from "./categories-management";
 
 type DeleteCategoryProps = {
-  category: CategoryItem;
+  category: Category;
   onSuccess?: () => void;
 };
 
