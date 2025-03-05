@@ -17,12 +17,12 @@ import {
 import { categoryIcons } from "@/lib/constants/category-icons";
 import { useTranslations } from "next-intl";
 
-interface IconPickerProps {
+type IconPickerProps = {
   value: string;
   onChange: (value: string) => void;
 }
 
-export function IconPicker({ value, onChange }: IconPickerProps) {
+function IconPicker({ value, onChange }: IconPickerProps) {
   const t = useTranslations("Categories");
   const [open, setOpen] = useState(false);
 
