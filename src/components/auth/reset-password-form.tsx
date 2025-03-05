@@ -14,17 +14,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Spinner } from "@/components/ui/spinner"
 import Link from "next/link"
 
-const schema = z.object({
-  password: z.string().min(8, "Password must be at least 8 characters"),
-  confirmPassword: z.string(),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords do not match",
-  path: ["confirmPassword"],
-})
-
-type ResetPasswordData = z.infer<typeof schema>
-
-export interface ResetPasswordFormProps {
+type ResetPasswordFormProps = {
   token: string;
   locale?: string;
 }
@@ -34,53 +24,6 @@ export function ResetPasswordForm({ token, locale = 'en' }: ResetPasswordFormPro
   const router = useRouter()
   const { toast } = useToast()
   const isRtl = locale === 'ar';
-
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<ResetPasswordData>({
-    resolver: zodResolver(schema),
-    defaultValues: {
-      password: '',
-      confirmPassword: '',
-    },
-  })
-
-  const onSubmit = async (data: ResetPasswordData) => {
-    try {
-      setIsLoading(true)
-
-      const response = await fetch("/api/auth/reset-password", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          token,
-          password: data.password,
-        }),
-      })
-
-      if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.message || "Failed to reset password")
-      }
-
-      toast({
-        title: "Success",
-        description: "Password has been reset successfully. Please sign in.",
-      })
-
-      router.push(`/${locale}/auth/login`)
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to reset password",
-        variant: "destructive",
-      })
-    } finally {
-      setIsLoading(false)
-    }
-  }
 
   const translations = {
     title: locale === 'ar' ? 'إعادة تعيين كلمة المرور' : 'Reset Password',
@@ -94,6 +37,92 @@ export function ResetPasswordForm({ token, locale = 'en' }: ResetPasswordFormPro
     resetPassword: locale === 'ar' ? 'إعادة تعيين كلمة المرور' : 'Reset Password',
     resetting: locale === 'ar' ? 'جاري إعادة التعيين...' : 'Resetting...',
     backToLogin: locale === 'ar' ? 'العودة إلى تسجيل الدخول' : 'Back to Login',
+    successTitle: locale === 'ar' ? 'تم بنجاح' : 'Success',
+    successMessage: locale === 'ar' 
+      ? 'تم إعادة تعيين كلمة المرور بنجاح. يرجى تسجيل الدخول.' 
+      : 'Password has been reset successfully. Please sign in.',
+    errorTitle: locale === 'ar' ? 'خطأ' : 'Error',
+    errorMessage: locale === 'ar' 
+      ? 'فشل في إعادة تعيين كلمة المرور' 
+      : 'Failed to reset password',
+    networkError: locale === 'ar'
+      ? 'حدث خطأ في الاتصال. يرجى التحقق من اتصالك بالإنترنت والمحاولة مرة أخرى.'
+      : 'A network error occurred. Please check your internet connection and try again.',
+    invalidToken: locale === 'ar'
+      ? 'رابط إعادة تعيين كلمة المرور غير صالح أو منتهي الصلاحية'
+      : 'Password reset link is invalid or has expired',
+    passwordMinLength: locale === 'ar'
+      ? 'يجب أن تتكون كلمة المرور من 8 أحرف على الأقل'
+      : 'Password must be at least 8 characters',
+    passwordsDoNotMatch: locale === 'ar'
+      ? 'كلمات المرور غير متطابقة'
+      : 'Passwords do not match',
+  };
+
+  const schema = z.object({
+    password: z.string().min(8, translations.passwordMinLength),
+    confirmPassword: z.string(),
+  }).refine((data) => data.password === data.confirmPassword, {
+    message: translations.passwordsDoNotMatch,
+    path: ["confirmPassword"],
+  });
+
+  type ResetPasswordData = z.infer<typeof schema>;
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<ResetPasswordData>({
+    resolver: zodResolver(schema),
+    defaultValues: {
+      password: '',
+      confirmPassword: '',
+    },
+  });
+
+  const onSubmit = async (data: ResetPasswordData) => {
+    try {
+      setIsLoading(true);
+
+      const response = await fetch("/api/auth/reset-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          token,
+          password: data.password,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        if (response.status === 401) {
+          throw new Error(translations.invalidToken);
+        }
+        throw new Error(error.message || translations.errorMessage);
+      }
+
+      toast({
+        title: translations.successTitle,
+        description: translations.successMessage,
+      });
+
+      router.push(`/${locale}/auth/login`);
+    } catch (error) {
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : error instanceof TypeError 
+          ? translations.networkError 
+          : translations.errorMessage;
+
+      toast({
+        title: translations.errorTitle,
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -110,7 +139,7 @@ export function ResetPasswordForm({ token, locale = 'en' }: ResetPasswordFormPro
             </Label>
             <div className="relative">
               <div className={`absolute inset-y-0 ${isRtl ? 'right-0 pr-3' : 'left-0 pl-3'} flex items-center pointer-events-none text-muted-foreground`}>
-                <FiLock className="h-5 w-5" />
+                <FiLock className="h-5 w-5" aria-hidden="true" />
               </div>
               <Input
                 id="password"
@@ -120,10 +149,15 @@ export function ResetPasswordForm({ token, locale = 'en' }: ResetPasswordFormPro
                 disabled={isLoading}
                 className={`${isRtl ? 'text-right pr-10' : 'pl-10'}`}
                 dir={isRtl ? "rtl" : "ltr"}
+                aria-label={translations.password}
+                aria-invalid={!!errors.password}
+                aria-describedby={errors.password ? "password-error" : undefined}
               />
             </div>
             {errors.password && (
-              <p className={`text-sm text-destructive ${isRtl ? 'text-right' : ''}`}>{errors.password.message}</p>
+              <p id="password-error" className={`text-sm text-destructive ${isRtl ? 'text-right' : ''}`} role="alert">
+                {errors.password.message}
+              </p>
             )}
           </div>
           <div className="space-y-2">
@@ -132,7 +166,7 @@ export function ResetPasswordForm({ token, locale = 'en' }: ResetPasswordFormPro
             </Label>
             <div className="relative">
               <div className={`absolute inset-y-0 ${isRtl ? 'right-0 pr-3' : 'left-0 pl-3'} flex items-center pointer-events-none text-muted-foreground`}>
-                <FiLock className="h-5 w-5" />
+                <FiLock className="h-5 w-5" aria-hidden="true" />
               </div>
               <Input
                 id="confirmPassword"
@@ -142,15 +176,23 @@ export function ResetPasswordForm({ token, locale = 'en' }: ResetPasswordFormPro
                 disabled={isLoading}
                 className={`${isRtl ? 'text-right pr-10' : 'pl-10'}`}
                 dir={isRtl ? "rtl" : "ltr"}
+                aria-label={translations.confirmPassword}
+                aria-invalid={!!errors.confirmPassword}
+                aria-describedby={errors.confirmPassword ? "confirm-password-error" : undefined}
               />
             </div>
             {errors.confirmPassword && (
-              <p className={`text-sm text-destructive ${isRtl ? 'text-right' : ''}`}>
+              <p id="confirm-password-error" className={`text-sm text-destructive ${isRtl ? 'text-right' : ''}`} role="alert">
                 {errors.confirmPassword.message}
               </p>
             )}
           </div>
-          <Button type="submit" className="w-full" disabled={isLoading}>
+          <Button 
+            type="submit" 
+            className="w-full" 
+            disabled={isLoading}
+            aria-label={isLoading ? translations.resetting : translations.resetPassword}
+          >
             {isLoading ? (
               <span className="flex items-center justify-center gap-2">
                 <Spinner size="sm" />
@@ -167,12 +209,13 @@ export function ResetPasswordForm({ token, locale = 'en' }: ResetPasswordFormPro
           <Link 
             href={`/${locale}/auth/login`} 
             className={`text-sm text-primary hover:underline flex items-center gap-2 ${isRtl ? 'flex-row-reverse' : ''}`}
+            aria-label={translations.backToLogin}
           >
-            <FiArrowLeft className="h-4 w-4" />
+            <FiArrowLeft className="h-4 w-4" aria-hidden="true" />
             {translations.backToLogin}
           </Link>
         </div>
       </CardFooter>
     </Card>
-  )
+  );
 }
