@@ -33,12 +33,13 @@ import { Spinner } from "@/components/ui/spinner"
 import IconInput from "./icon-input"
 import { useTranslations } from "next-intl"
 
-export interface Category {
+export type Category = {
   id: string
   nameEn: string
   nameAr: string
   parentId: string | null
   order: number
+  iconName: string
 }
 
 const categorySchema = z.object({
@@ -65,7 +66,7 @@ const categorySchema = z.object({
 
 export type CategoryFormValues = z.infer<typeof categorySchema>
 
-export interface CategoryFormProps {
+export type CategoryFormProps = {
   initialData?: {
     id?: string
     nameEn: string
@@ -78,7 +79,7 @@ export interface CategoryFormProps {
   isSubmitting: boolean
 }
 
-async function fetchCategories() {
+async function fetchCategories(): Promise<Category[]> {
   const response = await fetch("/api/cms/categories")
   if (!response.ok) {
     throw new Error("Failed to fetch categories")
@@ -87,7 +88,12 @@ async function fetchCategories() {
   return data.data || []
 }
 
-function FormSection({ title, children }: { title: string; children: React.ReactNode }) {
+type FormSectionProps = {
+  title: string
+  children: React.ReactNode
+}
+
+function FormSection({ title, children }: FormSectionProps) {
   return (
     <div className="space-y-4">
       <div className="flex items-center">
@@ -99,7 +105,7 @@ function FormSection({ title, children }: { title: string; children: React.React
   )
 }
 
-export function CategoryForm({ initialData, onSubmit, isSubmitting }: CategoryFormProps) {
+function CategoryForm({ initialData, onSubmit, isSubmitting }: CategoryFormProps) {
   const [nextAvailableSortOrder, setNextAvailableSortOrder] = useState<number | null>(null)
 
   const form = useForm<CategoryFormValues>({
@@ -123,19 +129,19 @@ export function CategoryForm({ initialData, onSubmit, isSubmitting }: CategoryFo
   })
 
   const filteredCategories = categories.filter(
-    (category: any) => category.id !== initialData?.id
+    (category: Category) => category.id !== initialData?.id
   ) || []
 
   useEffect(() => {
     if (categories.length > 0 && !initialData?.sortOrder) {
       const parentId = form.getValues().parentId
       const categoriesWithSameParent = categories.filter(
-        (cat: any) => cat.parentId === parentId
+        (cat: Category) => cat.parentId === parentId
       )
 
       if (categoriesWithSameParent.length > 0) {
         const maxSortOrder = Math.max(
-          ...categoriesWithSameParent.map((cat: any) => cat.sortOrder)
+          ...categoriesWithSameParent.map((cat: Category) => cat.order)
         )
         setNextAvailableSortOrder(maxSortOrder + 1)
       } else {
@@ -147,12 +153,12 @@ export function CategoryForm({ initialData, onSubmit, isSubmitting }: CategoryFo
   useEffect(() => {
     if (watchParentId !== undefined && !initialData?.id) {
       const categoriesWithSameParent = categories.filter(
-        (cat: any) => cat.parentId === watchParentId
+        (cat: Category) => cat.parentId === watchParentId
       )
 
       if (categoriesWithSameParent.length > 0) {
         const maxSortOrder = Math.max(
-          ...categoriesWithSameParent.map((cat: any) => cat.sortOrder)
+          ...categoriesWithSameParent.map((cat: Category) => cat.order)
         )
         setNextAvailableSortOrder(maxSortOrder + 1)
       } else {
@@ -175,7 +181,7 @@ export function CategoryForm({ initialData, onSubmit, isSubmitting }: CategoryFo
 
   const getParentName = () => {
     if (!watchParentId) return null
-    const parent = categories.find((cat: any) => cat.id === watchParentId)
+    const parent = categories.find((cat: Category) => cat.id === watchParentId)
     return parent ? parent.nameEn : null
   }
 
@@ -256,7 +262,7 @@ export function CategoryForm({ initialData, onSubmit, isSubmitting }: CategoryFo
                       </FormControl>
                       <SelectContent>
                         <SelectItem value="none">None (Top Level)</SelectItem>
-                        {filteredCategories.map((category: any) => (
+                        {filteredCategories.map((category: Category) => (
                           <SelectItem key={category.id} value={category.id}>
                             {category.nameEn}
                           </SelectItem>
