@@ -261,8 +261,13 @@ function SortableCategoryRow({
       <TableCell>{category.nameAr}</TableCell>
       <TableCell>{category.iconName}</TableCell>
       <TableCell>
-        {category.parent ? category.parent.nameEn : 
-          <span className="text-gray-400 text-sm">None</span>}
+        {category.parentId ? (
+          <span className="text-gray-600">
+            {categoriesData.find(c => c.id === category.parentId)?.nameEn}
+          </span>
+        ) : (
+          <span className="text-gray-400">-</span>
+        )}
       </TableCell>
       <TableCell className="text-xs text-gray-600">{formatDate(category.createdAt)}</TableCell>
       <TableCell className="text-xs text-gray-600">{formatDate(category.updatedAt)}</TableCell>

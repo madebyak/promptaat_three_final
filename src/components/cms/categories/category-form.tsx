@@ -43,23 +43,24 @@ export type Category = {
 }
 
 const categorySchema = z.object({
+  id: z.string().optional(),
   nameEn: z
     .string()
-    .min(2, {
-      message: "English name must be at least 2 characters.",
+    .min(3, {
+      message: "Name must be at least 3 characters.",
     })
     .max(50, {
       message: "English name must not be longer than 50 characters.",
     }),
   nameAr: z
     .string()
-    .min(2, {
-      message: "Arabic name must be at least 2 characters.",
+    .min(3, {
+      message: "Arabic name must be at least 3 characters.",
     })
     .max(50, {
       message: "Arabic name must not be longer than 50 characters.",
     }),
-  iconName: z.string().min(1, "Icon is required"),
+  iconName: z.string().optional(),
   parentId: z.string().nullable(),
   sortOrder: z.number().int().default(0),
 })
@@ -108,6 +109,7 @@ function CategoryForm({
   const form = useForm<CategoryFormValues>({
     resolver: zodResolver(categorySchema),
     defaultValues: initialData || {
+      id: "",
       nameEn: "",
       nameAr: "",
       iconName: "",
