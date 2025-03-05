@@ -34,6 +34,14 @@ type CategoryData = {
   iconName: string
   parentId: string | null
   sortOrder: number
+  createdAt: string
+  updatedAt: string
+  _count: {
+    children: number
+    subcategories: number
+    prompts: number
+    promptCategories: number
+  }
 }
 
 type EditCategoryProps = {
