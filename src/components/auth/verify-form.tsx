@@ -16,6 +16,18 @@ export function VerifyForm({ email = '', locale = 'en' }: VerifyFormProps) {
   const [code, setCode] = useState('');
   const router = useRouter();
   const { toast } = useToast();
+  const isRtl = locale === 'ar';
+
+  const translations = {
+    placeholder: locale === 'ar' ? 'أدخل رمز التحقق' : 'Enter verification code',
+    verifying: locale === 'ar' ? 'جاري التحقق...' : 'Verifying...',
+    verify: locale === 'ar' ? 'تحقق من البريد الإلكتروني' : 'Verify Email',
+    successTitle: locale === 'ar' ? 'تم بنجاح' : 'Success',
+    successMessage: locale === 'ar' ? 'تم التحقق من البريد الإلكتروني بنجاح' : 'Email verified successfully',
+    errorTitle: locale === 'ar' ? 'خطأ' : 'Error',
+    errorMessage: locale === 'ar' ? 'فشل التحقق من البريد الإلكتروني' : 'Failed to verify email',
+    invalidCode: locale === 'ar' ? 'رمز التحقق غير صالح' : 'Invalid verification code'
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,19 +42,19 @@ export function VerifyForm({ email = '', locale = 'en' }: VerifyFormProps) {
       });
 
       if (!response.ok) {
-        throw new Error('Invalid verification code');
+        throw new Error(translations.invalidCode);
       }
 
       toast({
-        title: 'Success',
-        description: 'Email verified successfully',
+        title: translations.successTitle,
+        description: translations.successMessage,
       });
 
-      router.push('/auth/login');
+      router.push(`/${locale}/auth/login`);
     } catch {
       toast({
-        title: 'Error',
-        description: 'Failed to verify email',
+        title: translations.errorTitle,
+        description: translations.errorMessage,
         variant: 'destructive',
       });
     } finally {
@@ -55,14 +67,16 @@ export function VerifyForm({ email = '', locale = 'en' }: VerifyFormProps) {
       <div className="space-y-2">
         <Input
           type="text"
-          placeholder="Enter verification code"
+          placeholder={translations.placeholder}
           value={code}
           onChange={(e) => setCode(e.target.value)}
           disabled={isLoading}
+          dir={isRtl ? "rtl" : "ltr"}
+          className={isRtl ? "text-right" : "text-left"}
         />
       </div>
       <Button type="submit" className="w-full" disabled={isLoading}>
-        {isLoading ? 'Verifying...' : 'Verify Email'}
+        {isLoading ? translations.verifying : translations.verify}
       </Button>
     </form>
   );
