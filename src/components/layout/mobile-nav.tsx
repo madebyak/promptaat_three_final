@@ -7,6 +7,7 @@ import { DynamicIcon } from 'lucide-react/dynamic'
 import { cn } from '@/lib/utils'
 import { Category as BaseCategory } from '@/types/prompts'
 import { AppSidebar } from './app-sidebar'
+import Link from 'next/link'
 
 // Extend the base Category interface with additional properties needed
 interface Category extends BaseCategory {
@@ -86,6 +87,21 @@ export function MobileNav({
           </SheetContent>
         </Sheet>
       </div>
+      <nav className="fixed bottom-0 left-0 right-0 z-30 flex h-16 items-center justify-around border-t border-light-grey-light bg-white-pure dark:border-dark-grey dark:bg-black-main md:hidden">
+        {items.map((item) => (
+          <Link
+            key={item.href}
+            href={item.href}
+            className="flex flex-col items-center justify-center text-sm text-light-grey hover:text-accent-purple"
+          >
+            {item.icon && (
+              <item.icon className="h-5 w-5" />
+            )}
+            <span>{item.label}</span>
+          </Link>
+        ))}
+        {children}
+      </nav>
     </nav>
   )
 }
