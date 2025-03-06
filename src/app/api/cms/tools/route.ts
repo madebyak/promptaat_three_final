@@ -12,6 +12,15 @@ const toolSchema = z.object({
   isPublished: z.boolean().optional(),
 })
 
+type ToolData = {
+  id: string
+  name: string
+  description: string | null
+  iconName: string | null
+  createdAt: string
+  updatedAt: string
+}
+
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
@@ -44,7 +53,7 @@ export async function GET(request: NextRequest) {
         skip: (page - 1) * limit,
         take: limit,
         orderBy: { createdAt: "desc" },
-      }),
+      }) as Promise<ToolData[]>,
       prisma.tool.count({ where }),
     ])
 

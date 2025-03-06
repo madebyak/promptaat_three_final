@@ -16,11 +16,19 @@ interface Category extends BaseCategory {
   sortOrder: number;
 }
 
+type NavigationItem = {
+  href: string
+  label: string
+  icon?: React.ComponentType<{ className?: string }>
+}
+
 interface MobileNavProps {
   categories: Category[]
   locale: string
   activeCategory: string | null
   onCategoryClick: (categoryId: string | null) => void
+  items: NavigationItem[]
+  children?: React.ReactNode
 }
 
 export function MobileNav({
@@ -28,6 +36,8 @@ export function MobileNav({
   locale,
   activeCategory,
   onCategoryClick,
+  items,
+  children,
 }: MobileNavProps) {
   const isRTL = locale === 'ar'
 
@@ -47,7 +57,7 @@ export function MobileNav({
           >
             {category.iconName && (
               <DynamicIcon 
-                name={category.iconName as any}
+                name={category.iconName}
                 className="h-5 w-5"
                 aria-label={`${category.name} icon`}
               />

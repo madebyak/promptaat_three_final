@@ -40,6 +40,26 @@ interface ErrorResponse {
   status: number;
 }
 
+type PromptData = {
+  id: string;
+  titleEn: string;
+  titleAr: string;
+  isPro: boolean;
+  createdAt: string;
+  updatedAt: string;
+  copyCount: number;
+  category: {
+    id: string;
+    nameEn: string;
+    nameAr: string;
+  } | null;
+  subcategory: {
+    id: string;
+    nameEn: string;
+    nameAr: string;
+  } | null;
+};
+
 export async function GET(request: NextRequest) {
   try {
     // Get current admin
@@ -146,7 +166,7 @@ export async function GET(request: NextRequest) {
     ]);
 
     // Transform the data to a more usable format
-    const transformedPrompts = prompts.map((prompt) => {
+    const transformedPrompts: PromptData[] = prompts.map((prompt) => {
       const firstCategory = prompt.categories[0];
 
       return {
@@ -160,14 +180,14 @@ export async function GET(request: NextRequest) {
         category: firstCategory
           ? {
               id: firstCategory.category.id,
-              name: firstCategory.category.nameEn,
+              nameEn: firstCategory.category.nameEn,
               nameAr: firstCategory.category.nameAr,
             }
           : null,
         subcategory: firstCategory
           ? {
               id: firstCategory.subcategory.id,
-              name: firstCategory.subcategory.nameEn,
+              nameEn: firstCategory.subcategory.nameEn,
               nameAr: firstCategory.subcategory.nameAr,
             }
           : null,

@@ -2,6 +2,29 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getCurrentAdmin } from '@/lib/cms/auth/server-auth';
 
+type CategoryData = {
+  id: string
+  nameEn: string
+  nameAr: string
+  iconName: string
+  parentId: string | null
+  sortOrder: number
+  createdAt: string
+  updatedAt: string
+  _count: {
+    children: number
+    subcategories: number
+    prompts: number
+    promptCategories: number
+  }
+  parent: {
+    id: string
+    nameEn: string
+    nameAr: string
+  }
+  children: CategoryData[]
+}
+
 // GET all categories with proper hierarchy
 export async function GET(request: NextRequest) {
   try {
@@ -78,7 +101,7 @@ export async function GET(request: NextRequest) {
           },
         },
       },
-    });
+    }) as CategoryData[];
 
     return NextResponse.json({
       success: true,

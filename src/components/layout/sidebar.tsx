@@ -33,9 +33,17 @@ interface Category extends BaseCategory {
   subcategories?: Category[];
 }
 
+type NavigationItem = {
+  href: string
+  label: string
+  icon?: React.ComponentType<{ className?: string }>
+}
+
 interface SidebarProps {
   locale: string
   className?: string
+  items: NavigationItem[]
+  children?: React.ReactNode
 }
 
 interface APIResponse {
@@ -45,7 +53,7 @@ interface APIResponse {
   error?: string
 }
 
-export function Sidebar({ locale, className }: SidebarProps) {
+export function Sidebar({ locale, className, items, children }: SidebarProps) {
   const router = useRouter()
   const pathname = usePathname()
   const { theme } = useTheme()

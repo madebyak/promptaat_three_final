@@ -17,6 +17,16 @@ import { cn } from '@/lib/utils'
 import { useTheme } from 'next-themes'
 import { useState } from 'react'
 
+type Category = {
+  id: string
+  nameEn: string
+  nameAr: string
+  iconName: string
+  parentId: string | null
+  sortOrder: number
+  children: Category[]
+}
+
 interface CategoryItem extends Category {
   iconName?: string;
   subcategories?: CategoryItem[];
