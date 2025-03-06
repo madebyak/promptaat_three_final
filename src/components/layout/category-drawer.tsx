@@ -29,7 +29,7 @@ interface CategoryDrawerProps {
   categories: CategoryItem[]
   activeCategory: string | null
   onCategoryClick: (categoryId: string) => void
-  onSubcategoryClick?: (categoryId: string) => void
+  onSubcategoryClick?: (categoryId: string, subcategoryId: string, e: React.MouseEvent) => void
   locale: string
   isRTL: boolean
 }
