@@ -28,8 +28,8 @@ export default async function CMSLayout({
   const currentLocale = locale || 'en';
   
   if (!session?.user) {
-    // Redirect to the localized auth login page
-    redirect(`/${currentLocale}/auth/login?callbackUrl=/cms/dashboard`)
+    // Redirect to the CMS auth login page
+    redirect(`/cms/auth/login?callbackUrl=/cms/dashboard`)
   }
 
   return (
