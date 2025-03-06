@@ -58,9 +58,9 @@ export function MobileNav({
           >
             {category.iconName && (
               <DynamicIcon 
-                name={category.iconName}
+                name={category.iconName as any}
                 className="h-5 w-5"
-                aria-label={`${category.name} icon`}
+                aria-label={`${locale === 'en' ? category.nameEn : category.nameAr} icon`}
               />
             )}
           </Button>
