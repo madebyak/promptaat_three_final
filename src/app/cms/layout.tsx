@@ -4,7 +4,7 @@ import { Sidebar } from "@/components/layout/sidebar"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth/options"
 import { redirect } from "next/navigation"
-import { LayoutDashboard, MessageSquare, FolderTree, Tool, Users } from "@/components/icons"
+import { LayoutDashboard, MessageSquare, FolderTree, Tool, Users } from "lucide-react"
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("CMS")
