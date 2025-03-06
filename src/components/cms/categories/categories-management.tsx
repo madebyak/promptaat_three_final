@@ -160,6 +160,11 @@ function SortableCategoryRow({
   onSortOrderChange,
   queryClient,
 }: SortableCategoryRowProps) {
+  const { data: categories = [] } = useQuery({
+    queryKey: ['cms-categories'],
+    queryFn: fetchCategories,
+  })
+
   const {
     attributes,
     listeners,
@@ -179,8 +184,8 @@ function SortableCategoryRow({
   }
 
   const truncateId = (id: string) => {
-    return id.length > 8 ? `${id.substring(0, 8)}...` : id;
-  };
+    return id.length > 8 ? `${id.substring(0, 8)}...` : id
+  }
 
   return (
     <TableRow 
@@ -194,37 +199,21 @@ function SortableCategoryRow({
     >
       <TableCell>
         <div className="flex items-center space-x-2">
-          {hasChildren && (
-            <button 
-              onClick={() => onToggleExpand(category.id)}
-              className="p-1 rounded-full hover:bg-gray-200"
-              aria-label={isExpanded ? "Collapse category" : "Expand category"}
-            >
-              {isExpanded ? (
-                <ChevronDown className="h-4 w-4 text-gray-600" aria-hidden="true" />
-              ) : (
-                <ChevronRight className="h-4 w-4 text-gray-600" aria-hidden="true" />
-              )}
-            </button>
-          )}
-          {!hasChildren && <div className="w-6" />}
-          <div className="flex items-center space-x-2">
-            <div 
-              {...attributes} 
-              {...listeners}
-              className="cursor-grab active:cursor-grabbing"
-              aria-label="Drag to reorder"
-            >
-              <GripVertical className="h-4 w-4 text-gray-400" aria-hidden="true" />
-            </div>
-            <Input
-              type="number"
-              value={category.sortOrder}
-              onChange={(e) => onSortOrderChange(category.id, parseInt(e.target.value))}
-              className="w-16 h-8 text-sm"
-              aria-label="Sort order"
-            />
+          <div {...attributes} {...listeners}>
+            <GripVertical className="h-4 w-4 cursor-grab" />
           </div>
+          <button
+            onClick={() => onToggleExpand(category.id)}
+            className="p-0.5 hover:bg-gray-100 rounded-sm"
+          >
+            {hasChildren && (
+              <ChevronRight
+                className={`h-4 w-4 transition-transform ${
+                  isExpanded ? "rotate-90" : ""
+                }`}
+              />
+            )}
+          </button>
         </div>
       </TableCell>
       <TableCell>
@@ -235,25 +224,21 @@ function SortableCategoryRow({
           role="button"
           aria-label="Copy category ID"
         >
-          <span className="text-xs text-gray-600">{truncateId(category.id)}</span>
-          {copiedId === category.id ? (
-            <Check className="h-3.5 w-3.5 text-green-500" aria-hidden="true" />
-          ) : (
-            <Copy className="h-3.5 w-3.5 text-gray-400" aria-hidden="true" />
+          <span className="text-xs text-gray-500">
+            {truncateId(category.id)}
+          </span>
+          {copiedId === category.id && (
+            <Check className="h-3 w-3 text-green-500" />
           )}
         </div>
       </TableCell>
-      <TableCell className="font-medium">
-        <div style={{ paddingLeft: `${level * 16}px` }}>
-          {category.nameEn}
-        </div>
-      </TableCell>
+      <TableCell>{category.nameEn}</TableCell>
       <TableCell>{category.nameAr}</TableCell>
       <TableCell>{category.iconName}</TableCell>
       <TableCell>
         {category.parentId ? (
           <span className="text-gray-600">
-            {categoriesData.find((c: Category) => c.id === category.parentId)?.nameEn}
+            {categories.find((c: Category) => c.id === category.parentId)?.nameEn}
           </span>
         ) : (
           <span className="text-gray-400">-</span>
