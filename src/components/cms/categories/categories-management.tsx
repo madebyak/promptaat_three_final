@@ -253,7 +253,7 @@ function SortableCategoryRow({
       <TableCell>
         {category.parentId ? (
           <span className="text-gray-600">
-            {expandedCategories.find((c: Category) => c.id === category.parentId)?.nameEn}
+            {categoriesData.find((c: Category) => c.id === category.parentId)?.nameEn}
           </span>
         ) : (
           <span className="text-gray-400">-</span>
@@ -468,7 +468,9 @@ function CategoriesManagement() {
                     {organizedCategories.map((category) => (
                       <React.Fragment key={category.id}>
                         <SortableCategoryRow
+                          key={category.id}
                           category={category}
+                          level={0}
                           onToggleExpand={toggleCategoryExpansion}
                           isExpanded={expandedCategories.has(category.id)}
                           expandedCategories={expandedCategories}
