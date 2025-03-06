@@ -67,7 +67,7 @@ function CategoryDrawer({
               >
                 {category.iconName && (
                   <DynamicIcon
-                    name={category.iconName}
+                    name={category.iconName as any}
                     className="mr-2 h-4 w-4"
                   />
                 )}
