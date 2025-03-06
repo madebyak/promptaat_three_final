@@ -454,7 +454,7 @@ export function Sidebar({ locale, className, items, children }: SidebarProps) {
 
       {/* Mobile Drawer */}
       <CategoryDrawer
-        categories={categories}
+        categories={categories as any}
         activeCategory={activeCategory}
         onCategoryClick={handleCategoryClick}
         onSubcategoryClick={handleSubcategoryClick}

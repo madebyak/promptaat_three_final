@@ -27,20 +27,26 @@ type CategoryItem = {
 
 interface CategoryDrawerProps {
   categories: CategoryItem[]
-  onCategorySelect: (categoryId: string) => void
-  selectedCategoryId?: string
+  activeCategory: string | null
+  onCategoryClick: (categoryId: string) => void
+  onSubcategoryClick?: (categoryId: string) => void
+  locale: string
+  isRTL: boolean
 }
 
 function CategoryDrawer({
   categories,
-  onCategorySelect,
-  selectedCategoryId,
+  activeCategory,
+  onCategoryClick,
+  onSubcategoryClick,
+  locale,
+  isRTL,
 }: CategoryDrawerProps) {
   const { theme } = useTheme()
   const [isOpen, setIsOpen] = useState(false)
 
   const handleCategoryClick = (categoryId: string) => {
-    onCategorySelect(categoryId)
+    onCategoryClick(categoryId)
     setIsOpen(false)
   }
 
@@ -61,7 +67,7 @@ function CategoryDrawer({
             {categories.map((category) => (
               <Button
                 key={category.id}
-                variant={selectedCategoryId === category.id ? "secondary" : "ghost"}
+                variant={activeCategory === category.id ? "secondary" : "ghost"}
                 className="w-full justify-start"
                 onClick={() => handleCategoryClick(category.id)}
               >
