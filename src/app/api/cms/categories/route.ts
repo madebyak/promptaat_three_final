@@ -9,8 +9,8 @@ type CategoryData = {
   iconName: string
   parentId: string | null
   sortOrder: number
-  createdAt: string
-  updatedAt: string
+  createdAt: Date
+  updatedAt: Date
   _count: {
     children: number
     subcategories: number
@@ -21,7 +21,7 @@ type CategoryData = {
     id: string
     nameEn: string
     nameAr: string
-  }
+  } | null
   children: CategoryData[]
 }
 
@@ -78,8 +78,10 @@ export async function GET(request: NextRequest) {
       include: {
         _count: {
           select: {
-            promptCategories: true,
             children: true,
+            subcategories: true,
+            prompts: true,
+            promptCategories: true,
           },
         },
         parent: {
@@ -95,13 +97,16 @@ export async function GET(request: NextRequest) {
           include: {
             _count: {
               select: {
+                children: true,
+                subcategories: true,
+                prompts: true,
                 promptCategories: true,
               },
             },
           },
         },
       },
-    }) as CategoryData[];
+    }) as unknown as CategoryData[];
 
     return NextResponse.json({
       success: true,

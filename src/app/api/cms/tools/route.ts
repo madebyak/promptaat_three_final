@@ -17,8 +17,10 @@ type ToolData = {
   name: string
   description: string | null
   iconName: string | null
-  createdAt: string
-  updatedAt: string
+  createdAt: Date
+  updatedAt: Date
+  deletedAt: Date | null
+  iconUrl: string | null
 }
 
 export async function GET(request: NextRequest) {
@@ -53,22 +55,23 @@ export async function GET(request: NextRequest) {
         skip: (page - 1) * limit,
         take: limit,
         orderBy: { createdAt: "desc" },
-      }) as Promise<ToolData[]>,
+      }) as unknown as Promise<ToolData[]>,
       prisma.tool.count({ where }),
     ])
 
     return NextResponse.json({
-      tools,
+      data: tools,
       total,
       page,
-      totalPages: Math.ceil(total / limit),
+      limit,
     })
   } catch (error) {
+    if (error instanceof Error) {
+      console.error("Get tools error:", error)
+      return NextResponse.json({ error: error.message }, { status: 500 })
+    }
     console.error("Get tools error:", error)
-    return NextResponse.json(
-      { error: "Failed to fetch tools" },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'An unknown error occurred' }, { status: 500 })
   }
 }
 

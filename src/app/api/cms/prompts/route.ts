@@ -45,8 +45,8 @@ type PromptData = {
   titleEn: string;
   titleAr: string;
   isPro: boolean;
-  createdAt: string;
-  updatedAt: string;
+  createdAt: Date;
+  updatedAt: Date;
   copyCount: number;
   category: {
     id: string;
@@ -184,14 +184,14 @@ export async function GET(request: NextRequest) {
               nameAr: firstCategory.category.nameAr,
             }
           : null,
-        subcategory: firstCategory
+        subcategory: firstCategory?.subcategory
           ? {
               id: firstCategory.subcategory.id,
               nameEn: firstCategory.subcategory.nameEn,
               nameAr: firstCategory.subcategory.nameAr,
             }
           : null,
-      };
+      } as PromptData;
     });
 
     // Calculate pagination metadata
