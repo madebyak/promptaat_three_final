@@ -62,7 +62,12 @@ type Category = {
   updatedAt: string
   children?: Category[]
   subcategories?: Category[]
-  _count?: CategoryCount
+  _count: {
+    promptCategories: number
+    children: number
+    prompts: number
+    subcategories: number
+  }
 }
 
 type CategoryParent = {
@@ -273,7 +278,7 @@ function SortableCategoryRow({
       </TableCell>
       <TableCell className="text-xs text-gray-600">{formatDate(category.createdAt)}</TableCell>
       <TableCell className="text-xs text-gray-600">{formatDate(category.updatedAt)}</TableCell>
-      <TableCell>{category._count?.prompts || category._count?.promptCategories || 0}</TableCell>
+      <TableCell>{category._count.prompts}</TableCell>
       <TableCell>
         <div className="flex space-x-2">
           <EditCategory 
