@@ -33,15 +33,6 @@ import { Spinner } from "@/components/ui/spinner"
 import IconInput from "./icon-input"
 import { useTranslations } from "next-intl"
 
-export type Category = {
-  id: string
-  nameEn: string
-  nameAr: string
-  parentId: string | null
-  order: number
-  iconName: string
-}
-
 const categorySchema = z.object({
   id: z.string().optional(),
   nameEn: z
@@ -73,6 +64,20 @@ type CategoryFormProps = {
   isSubmitting?: boolean
 }
 
+type Category = {
+  id: string
+  nameEn: string
+  nameAr: string
+  parentId: string | null
+  order: number
+  iconName: string
+}
+
+type FormSectionProps = {
+  title: string
+  children: React.ReactNode
+}
+
 async function fetchCategories(): Promise<Category[]> {
   const response = await fetch("/api/cms/categories")
   if (!response.ok) {
@@ -80,11 +85,6 @@ async function fetchCategories(): Promise<Category[]> {
   }
   const data = await response.json()
   return data.data || []
-}
-
-type FormSectionProps = {
-  title: string
-  children: React.ReactNode
 }
 
 function FormSection({ title, children }: FormSectionProps) {
@@ -324,5 +324,5 @@ function CategoryForm({
   )
 }
 
-export type { CategoryFormValues }
+export type { CategoryFormValues, CategoryFormProps, Category }
 export default CategoryForm
