@@ -11,7 +11,7 @@ import { useDebounce } from '@/hooks/use-debounce'
 import { AlertCircle, ChevronDown, ChevronLeft, ChevronRight, Search } from 'lucide-react'
 import { DynamicIcon } from 'lucide-react/dynamic'
 import { SidebarSkeleton } from './sidebar-skeleton'
-import { CategoryDrawer } from './category-drawer'
+import CategoryDrawer from './category-drawer'
 import { Category as BaseCategory } from '@/types/prompts'
 
 // Extend the base Category interface with additional properties needed for the sidebar

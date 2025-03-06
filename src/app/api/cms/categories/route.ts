@@ -13,7 +13,6 @@ type CategoryData = {
   updatedAt: Date
   _count: {
     children: number
-    subcategories: number
     prompts: number
     promptCategories: number
   }
@@ -79,7 +78,6 @@ export async function GET(request: NextRequest) {
         _count: {
           select: {
             children: true,
-            subcategories: true,
             prompts: true,
             promptCategories: true,
           },
@@ -98,7 +96,6 @@ export async function GET(request: NextRequest) {
             _count: {
               select: {
                 children: true,
-                subcategories: true,
                 prompts: true,
                 promptCategories: true,
               },
