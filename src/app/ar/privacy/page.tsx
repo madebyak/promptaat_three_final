@@ -53,6 +53,13 @@ export default function PrivacyPage() {
           </p>
         </section>
 
+        <section className="space-y-4">
+          <h2 className="text-2xl font-semibold">3. استخدام معلوماتك</h2>
+          <p className="mb-4">
+            تم تصميم موقع &quot;بروبتات&quot; لمساعدتك في العثور على أفضل الأدوات والموارد.
+          </p>
+        </section>
+
         {/* Additional sections would be added here */}
         
         <section className="space-y-4">

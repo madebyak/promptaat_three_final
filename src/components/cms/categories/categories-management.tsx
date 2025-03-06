@@ -70,30 +70,19 @@ type Category = {
   }
 }
 
-type CategoryParent = {
-  id: string
-  nameEn: string
-  nameAr: string
-}
-
-type CategoryCount = {
-  promptCategories: number
-  children: number
-  prompts?: number
-  subcategories?: number
+type QueryClient = {
+  invalidateQueries: (options: { queryKey: string[] }) => void
 }
 
 type SortableCategoryRowProps = {
   category: Category
-  level?: number
+  level: number
   onToggleExpand: (id: string) => void
   isExpanded: boolean
-  onCopyId: (id: string) => void
+  expandedCategories: Set<string>
   copiedId: string | null
   onSortOrderChange: (id: string, order: number) => void
-  queryClient: any
-  categoriesData: Category[]
-  children?: React.ReactNode
+  queryClient: QueryClient
 }
 
 async function fetchCategories(): Promise<Category[]> {
@@ -161,17 +150,15 @@ function organizeCategories(categories: Category[]): Category[] {
   return topLevelCategories;
 }
 
-function SortableCategoryRow({ 
-  category, 
-  level = 0, 
-  onToggleExpand, 
-  isExpanded, 
-  onCopyId, 
+function SortableCategoryRow({
+  category,
+  level,
+  onToggleExpand,
+  isExpanded,
+  expandedCategories,
   copiedId, 
   onSortOrderChange,
   queryClient,
-  categoriesData,
-  children
 }: SortableCategoryRowProps) {
   const {
     attributes,
@@ -179,25 +166,17 @@ function SortableCategoryRow({
     setNodeRef,
     transform,
     transition,
-    isDragging,
-  } = useSortable({ id: category.id });
+  } = useSortable({ id: category.id })
 
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-  };
-
-  const hasChildren = category.children && category.children.length > 0;
-  const hasSubcategories = category.subcategories && category.subcategories.length > 0;
+  const hasChildren = category.children && category.children.length > 0
   
   const formatDate = (dateString: string) => {
     try {
-      return format(new Date(dateString), 'MMM dd, yyyy HH:mm');
-    } catch (error) {
-      return 'Invalid date';
+      return new Date(dateString).toLocaleDateString()
+    } catch {
+      return dateString
     }
-  };
+  }
 
   const truncateId = (id: string) => {
     return id.length > 8 ? `${id.substring(0, 8)}...` : id;
@@ -206,8 +185,12 @@ function SortableCategoryRow({
   return (
     <TableRow 
       ref={setNodeRef} 
-      style={style} 
-      className={`${level > 0 ? "bg-gray-50" : ""} ${isDragging ? "z-10" : ""}`}
+      style={{
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: 0.5,
+      }} 
+      className={`${level > 0 ? "bg-gray-50" : ""}`}
     >
       <TableCell>
         <div className="flex items-center space-x-2">
@@ -247,7 +230,7 @@ function SortableCategoryRow({
       <TableCell>
         <div 
           className="flex items-center space-x-1 cursor-pointer"
-          onClick={() => onCopyId(category.id)}
+          onClick={() => onToggleExpand(category.id)}
           title={category.id}
           role="button"
           aria-label="Copy category ID"
@@ -270,7 +253,7 @@ function SortableCategoryRow({
       <TableCell>
         {category.parentId ? (
           <span className="text-gray-600">
-            {categoriesData.find((c: Category) => c.id === category.parentId)?.nameEn}
+            {expandedCategories.find((c: Category) => c.id === category.parentId)?.nameEn}
           </span>
         ) : (
           <span className="text-gray-400">-</span>
@@ -315,9 +298,7 @@ function CategoriesManagement() {
 
   const { 
     data: categoriesData = [], 
-    isLoading, 
-    isError,
-    error 
+    isLoading 
   } = useQuery({
     queryKey: ['cms-categories'],
     queryFn: fetchCategories,
@@ -329,9 +310,6 @@ function CategoriesManagement() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cms-categories'] });
     },
-    onError: (error) => {
-      toast.error(`Failed to update sort order: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    },
   });
 
   const { mutate: batchReorderCategories } = useMutation({
@@ -340,9 +318,6 @@ function CategoriesManagement() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cms-categories'] });
       toast.success("Categories reordered successfully");
-    },
-    onError: (error) => {
-      toast.error(`Failed to reorder categories: ${error instanceof Error ? error.message : 'Unknown error'}`);
     },
   });
 
@@ -423,14 +398,6 @@ function CategoriesManagement() {
     );
   }
 
-  if (isError) {
-    return (
-      <div className="p-8 text-center text-red-500">
-        Error: {error instanceof Error ? error.message : 'Failed to load categories'}
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-4">
       <Card>
@@ -504,11 +471,10 @@ function CategoriesManagement() {
                           category={category}
                           onToggleExpand={toggleCategoryExpansion}
                           isExpanded={expandedCategories.has(category.id)}
-                          onCopyId={handleCopyId}
+                          expandedCategories={expandedCategories}
                           copiedId={copiedId}
                           onSortOrderChange={handleSortOrderChange}
                           queryClient={queryClient}
-                          categoriesData={categoriesData}
                         />
                         {expandedCategories.has(category.id) && category.children?.map((child) => (
                           <SortableCategoryRow
@@ -517,11 +483,10 @@ function CategoriesManagement() {
                             level={1}
                             onToggleExpand={toggleCategoryExpansion}
                             isExpanded={expandedCategories.has(child.id)}
-                            onCopyId={handleCopyId}
+                            expandedCategories={expandedCategories}
                             copiedId={copiedId}
                             onSortOrderChange={handleSortOrderChange}
                             queryClient={queryClient}
-                            categoriesData={categoriesData}
                           />
                         ))}
                       </React.Fragment>

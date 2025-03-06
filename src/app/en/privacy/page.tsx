@@ -53,6 +53,13 @@ export default function PrivacyPage() {
           </p>
         </section>
 
+        <section className="space-y-4">
+          <h2 className="text-2xl font-semibold">3. Use of Your Information</h2>
+          <p className="mb-4">
+            The &quot;Promptaat&quot; website is designed to help you find the best tools and resources.
+          </p>
+        </section>
+
         {/* Additional sections would be added here */}
         
         <section className="space-y-4">

@@ -57,8 +57,7 @@ function DeleteCategory({ category, onSuccess }: DeleteCategoryProps) {
         <AlertDialogHeader>
           <AlertDialogTitle>Delete Category</AlertDialogTitle>
           <AlertDialogDescription>
-            Are you sure you want to delete the category "{category.nameEn}"? This action
-            cannot be undone.
+            Are you sure you want to delete &ldquo;{category.nameEn}&rdquo;? This action cannot be undone.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
