@@ -4,7 +4,7 @@ import { Sidebar } from "@/components/layout/sidebar"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth/options"
 import { redirect } from "next/navigation"
-import { LayoutDashboard, MessageSquare, FolderTree, Tool, Users } from "lucide-react"
+import { LayoutDashboard, MessageSquare, FolderTree, Wrench, Users } from "lucide-react"
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("CMS")
@@ -55,7 +55,7 @@ export default async function CMSLayout({
           {
             href: "/cms/tools",
             label: "Tools",
-            icon: Tool,
+            icon: Wrench,
           },
           {
             href: "/cms/users",
