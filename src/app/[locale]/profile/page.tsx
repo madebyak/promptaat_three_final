@@ -23,13 +23,14 @@ export default async function ProfilePage({
   try {
     debugLog('Rendering profile page, locale:', locale);
     
-    // Get translations - without fallback object that causes TypeScript errors
+    // Get translations with proper fallback handling
     let t;
     try {
       t = await getTranslations("Profile");
     } catch (err) {
       debugLog('Error getting translations:', err);
-      // We'll handle this in the error catch block
+      // Since we can't properly mock the translation function, we'll throw an error
+      // that will be caught by our main try/catch block
       throw new Error('Failed to load translations');
     }
     
