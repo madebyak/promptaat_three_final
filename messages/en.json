@@ -15,5 +15,32 @@
   "CMS": {
     "title": "Admin Dashboard",
     "description": "Manage your website content"
+  },
+  "Catalogs": {
+    "createCatalog": "Create Catalog",
+    "createCatalogDescription": "Create a new catalog to organize your bookmarked prompts.",
+    "catalogName": "Catalog Name",
+    "catalogNamePlaceholder": "Enter catalog name",
+    "description": "Description (optional)",
+    "descriptionPlaceholder": "Enter catalog description",
+    "cancel": "Cancel",
+    "create": "Create",
+    "creating": "Creating...",
+    "addToCatalog": "Add to Catalog",
+    "addToCatalogDescription": "Add this prompt to one or more of your catalogs.",
+    "searchCatalogs": "Search catalogs...",
+    "noCatalogs": "You don't have any catalogs yet.",
+    "noResults": "No catalogs found.",
+    "done": "Done",
+    "error": "Error",
+    "success": "Success",
+    "nameRequired": "Catalog name is required",
+    "catalogCreated": "Catalog created successfully",
+    "createFailed": "Failed to create catalog",
+    "fetchFailed": "Failed to fetch catalogs",
+    "addedToCatalog": "Added to catalog",
+    "removedFromCatalog": "Removed from catalog",
+    "addToCatalogFailed": "Failed to add to catalog",
+    "removeFromCatalogFailed": "Failed to remove from catalog"
   }
 }

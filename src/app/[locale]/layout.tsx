@@ -10,6 +10,7 @@ import { usePathname } from 'next/navigation'
 import { useSession, SessionProvider } from 'next-auth/react'
 import { VerificationBanner } from '@/components/auth/verification-banner'
 import { UserAccountLayout } from '@/components/layout/user-account-layout'
+import { NextIntlClientProvider } from 'next-intl'
 
 export default function LocaleLayout({
   children,
@@ -29,24 +30,42 @@ export default function LocaleLayout({
   const defaultDirection = locale === 'ar' ? 'rtl' : 'ltr'
   const isRTL = locale === 'ar'
   
+  // Load messages for the current locale
+  const getMessages = async () => {
+    try {
+      // Dynamic import of the messages for the current locale
+      // Messages are in the root directory, not in src
+      return (await import(`../../../messages/${locale}.json`)).default;
+    } catch (error) {
+      console.error(`Failed to load messages for locale: ${locale}`, error);
+      // Return empty messages as fallback
+      return {};
+    }
+  };
+  
+  // Use React.use to handle the Promise
+  const messages = React.use(getMessages());
+  
   return (
     <SessionProvider>
-      <ThemeProvider defaultDirection={defaultDirection}>
-        <QueryProvider>
-          <div className="relative min-h-screen bg-white-pure dark:bg-black-main">
-            {!isAuthRoute && (
-              <MainLayout
-                locale={locale}
-                isRTL={isRTL}
-                isUserAccountRoute={isUserAccountRoute}
-              >
-                {children}
-              </MainLayout>
-            )}
-            {isAuthRoute && children}
-          </div>
-        </QueryProvider>
-      </ThemeProvider>
+      <NextIntlClientProvider locale={locale} messages={messages}>
+        <ThemeProvider defaultDirection={defaultDirection}>
+          <QueryProvider>
+            <div className="relative min-h-screen bg-white-pure dark:bg-black-main">
+              {!isAuthRoute && (
+                <MainLayout
+                  locale={locale}
+                  isRTL={isRTL}
+                  isUserAccountRoute={isUserAccountRoute}
+                >
+                  {children}
+                </MainLayout>
+              )}
+              {isAuthRoute && children}
+            </div>
+          </QueryProvider>
+        </ThemeProvider>
+      </NextIntlClientProvider>
     </SessionProvider>
   )
 }

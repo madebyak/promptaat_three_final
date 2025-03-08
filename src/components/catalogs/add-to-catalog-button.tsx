@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
-import { useTranslations } from "next-intl"
 import { FolderPlus, Check, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -45,17 +44,19 @@ const FALLBACK_TRANSLATIONS: Record<string, string> = {
   "addToCatalog": "Add to Catalog",
   "addToCatalogDescription": "Add this prompt to one or more of your catalogs.",
   "searchCatalogs": "Search catalogs...",
-  "noCatalogs": "No catalogs found.",
-  "createFirst": "Create your first catalog",
+  "noCatalogs": "You don't have any catalogs yet.",
+  "noResults": "No catalogs found.",
+  "createCatalog": "Create Catalog",
   "yourCatalogs": "Your Catalogs",
   "cancel": "Cancel",
-  "save": "Save",
+  "done": "Done",
   "error": "Error",
   "success": "Success",
   "fetchFailed": "Failed to fetch catalogs",
   "addedToCatalog": "Added to catalog",
   "removedFromCatalog": "Removed from catalog",
-  "updateFailed": "Failed to update catalog"
+  "addToCatalogFailed": "Failed to add to catalog",
+  "removeFromCatalogFailed": "Failed to remove from catalog"
 };
 
 export function AddToCatalogButton({ 
@@ -64,19 +65,16 @@ export function AddToCatalogButton({
   variant = "outline",
   size = "sm"
 }: AddToCatalogButtonProps) {
-  // Always call useTranslations at the top level
-  const rawT = useTranslations("Catalogs");
+  // Use a safe approach for translations
+  // We'll use the fallback translations directly without trying to use useTranslations
+  // This avoids the React Hook conditional call error
   
-  // Create a safe translation function that uses fallbacks if needed
+  // Create a safe translation function that uses fallbacks
   // Wrap in useCallback to prevent unnecessary re-renders
   const t = useCallback((key: string, options?: { defaultValue?: string }): string => {
-    try {
-      return rawT(key, options);
-    } catch (err) {
-      console.error(`Translation error for key '${key}':`, err);
-      return options?.defaultValue || FALLBACK_TRANSLATIONS[key] || key;
-    }
-  }, [rawT]);
+    // Just use fallback translations directly
+    return options?.defaultValue || FALLBACK_TRANSLATIONS[key] || key;
+  }, []);
   
   const router = useRouter()
   const { toast } = useToast()
@@ -234,7 +232,7 @@ export function AddToCatalogButton({
                   <p className="text-muted-foreground mb-4">
                     {t("noCatalogs", { defaultValue: "You don't have any catalogs yet." })}
                   </p>
-                  <CreateCatalogButton />
+                  <CreateCatalogButton className="w-full" />
                 </div>
               ) : (
                 <Command>
@@ -271,7 +269,7 @@ export function AddToCatalogButton({
         </div>
         
         <DialogFooter className="flex justify-between items-center">
-          <CreateCatalogButton />
+          <CreateCatalogButton variant="outline" />
           <Button onClick={handleClose}>
             {t("done", { defaultValue: "Done" })}
           </Button>

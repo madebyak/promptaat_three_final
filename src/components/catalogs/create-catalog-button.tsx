@@ -2,7 +2,6 @@
 
 import { useState, useCallback } from "react"
 import { useRouter } from "next/navigation"
-import { useTranslations } from "next-intl"
 import { PlusCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -21,13 +20,14 @@ import { useToast } from "@/components/ui/use-toast"
 
 interface CreateCatalogButtonProps {
   className?: string
+  variant?: "default" | "outline" | "secondary" | "ghost" | "link" | "destructive"
 }
 
 // Create fallback translations to use when the real translations fail
 const FALLBACK_TRANSLATIONS: Record<string, string> = {
   "createCatalog": "Create Catalog",
   "createCatalogDescription": "Create a new catalog to organize your bookmarked prompts.",
-  "name": "Name",
+  "catalogName": "Catalog Name",
   "description": "Description (optional)",
   "cancel": "Cancel",
   "create": "Create",
@@ -35,23 +35,19 @@ const FALLBACK_TRANSLATIONS: Record<string, string> = {
   "success": "Success",
   "nameRequired": "Catalog name is required",
   "catalogCreated": "Catalog created successfully",
-  "createFailed": "Failed to create catalog"
+  "createFailed": "Failed to create catalog",
+  "catalogNamePlaceholder": "Enter catalog name",
+  "descriptionPlaceholder": "Enter catalog description",
+  "creating": "Creating..."
 };
 
-export function CreateCatalogButton({ className }: CreateCatalogButtonProps) {
-  // Always call useTranslations at the top level
-  const rawT = useTranslations("Catalogs");
-  
-  // Create a safe translation function that uses fallbacks if needed
-  // Wrap in useCallback to prevent unnecessary re-renders
+export function CreateCatalogButton({ className, variant = "default" }: CreateCatalogButtonProps) {
+  // Create a safe translation function that always uses fallbacks
+  // This avoids conditional hook calls which cause ESLint errors
   const t = useCallback((key: string, options?: { defaultValue?: string }): string => {
-    try {
-      return rawT(key, options);
-    } catch (err) {
-      console.error(`Translation error for key '${key}':`, err);
-      return options?.defaultValue || FALLBACK_TRANSLATIONS[key] || key;
-    }
-  }, [rawT]);
+    // Just use fallback translations directly to avoid any issues with missing context
+    return options?.defaultValue || FALLBACK_TRANSLATIONS[key] || key;
+  }, []);
   
   const router = useRouter()
   const { toast } = useToast()
@@ -113,7 +109,7 @@ export function CreateCatalogButton({ className }: CreateCatalogButtonProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className={className}>
+        <Button variant={variant} className={className}>
           <PlusCircle className="mr-2 h-4 w-4" />
           {t("createCatalog", { defaultValue: "Create Catalog" })}
         </Button>

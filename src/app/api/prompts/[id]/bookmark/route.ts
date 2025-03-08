@@ -2,11 +2,13 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma/client"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth/options"
+import { Prisma } from "@prisma/client"
 
 export async function POST(
   request: NextRequest,
 ) {
   try {
+    // Check authentication
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) {
       return NextResponse.json(
@@ -15,20 +17,43 @@ export async function POST(
       )
     }
 
-    // Extract ID from URL
-    const url = new URL(request.url)
-    const id = url.pathname.split('/')[4] // /api/prompts/[id]/bookmark
+    // Extract prompt ID from URL
+    const segments = new URL(request.url).pathname.split('/')
+    const promptsIndex = segments.findIndex(segment => segment === 'prompts')
+    let id = ''
+    
+    if (promptsIndex !== -1 && promptsIndex + 1 < segments.length) {
+      id = segments[promptsIndex + 1]
+    }
+    
+    console.log('Bookmark request for prompt ID:', id)
+    
+    if (!id) {
+      return NextResponse.json(
+        { error: "Invalid prompt ID" },
+        { status: 400 }
+      )
+    }
 
     // Check if prompt exists
-    const prompt = await prisma.prompt.findUnique({
-      where: { id },
-      select: { id: true }
-    })
+    try {
+      const prompt = await prisma.prompt.findUnique({
+        where: { id },
+        select: { id: true }
+      })
 
-    if (!prompt) {
+      if (!prompt) {
+        console.error(`Prompt not found with ID: ${id}`)
+        return NextResponse.json(
+          { error: "Prompt not found" },
+          { status: 404 }
+        )
+      }
+    } catch (error) {
+      console.error('Error checking prompt existence:', error)
       return NextResponse.json(
-        { error: "Prompt not found" },
-        { status: 404 }
+        { error: "Database error when checking prompt" },
+        { status: 500 }
       )
     }
 
@@ -71,6 +96,7 @@ export async function DELETE(
   request: NextRequest,
 ) {
   try {
+    // Check authentication
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) {
       return NextResponse.json(
@@ -79,21 +105,50 @@ export async function DELETE(
       )
     }
 
-    // Extract ID from URL
-    const url = new URL(request.url)
-    const id = url.pathname.split('/')[4] // /api/prompts/[id]/bookmark
+    // Extract prompt ID from URL
+    const segments = new URL(request.url).pathname.split('/')
+    const promptsIndex = segments.findIndex(segment => segment === 'prompts')
+    let id = ''
+    
+    if (promptsIndex !== -1 && promptsIndex + 1 < segments.length) {
+      id = segments[promptsIndex + 1]
+    }
+    
+    console.log('Unbookmark request for prompt ID:', id)
+    
+    if (!id) {
+      return NextResponse.json(
+        { error: "Invalid prompt ID" },
+        { status: 400 }
+      )
+    }
 
     // Delete bookmark
-    await prisma.userBookmark.delete({
-      where: {
-        userId_promptId: {
-          userId: session.user.id,
-          promptId: id
+    try {
+      await prisma.userBookmark.delete({
+        where: {
+          userId_promptId: {
+            userId: session.user.id,
+            promptId: id
+          }
+        }
+      })
+      return NextResponse.json({ message: "Bookmark removed successfully" })
+    } catch (error) {
+      // Handle Prisma errors
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        // P2025 is the "Record not found" error code in Prisma
+        if (error.code === 'P2025') {
+          return NextResponse.json({ message: "Bookmark already removed" })
         }
       }
-    })
-
-    return NextResponse.json({ message: "Bookmark removed successfully" })
+      
+      console.error('Error removing bookmark:', error)
+      return NextResponse.json(
+        { error: "Failed to remove bookmark" },
+        { status: 500 }
+      )
+    }
   } catch (error) {
     console.error("Remove bookmark error:", error)
     return NextResponse.json(

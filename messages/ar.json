@@ -15,5 +15,32 @@
   "CMS": {
     "title": "لوحة تحكم المسؤول",
     "description": "إدارة محتوى موقعك"
+  },
+  "Catalogs": {
+    "createCatalog": "إنشاء كتالوج",
+    "createCatalogDescription": "إنشاء كتالوج جديد لتنظيم البرومات المحفوظة.",
+    "catalogName": "اسم الكتالوج",
+    "catalogNamePlaceholder": "أدخل اسم الكتالوج",
+    "description": "الوصف (اختياري)",
+    "descriptionPlaceholder": "أدخل وصف الكتالوج",
+    "cancel": "إلغاء",
+    "create": "إنشاء",
+    "creating": "جاري الإنشاء...",
+    "addToCatalog": "إضافة إلى الكتالوج",
+    "addToCatalogDescription": "أضف هذا البروم إلى واحد أو أكثر من الكتالوجات الخاصة بك.",
+    "searchCatalogs": "البحث في الكتالوجات...",
+    "noCatalogs": "ليس لديك أي كتالوجات حتى الآن.",
+    "noResults": "لم يتم العثور على كتالوجات.",
+    "done": "تم",
+    "error": "خطأ",
+    "success": "نجاح",
+    "nameRequired": "اسم الكتالوج مطلوب",
+    "catalogCreated": "تم إنشاء الكتالوج بنجاح",
+    "createFailed": "فشل إنشاء الكتالوج",
+    "fetchFailed": "فشل جلب الكتالوجات",
+    "addedToCatalog": "تمت الإضافة إلى الكتالوج",
+    "removedFromCatalog": "تمت الإزالة من الكتالوج",
+    "addToCatalogFailed": "فشلت الإضافة إلى الكتالوج",
+    "removeFromCatalogFailed": "فشلت الإزالة من الكتالوج"
   }
 }

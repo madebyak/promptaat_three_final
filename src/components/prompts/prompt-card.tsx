@@ -125,6 +125,14 @@ export function PromptCard({
     
     try {
       setIsBookmarking(true)
+      
+      // Ensure we have a valid ID
+      if (!id) {
+        throw new Error('Invalid prompt ID')
+      }
+      
+      console.log('Toggling bookmark for prompt:', id)
+      
       const method = bookmarkStatus ? 'DELETE' : 'POST'
       const response = await fetch(`/api/prompts/${id}/bookmark`, {
         method,
@@ -133,9 +141,16 @@ export function PromptCard({
         },
       })
 
+      const responseData = await response.json()
+      
       if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Failed to update bookmark')
+        // Special case for 'already bookmarked' error - treat as success
+        if (responseData.error === "Prompt already bookmarked") {
+          console.log('Prompt was already bookmarked, treating as success')
+          setBookmarkStatus(true) // Ensure UI shows as bookmarked
+          return // Exit early without throwing error
+        }
+        throw new Error(responseData.error || 'Failed to update bookmark')
       }
 
       // Update local state
