@@ -16,10 +16,18 @@ import { CreateCatalogButton } from "@/components/catalogs/create-catalog-button
 import { CatalogList } from "@/components/catalogs/catalog-list"
 
 export async function generateMetadata(): Promise<Metadata> {
-  const t = await getTranslations("MyPrompts")
-  return {
-    title: t("title"),
-    description: t("description"),
+  try {
+    const t = await getTranslations("MyPrompts");
+    return {
+      title: t("title"),
+      description: t("description"),
+    };
+  } catch (err) {
+    console.error('[METADATA ERROR]', err);
+    return {
+      title: "My Prompts",
+      description: "Manage your prompts and catalogs",
+    };
   }
 }
 
@@ -32,6 +40,29 @@ function debugLog(message: string, data?: unknown) {
     console.log(`[MY-PROMPTS DEBUG] ${message} (Data could not be stringified)`);
   }
 }
+
+// Create a fallback translation function that won't throw errors
+const createFallbackTranslations = () => {
+  const fallbacks = {
+    "title": "My Prompts",
+    "description": "Manage your prompts and catalogs",
+    "myPrompts": "My Prompts",
+    "catalogs": "Catalogs",
+    "createPrompt": "Create Prompt",
+    "noPrompts": "You don't have any prompts yet",
+    "createYourFirst": "Create your first prompt",
+    "noCatalogs": "You don't have any catalogs yet",
+    "createCatalog": "Create Catalog",
+    "errorTitle": "Error Loading Prompts",
+    "errorDescription": "There was a problem loading your prompts",
+    "errorAlert": "Error",
+    "errorMessage": "We encountered an error retrieving your prompts. Please try refreshing the page."
+  };
+  
+  return (key: string, options?: { defaultValue?: string }) => {
+    return options?.defaultValue || fallbacks[key as keyof typeof fallbacks] || key;
+  };
+};
 
 export default async function MyPromptsPage({
   params: { locale = "en" }
@@ -47,8 +78,9 @@ export default async function MyPromptsPage({
       t = await getTranslations("MyPrompts");
       debugLog('Translations loaded successfully');
     } catch (err) {
-      debugLog('Error getting translations:', err);
-      throw new Error('Failed to load translations');
+      debugLog('Error getting translations, using fallbacks:', err);
+      // Use fallback translations instead of throwing an error
+      t = createFallbackTranslations();
     }
     
     // Get session with error handling

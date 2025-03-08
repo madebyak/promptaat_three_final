@@ -15,6 +15,19 @@ function debugLog(message: string, data?: unknown) {
   }
 }
 
+// Create a fallback translation function that won't throw errors
+const createFallbackTranslations = () => {
+  const fallbacks = {
+    "title": "Profile",
+    "name": "Name",
+    "email": "Email"
+  };
+  
+  return (key: string, options?: { defaultValue?: string }) => {
+    return options?.defaultValue || fallbacks[key as keyof typeof fallbacks] || key;
+  };
+};
+
 export default async function ProfilePage({
   params: { locale = "en" }
 }: {
@@ -27,11 +40,11 @@ export default async function ProfilePage({
     let t;
     try {
       t = await getTranslations("Profile");
+      debugLog('Translations loaded successfully');
     } catch (err) {
-      debugLog('Error getting translations:', err);
-      // Since we can't properly mock the translation function, we'll throw an error
-      // that will be caught by our main try/catch block
-      throw new Error('Failed to load translations');
+      debugLog('Error getting translations, using fallbacks:', err);
+      // Use fallback translations instead of throwing an error
+      t = createFallbackTranslations();
     }
     
     // Get session with error handling

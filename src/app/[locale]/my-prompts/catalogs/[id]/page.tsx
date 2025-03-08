@@ -24,6 +24,28 @@ function debugLog(message: string, data?: unknown) {
   }
 }
 
+// Create a fallback translation function that won't throw errors
+const createFallbackTranslations = () => {
+  const fallbacks = {
+    "catalog": "Catalog",
+    "catalogDescription": "View and manage your catalog",
+    "catalogNotFound": "Catalog Not Found",
+    "prompts": "Prompts",
+    "noCatalogPrompts": "This catalog doesn't have any prompts yet",
+    "addPrompts": "Add Prompts",
+    "editCatalog": "Edit Catalog",
+    "back": "Back",
+    "errorTitle": "Error Loading Catalog",
+    "errorDescription": "There was a problem loading your catalog",
+    "errorAlert": "Error",
+    "errorMessage": "We encountered an error retrieving your catalog data. Please try refreshing the page."
+  };
+  
+  return (key: string, options?: { defaultValue?: string }) => {
+    return options?.defaultValue || fallbacks[key as keyof typeof fallbacks] || key;
+  };
+};
+
 export async function generateMetadata({
   params,
 }: {
@@ -35,10 +57,9 @@ export async function generateMetadata({
     debugLog('Translations loaded for metadata');
   } catch (err) {
     console.error('[CATALOG METADATA ERROR]', err);
-    return {
-      title: "Catalog",
-      description: "View and manage your catalog",
-    };
+    // Use fallback translations
+    t = createFallbackTranslations();
+    debugLog('Using fallback translations for metadata');
   }
   
   try {
@@ -84,8 +105,9 @@ export default async function CatalogDetailPage({
       t = await getTranslations("Catalogs");
       debugLog('Translations loaded successfully');
     } catch (err) {
-      debugLog('Error getting translations:', err);
-      throw new Error('Failed to load translations');
+      debugLog('Error getting translations, using fallbacks:', err);
+      // Use fallback translations instead of throwing an error
+      t = createFallbackTranslations();
     }
     
     // Use the destructured locale and id parameters
