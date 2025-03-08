@@ -33,6 +33,10 @@ const authPaths = [
 export async function middleware(request: NextRequest) {
   const token = request.cookies.get("token")?.value
   const pathname = request.nextUrl.pathname
+  
+  // Check for NextAuth.js session cookie
+  const hasNextAuthSession = request.cookies.has("next-auth.session-token") || 
+                            request.cookies.has("__Secure-next-auth.session-token")
 
   // Skip middleware for static files and API routes
   if (
@@ -59,25 +63,36 @@ export async function middleware(request: NextRequest) {
   const isProtectedPath = protectedPaths.some((p) => pathname.includes(p))
   const isAuthPath = authPaths.some((p) => pathname.startsWith(p))
 
-  try {
-    if (token) {
-      // Verify token
-      await verifyToken(token)
+  // Log authentication status in production for debugging
+  if (process.env.NODE_ENV === 'production' && isProtectedPath) {
+    console.log(`[AUTH MIDDLEWARE] Path: ${pathname}, HasToken: ${!!token}, HasNextAuthSession: ${hasNextAuthSession}`);
+  }
 
-      // If token is valid and user tries to access auth pages, redirect to dashboard
+  try {
+    // Check for either token-based auth OR NextAuth session
+    if (token || hasNextAuthSession) {
+      // If using token-based auth, verify the token
+      if (token) {
+        await verifyToken(token)
+      }
+
+      // If authenticated and trying to access auth pages, redirect to dashboard
       if (isAuthPath) {
         const url = new URL(`/${locale}/dashboard`, request.url)
         return NextResponse.redirect(url)
       }
     } else {
-      // If no token and trying to access protected pages, redirect to login
+      // If not authenticated and trying to access protected pages, redirect to login
       if (isProtectedPath) {
         const url = new URL(`/${locale}/auth/login`, request.url)
         url.searchParams.set("callbackUrl", pathname)
         return NextResponse.redirect(url)
       }
     }
-  } catch (error) {
+  } catch (err) {
+    // Log the error in production
+    console.error(`[AUTH ERROR] Token verification failed:`, err);
+    
     // If token verification fails, clear the token and redirect to login
     if (isProtectedPath) {
       const response = NextResponse.redirect(new URL(`/${locale}/auth/login`, request.url))
