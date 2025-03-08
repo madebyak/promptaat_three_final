@@ -4,10 +4,15 @@ import Link from "next/link"
 import { getTranslations } from "next-intl/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth/options"
-import { Card } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { prisma } from "@/lib/prisma/client"
-import { Prompt } from "@prisma/client"
+import { PromptCard } from "@/components/prompts/prompt-card"
+import { Category, Tool } from "@/types/prompts"
+import { PlusCircle, Bookmark } from "lucide-react"
+import { CreateCatalogButton } from "@/components/catalogs/create-catalog-button"
+import { CatalogList } from "@/components/catalogs/catalog-list"
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("MyPrompts")
@@ -17,47 +22,158 @@ export async function generateMetadata(): Promise<Metadata> {
   }
 }
 
-export default async function MyPromptsPage() {
+export default async function MyPromptsPage({
+  params: { locale = "en" }
+}: {
+  params: { locale: string }
+}) {
   const t = await getTranslations("MyPrompts")
   const session = await getServerSession(authOptions)
   if (!session?.user) {
-    redirect("/auth/login")
+    redirect(`/${locale}/auth/login`)
   }
 
-  // Since userId is not a direct field in the Prompt model, we need to query differently
-  // For now, we'll just fetch all prompts as a workaround
-  const prompts: Prompt[] = await prisma.prompt.findMany({
+  // Fetch user's bookmarked prompts
+  const bookmarkedPrompts = await prisma.prompt.findMany({
+    where: {
+      bookmarks: {
+        some: {
+          userId: session.user.id,
+        },
+      },
+      deletedAt: null,
+    },
+    include: {
+      categories: {
+        include: {
+          category: true,
+          subcategory: true,
+        }
+      },
+      tools: {
+        include: {
+          tool: true,
+        }
+      },
+    },
     orderBy: {
       createdAt: "desc"
     },
-    take: 20 // Limit to 20 most recent prompts
-  })
+  });
+
+  // Fetch user's catalogs with prompt count
+  const catalogs = await prisma.catalog.findMany({
+    where: {
+      userId: session.user.id,
+      deletedAt: null,
+    },
+    include: {
+      _count: {
+        select: {
+          prompts: true
+        }
+      }
+    },
+    orderBy: {
+      updatedAt: "desc"
+    },
+  });
+
+  // Format the bookmarked prompts for the PromptCard component
+  const formattedBookmarkedPrompts = bookmarkedPrompts.map(prompt => {
+    const categories: Category[] = prompt.categories.map(pc => ({
+      id: pc.category.id,
+      name: locale === 'ar' ? pc.category.nameAr : pc.category.nameEn,
+      iconName: pc.category.iconName,
+      subcategory: pc.subcategory ? {
+        id: pc.subcategory.id,
+        name: locale === 'ar' ? pc.subcategory.nameAr : pc.subcategory.nameEn,
+        iconName: pc.subcategory.iconName,
+      } : undefined
+    }));
+
+    const tools: Tool[] = prompt.tools.map(pt => ({
+      id: pt.tool.id,
+      name: pt.tool.name,
+      iconUrl: pt.tool.iconUrl || undefined
+    }));
+
+    return {
+      id: prompt.id,
+      title: locale === 'ar' ? prompt.titleAr : prompt.titleEn,
+      preview: locale === 'ar' ? prompt.promptTextAr : prompt.promptTextEn,
+      isPro: prompt.isPro,
+      copyCount: prompt.copyCount,
+      categories,
+      tools,
+      isBookmarked: true,
+    };
+  });
+
+  // We don't need to fetch catalog prompts here anymore since we'll load them on the catalog detail page
+
+  const isRTL = locale === 'ar';
 
   return (
     <div className="container mx-auto py-8">
-      <h1 className="text-3xl font-bold mb-6">{t("title")}</h1>
-      {prompts.length === 0 ? (
-        <Card className="p-6">
-          <div className="text-center">
-            <p className="text-lg text-gray-600 mb-4">{t("noPrompts")}</p>
-            <Link href="/create-prompt">
-              <Button>{t("createPrompt")}</Button>
-            </Link>
-          </div>
-        </Card>
-      ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {prompts.map((prompt) => (
-            <Card key={prompt.id} className="p-4">
-              <h2 className="text-xl font-semibold mb-2">{prompt.titleEn}</h2>
-              <p className="text-gray-600 mb-4">{prompt.descriptionEn || t("noDescription")}</p>
-              <Button variant="outline" className="w-full">
-                {t("viewDetails")}
-              </Button>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold">{t("title")}</h1>
+      </div>
+
+      <Tabs defaultValue="bookmarks" className="w-full">
+        <TabsList className="mb-6">
+          <TabsTrigger value="bookmarks">
+            <Bookmark className="h-4 w-4 mr-2" />
+            {t("bookmarks", { defaultValue: "Bookmarks" })}
+          </TabsTrigger>
+          <TabsTrigger value="catalogs">
+            {t("catalogs", { defaultValue: "Catalogs" })}
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="bookmarks">
+          {formattedBookmarkedPrompts.length === 0 ? (
+            <Card className="p-6">
+              <CardContent className="pt-6 text-center">
+                <p className="text-lg text-muted-foreground mb-4">{t("noBookmarks", { defaultValue: "You haven't bookmarked any prompts yet" })}</p>
+                <Link href="/prompts">
+                  <Button>
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    {t("browsePrompts", { defaultValue: "Browse Prompts" })}
+                  </Button>
+                </Link>
+              </CardContent>
             </Card>
-          ))}
-        </div>
-      )}
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {formattedBookmarkedPrompts.map((prompt) => (
+                <PromptCard
+                  key={prompt.id}
+                  id={prompt.id}
+                  title={prompt.title}
+                  preview={prompt.preview}
+                  isPro={prompt.isPro}
+                  copyCount={prompt.copyCount}
+                  categories={prompt.categories}
+                  tools={prompt.tools}
+                  isRTL={isRTL}
+                  locale={locale}
+                  isBookmarked={prompt.isBookmarked}
+                />
+              ))}
+            </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="catalogs">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-xl font-semibold">{t("myCatalogs", { defaultValue: "My Catalogs" })}</h2>
+            <CreateCatalogButton />
+          </div>
+          
+          <CatalogList catalogs={catalogs} />
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }

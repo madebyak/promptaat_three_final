@@ -2,9 +2,13 @@ import { Resend } from 'resend';
 import { verificationTemplate, passwordResetTemplate } from './templates';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
-// Use a more robust way to determine the base URL
+// Determine the base URL based on environment
 const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 
-                (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3001');
+                (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 
+                (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000'));
+
+// In production, this should be set to the actual domain (e.g., https://promptaat.com)
+// Make sure NEXT_PUBLIC_APP_URL is set in the production environment variables
 
 interface VerificationEmailProps {
   email: string;
@@ -16,8 +20,9 @@ export async function sendVerificationEmail({ email, name, token }: Verification
   console.log(`Attempting to send verification email to ${email} with token ${token.substring(0, 8)}...`);
   console.log(`Using base URL: ${baseUrl}`);
   
-  // Updated to include locale in the path
-  const verificationLink = `${baseUrl}/en/auth/verify?token=${token}`;
+  // Use the provided locale or default to English
+  const locale = process.env.DEFAULT_LOCALE || 'en';
+  const verificationLink = `${baseUrl}/${locale}/auth/verify?token=${token}`;
   console.log(`Verification link: ${verificationLink}`);
 
   try {
@@ -61,8 +66,9 @@ interface PasswordResetEmailProps {
 export async function sendPasswordResetEmail({ email, name, token }: PasswordResetEmailProps) {
   console.log(`Sending password reset email to ${email}`);
   
-  // Updated to include locale in the path
-  const resetLink = `${baseUrl}/en/auth/reset-password?token=${token}`;
+  // Use the provided locale or default to English
+  const locale = process.env.DEFAULT_LOCALE || 'en';
+  const resetLink = `${baseUrl}/${locale}/auth/reset-password?token=${token}`;
   
   try {
     // Replace template variables

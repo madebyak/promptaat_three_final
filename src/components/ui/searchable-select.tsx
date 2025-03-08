@@ -42,10 +42,11 @@ export function SearchableSelect({
   const selectedOption = options.find(option => option.value === value);
 
   const filteredOptions = React.useMemo(() => {
+    if (!search.trim()) return options;
     const searchTerm = search.toLowerCase();
     return options.filter(option =>
       option.label.toLowerCase().includes(searchTerm) ||
-      (option.labelAr && option.labelAr.includes(search))
+      (option.labelAr && option.labelAr.toLowerCase().includes(searchTerm))
     );
   }, [options, search]);
 
@@ -84,10 +85,10 @@ export function SearchableSelect({
         )}
       </button>
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="p-0 overflow-hidden">
+        <DialogContent className="p-0 overflow-hidden max-w-[320px] max-h-[380px] rounded-md border shadow-md">
           <Command className="w-full" shouldFilter={false}>
             <div className={cn(
-              "flex items-center border-b px-3",
+              "flex items-center border-b px-3 sticky top-0 bg-background z-10",
               isRtl ? "flex-row-reverse" : ""
             )}>
               {!isRtl && <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />}
@@ -96,15 +97,15 @@ export function SearchableSelect({
                 value={search}
                 onValueChange={setSearch}
                 className={cn(
-                  "flex h-11 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50",
+                  "flex h-10 w-full rounded-md bg-transparent py-2 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50",
                   isRtl ? "text-right" : ""
                 )}
                 placeholder={searchPlaceholder}
               />
               {isRtl && <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />}
             </div>
-            <ScrollArea className="h-[300px] overflow-y-auto">
-              <Command.List className="p-1">
+            <ScrollArea className="h-[250px] overflow-y-auto">
+              <Command.List className="p-1 overflow-hidden">
                 {filteredOptions.length === 0 ? (
                   <Command.Empty className="p-4 text-center text-sm text-muted-foreground">
                     {isRtl ? "لا توجد نتائج." : "No results found."}
@@ -119,12 +120,12 @@ export function SearchableSelect({
                         setOpen(false);
                       }}
                       className={cn(
-                        "flex items-center gap-2 rounded-sm px-3 py-3 text-sm cursor-pointer hover:bg-accent hover:text-accent-foreground",
+                        "flex items-center gap-2 rounded-sm px-3 py-1.5 text-sm cursor-pointer hover:bg-accent hover:text-accent-foreground",
                         value === option.value ? "bg-accent text-accent-foreground" : "",
                         isRtl ? "flex-row-reverse" : ""
                       )}
                     >
-                      {option.flag && <span>{option.flag}</span>}
+                      {option.flag && <span className="inline-block w-5 text-sm">{option.flag}</span>}
                       <span>{isRtl ? option.labelAr || option.label : option.label}</span>
                     </Command.Item>
                   ))

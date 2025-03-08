@@ -10,6 +10,7 @@ import Image from "next/image"
 import { Category, Tool } from "@/types/prompts"
 import { cn } from "@/lib/utils"
 import { PromptModal } from "./prompt-modal"
+import { AddToCatalogButton } from "@/components/catalogs/add-to-catalog-button"
 
 interface PromptCardProps {
   id: string
@@ -21,6 +22,8 @@ interface PromptCardProps {
   tools: Tool[]
   isRTL?: boolean
   locale?: string
+  isBookmarked?: boolean
+  onBookmarkChange?: (id: string, isBookmarked: boolean) => void
 }
 
 export function PromptCard({
@@ -32,7 +35,9 @@ export function PromptCard({
   categories,
   tools,
   isRTL = false,
-  locale = 'en'
+  locale = 'en',
+  isBookmarked = false,
+  onBookmarkChange
 }: PromptCardProps) {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isCopied, setIsCopied] = useState(false)
@@ -48,7 +53,8 @@ export function PromptCard({
         title: "Success",
         description: "Prompt copied to clipboard",
       })
-    } catch (error) {
+    } catch (err) {
+      console.error('Copy error:', err);
       toast({
         title: "Error",
         description: "Failed to copy prompt",
@@ -65,7 +71,8 @@ export function PromptCard({
         text: preview,
         url: window.location.href,
       })
-    } catch (error) {
+    } catch (err) {
+      console.error('Share error:', err);
       toast({
         title: "Error",
         description: "Failed to share prompt",
@@ -74,9 +81,37 @@ export function PromptCard({
     }
   }
 
-  const handleBookmark = (e: React.MouseEvent) => {
+  const handleBookmark = async (e: React.MouseEvent) => {
     e.stopPropagation()
-    // TODO: Implement bookmark functionality
+    try {
+      const response = await fetch(`/api/prompts/${id}/bookmark`, {
+        method: isBookmarked ? 'DELETE' : 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to update bookmark')
+      }
+
+      // Call the onBookmarkChange callback if provided
+      if (onBookmarkChange) {
+        onBookmarkChange(id, !isBookmarked)
+      }
+
+      toast({
+        title: isBookmarked ? "Removed from bookmarks" : "Added to bookmarks",
+        description: isBookmarked ? "Prompt removed from your bookmarks" : "Prompt added to your bookmarks",
+      })
+    } catch (err) {
+      console.error('Bookmark error:', err);
+      toast({
+        title: "Error",
+        description: "Failed to update bookmark",
+        variant: "destructive",
+      })
+    }
   }
 
   return (
@@ -104,8 +139,8 @@ export function PromptCard({
             {/* Right side actions */}
             <div className="flex items-center gap-2">
               <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleBookmark}>
-                <Bookmark className="h-4 w-4" />
-                <span className="sr-only">Bookmark</span>
+                <Bookmark className={cn("h-4 w-4", isBookmarked ? "fill-current" : "")} />
+                <span className="sr-only">{isBookmarked ? "Remove bookmark" : "Bookmark"}</span>
               </Button>
               <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleShare}>
                 <Share2 className="h-4 w-4" />
@@ -185,21 +220,30 @@ export function PromptCard({
               ))}
             </div>
 
-            {/* Bottom row with copy count and button */}
+            {/* Bottom row with copy count and buttons */}
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-1 text-muted-foreground">
                 <BarChart2 className="h-4 w-4" />
                 <span className="text-sm">{copyCount}</span>
               </div>
-              <Button
-                variant="secondary"
-                size="sm"
-                className="flex-shrink-0"
-                onClick={handleCopy}
-              >
-                <Copy className="h-3 w-3 mr-2" />
-                {isCopied ? "Copied!" : "Copy"}
-              </Button>
+              <div className="flex items-center gap-2">
+                {isBookmarked && (
+                  <AddToCatalogButton
+                    promptId={id}
+                    size="sm"
+                    variant="outline"
+                  />
+                )}
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  className="flex-shrink-0"
+                  onClick={handleCopy}
+                >
+                  <Copy className="h-3 w-3 mr-2" />
+                  {isCopied ? "Copied!" : "Copy"}
+                </Button>
+              </div>
             </div>
           </div>
         </div>
@@ -211,6 +255,7 @@ export function PromptCard({
         onClose={() => setIsModalOpen(false)}
         locale={locale}
         isRTL={isRTL}
+        isBookmarked={isBookmarked}
       />
     </>
   )

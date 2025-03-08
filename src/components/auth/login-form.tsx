@@ -59,7 +59,7 @@ export function LoginForm({ locale = 'en' }: LoginFormProps) {
         email: data.email,
         password: data.password,
         redirect: false,
-        callbackUrl: "/",
+        callbackUrl: `/${locale}`,
         // Pass the remember me value to the authentication handler
         rememberMe: data.rememberMe,
       })
@@ -73,6 +73,10 @@ export function LoginForm({ locale = 'en' }: LoginFormProps) {
         description: "Signed in successfully",
       })
 
+      // Wait for session to be fully established
+      await new Promise(resolve => setTimeout(resolve, 500))
+      
+      // Force a refresh to ensure the session is updated across the app
       router.push(`/${locale}`)
       router.refresh()
     } catch (error) {

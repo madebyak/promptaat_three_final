@@ -63,10 +63,28 @@ export function MainLayout({
   isRTL: boolean
   isUserAccountRoute: boolean
 }) {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   // Check if the user is logged in but hasn't verified their email
-  // Remove the emailVerified check as it's not in the default user type
-  const needsVerification = false; // Disable verification check for now
+  const needsVerification = session?.user?.emailVerified === false;
+  
+  // Add a check for protected routes with a delay to ensure session is fully loaded
+  React.useEffect(() => {
+    // Only redirect if explicitly unauthenticated (not loading) and on a protected route
+    if (isUserAccountRoute && status === 'unauthenticated') {
+      // Add debug logging
+      console.log('MainLayout: Session status is unauthenticated, redirecting to login');
+      
+      // Use setTimeout to give the session a chance to load
+      const timer = setTimeout(() => {
+        // Double-check status before redirecting
+        if (status === 'unauthenticated') {
+          window.location.href = `/${locale}/auth/login`;
+        }
+      }, 800);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [isUserAccountRoute, status, locale]);
   
   return (
     <>

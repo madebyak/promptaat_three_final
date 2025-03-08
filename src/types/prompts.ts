@@ -69,6 +69,7 @@ export interface PromptCardProps {
   tools: Tool[];
   isRTL?: boolean;
   locale?: string;
+  isBookmarked?: boolean;
 }
 
 export interface PromptModalProps {
@@ -77,6 +78,7 @@ export interface PromptModalProps {
   onClose: () => void;
   isRTL?: boolean;
   locale?: string;
+  isBookmarked?: boolean;
 }
 
 export interface PromptsResponse {

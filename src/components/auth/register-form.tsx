@@ -85,7 +85,8 @@ export function RegisterForm({ countries = [], locale = 'en' }: RegisterFormProp
         description: 'Registration successful! Please check your email to verify your account.',
       });
 
-      router.push(`/${locale}/auth/login`);
+      // Redirect to verification pending page instead of login
+      router.push(`/${locale}/auth/verification-pending?email=${encodeURIComponent(data.email)}`);
     } catch (error) {
       toast({
         title: 'Error',
@@ -126,7 +127,7 @@ export function RegisterForm({ countries = [], locale = 'en' }: RegisterFormProp
   };
 
   return (
-    <Card className="w-full max-w-2xl mx-auto shadow-md border-0">
+    <Card className="w-full mx-auto shadow-md border-0">
       <CardHeader className="space-y-2 pb-8">
         <CardTitle className="text-2xl font-bold text-center">{translations.title}</CardTitle>
         <CardDescription className="text-center text-base">{translations.subtitle}</CardDescription>
@@ -260,7 +261,7 @@ export function RegisterForm({ countries = [], locale = 'en' }: RegisterFormProp
               <div className={`absolute inset-y-0 ${isRtl ? 'right-0 pr-3' : 'left-0 pl-3'} flex items-center pointer-events-none text-muted-foreground z-10`}>
                 <FiGlobe className="h-5 w-5" />
               </div>
-              <div className={`${isRtl ? 'pr-10' : 'pl-10'}`}>
+              <div className={`w-full ${isRtl ? 'pr-10' : 'pl-10'}`}>
                 <SearchableSelect
                   value={watch('country')}
                   onValueChange={(value) => setValue('country', value)}

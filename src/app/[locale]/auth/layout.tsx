@@ -52,7 +52,7 @@ export default function AuthLayout({
           className={`w-full md:w-1/2 flex items-center justify-center ${isRtl ? 'order-1' : 'order-2'}`}
           dir={isRtl ? 'rtl' : 'ltr'}
         >
-          <div className="w-full max-w-md px-6 py-12 sm:px-12">
+          <div className="w-full max-w-xl px-6 py-12 sm:px-12">
             {children}
           </div>
         </div>

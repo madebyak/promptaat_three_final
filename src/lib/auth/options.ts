@@ -61,7 +61,10 @@ export const authOptions: NextAuthOptions = {
   session: {
     strategy: "jwt",
   },
+  // We'll handle redirects in the components instead of hardcoding paths here
+  // This allows us to include the locale in the redirect paths
   pages: {
+    // These paths are relative to the locale and will be prepended with the locale in the components
     signIn: "/auth/login",
     error: "/auth/error",
   },

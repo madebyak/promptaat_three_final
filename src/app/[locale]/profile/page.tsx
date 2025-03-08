@@ -1,13 +1,18 @@
 import { getTranslations } from "next-intl/server"
 import { getServerSession } from "next-auth"
+import { redirect } from "next/navigation"
 import { authOptions } from "@/lib/auth/options"
 import { Card, CardHeader, CardTitle } from "@/components/ui/card"
 
-export default async function ProfilePage() {
+export default async function ProfilePage({
+  params: { locale = "en" }
+}: {
+  params: { locale: string }
+}) {
   const t = await getTranslations("Profile")
   const session = await getServerSession(authOptions)
   if (!session?.user) {
-    // redirect("/auth/login")
+    redirect(`/${locale}/auth/login`)
   }
 
   return (
