@@ -54,6 +54,18 @@ export function LoginForm({ locale = 'en' }: LoginFormProps) {
   const onSubmit = async (data: LoginData) => {
     try {
       setIsLoading(true)
+      console.log('[Login] Attempting login with email:', data.email)
+
+      // Log environment information in production to help diagnose issues
+      if (process.env.NODE_ENV === 'production') {
+        console.log('[Login] Production environment details:', {
+          nextAuthUrl: process.env.NEXTAUTH_URL || 'not set',
+          hasNextAuthSecret: !!process.env.NEXTAUTH_SECRET,
+          vercelUrl: process.env.VERCEL_URL || 'not set',
+          nodeEnv: process.env.NODE_ENV,
+          locale,
+        });
+      }
 
       const result = await signIn("credentials", {
         email: data.email,
@@ -64,8 +76,34 @@ export function LoginForm({ locale = 'en' }: LoginFormProps) {
         rememberMe: data.rememberMe,
       })
 
+      console.log('[Login] Sign in result:', { 
+        ok: result?.ok, 
+        error: result?.error,
+        status: result?.status,
+        url: result?.url
+      })
+
       if (!result?.ok) {
-        throw new Error(result?.error || "Failed to sign in")
+        let errorMessage = "Failed to sign in"
+        let errorDetails = {}
+        
+        // Handle specific error cases
+        if (result?.error === "CredentialsSignin") {
+          errorMessage = "Invalid email or password"
+          errorDetails = { type: 'credentials' }
+        } else if (result?.error === "Database connection error") {
+          errorMessage = "Database connection error. Please try again later."
+          errorDetails = { type: 'database' }
+        } else if (result?.error?.includes('NEXTAUTH_SECRET')) {
+          errorMessage = "Authentication configuration error. Please contact support."
+          errorDetails = { type: 'config', missing: 'NEXTAUTH_SECRET' }
+        } else if (result?.error) {
+          errorMessage = result.error
+          errorDetails = { type: 'unknown', rawError: result.error }
+        }
+        
+        console.error('[Login] Authentication failed:', { errorMessage, ...errorDetails, status: result?.status })
+        throw new Error(errorMessage)
       }
 
       toast({
@@ -73,15 +111,19 @@ export function LoginForm({ locale = 'en' }: LoginFormProps) {
         description: "Signed in successfully",
       })
 
-      // Wait for session to be fully established
-      await new Promise(resolve => setTimeout(resolve, 500))
+      console.log('[Login] Waiting for session establishment')
+      // Wait for session to be fully established - increased timeout for production
+      const sessionWaitTime = process.env.NODE_ENV === 'production' ? 1500 : 1000
+      await new Promise(resolve => setTimeout(resolve, sessionWaitTime))
       
+      console.log('[Login] Session established, redirecting to home')
       // Force a refresh to ensure the session is updated across the app
       router.push(`/${locale}`)
       router.refresh()
     } catch (error) {
+      console.error('[Login] Error during sign in:', error)
       toast({
-        title: "Error",
+        title: "Authentication Error",
         description: error instanceof Error ? error.message : "Failed to sign in",
         variant: "destructive",
       })

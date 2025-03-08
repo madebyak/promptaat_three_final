@@ -25,11 +25,28 @@ function ab2hex(buffer: ArrayBuffer): string {
  * @returns A promise that resolves to the hashed password
  */
 export async function hashPassword(password: string): Promise<string> {
-  // Add a static salt to make the hash more secure
-  const saltedPassword = `${password}__promptaat_salt__`;
-  const msgBuffer = str2ab(saltedPassword);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-  return ab2hex(hashBuffer);
+  try {
+    if (!password) {
+      console.error('[hashPassword] Password is empty or undefined');
+      throw new Error('Password cannot be empty');
+    }
+    
+    // Add a static salt to make the hash more secure
+    const saltedPassword = `${password}__promptaat_salt__`;
+    const msgBuffer = str2ab(saltedPassword);
+    
+    // Ensure crypto is available (browser or Node.js environment)
+    if (!crypto || !crypto.subtle) {
+      console.error('[hashPassword] Crypto API not available');
+      throw new Error('Crypto API not available');
+    }
+    
+    const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+    return ab2hex(hashBuffer);
+  } catch (error) {
+    console.error('[hashPassword] Error hashing password:', error);
+    throw error;
+  }
 }
 
 /**
@@ -39,8 +56,29 @@ export async function hashPassword(password: string): Promise<string> {
  * @returns A promise that resolves to true if the password matches the hash
  */
 export async function comparePasswords(password: string, hash: string): Promise<boolean> {
-  const hashedPassword = await hashPassword(password);
-  return hashedPassword === hash;
+  try {
+    if (!password || !hash) {
+      console.error('[comparePasswords] Missing password or hash');
+      return false;
+    }
+    
+    const hashedPassword = await hashPassword(password);
+    
+    // Debug logging for production troubleshooting
+    if (process.env.NODE_ENV === 'production') {
+      console.log('[comparePasswords] Comparing passwords (masked):', {
+        passwordLength: password.length,
+        hashLength: hash.length,
+        hashedPasswordLength: hashedPassword.length,
+        match: hashedPassword === hash
+      });
+    }
+    
+    return hashedPassword === hash;
+  } catch (error) {
+    console.error('[comparePasswords] Error comparing passwords:', error);
+    return false;
+  }
 }
 
 /**
