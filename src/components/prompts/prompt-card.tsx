@@ -1,16 +1,18 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/components/ui/use-toast"
-import { Crown, Bookmark, Share2, Copy, Turtle, BarChart2 } from "lucide-react"
+import { Crown, Bookmark, BookmarkCheck, Share2, Copy, Turtle, BarChart2 } from "lucide-react"
 import Image from "next/image"
 import { Category, Tool } from "@/types/prompts"
 import { cn } from "@/lib/utils"
 import { PromptModal } from "./prompt-modal"
 import { AddToCatalogButton } from "@/components/catalogs/add-to-catalog-button"
+import { useSession } from "next-auth/react"
+import { useRouter } from "next/navigation"
 
 interface PromptCardProps {
   id: string
@@ -42,7 +44,11 @@ export function PromptCard({
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isCopied, setIsCopied] = useState(false)
   const [tools, setTools] = useState(initialTools)
+  const [isBookmarking, setIsBookmarking] = useState(false)
+  const [bookmarkStatus, setBookmarkStatus] = useState(isBookmarked)
   const { toast } = useToast()
+  const { data: session } = useSession()
+  const router = useRouter()
   
   // Validate tools on client-side to prevent rendering errors
   useEffect(() => {
@@ -99,38 +105,66 @@ export function PromptCard({
     }
   }
 
-  const handleBookmark = async (e: React.MouseEvent) => {
+  // Update local state when prop changes
+  useEffect(() => {
+    setBookmarkStatus(isBookmarked);
+  }, [isBookmarked]);
+
+  const handleBookmark = useCallback(async (e: React.MouseEvent) => {
     e.stopPropagation()
+    
+    if (!session?.user) {
+      toast({
+        title: "Authentication required",
+        description: "Please sign in to bookmark prompts",
+        variant: "destructive",
+      })
+      router.push(`/${locale}/auth/login`)
+      return
+    }
+    
     try {
+      setIsBookmarking(true)
+      const method = bookmarkStatus ? 'DELETE' : 'POST'
       const response = await fetch(`/api/prompts/${id}/bookmark`, {
-        method: isBookmarked ? 'DELETE' : 'POST',
+        method,
         headers: {
           'Content-Type': 'application/json',
         },
       })
 
       if (!response.ok) {
-        throw new Error('Failed to update bookmark')
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to update bookmark')
       }
 
+      // Update local state
+      const newStatus = !bookmarkStatus
+      setBookmarkStatus(newStatus)
+      
       // Call the onBookmarkChange callback if provided
       if (onBookmarkChange) {
-        onBookmarkChange(id, !isBookmarked)
+        onBookmarkChange(id, newStatus)
       }
 
       toast({
-        title: isBookmarked ? "Removed from bookmarks" : "Added to bookmarks",
-        description: isBookmarked ? "Prompt removed from your bookmarks" : "Prompt added to your bookmarks",
+        title: bookmarkStatus ? "Removed from bookmarks" : "Added to bookmarks",
+        description: bookmarkStatus ? "Prompt removed from your bookmarks" : "Prompt added to your bookmarks",
       })
+      
+      // Refresh the page to update other components that might display this prompt
+      router.refresh()
     } catch (err) {
       console.error('Bookmark error:', err);
       toast({
         title: "Error",
-        description: "Failed to update bookmark",
+        description: err instanceof Error ? err.message : "Failed to update bookmark",
         variant: "destructive",
       })
+    } finally {
+      setIsBookmarking(false)
     }
-  }
+  }, [bookmarkStatus, id, session, router, toast, locale, onBookmarkChange])
 
   return (
     <>
@@ -156,9 +190,19 @@ export function PromptCard({
             </div>
             {/* Right side actions */}
             <div className="flex items-center gap-2">
-              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleBookmark}>
-                <Bookmark className={cn("h-4 w-4", isBookmarked ? "fill-current" : "")} />
-                <span className="sr-only">{isBookmarked ? "Remove bookmark" : "Bookmark"}</span>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className={cn("h-8 w-8", bookmarkStatus && "text-accent-purple")} 
+                onClick={handleBookmark}
+                disabled={isBookmarking || !session?.user}
+              >
+                {bookmarkStatus ? (
+                  <BookmarkCheck className="h-4 w-4" />
+                ) : (
+                  <Bookmark className="h-4 w-4" />
+                )}
+                <span className="sr-only">{bookmarkStatus ? "Remove bookmark" : "Bookmark"}</span>
               </Button>
               <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleShare}>
                 <Share2 className="h-4 w-4" />
@@ -256,7 +300,7 @@ export function PromptCard({
                 <span className="text-sm">{copyCount}</span>
               </div>
               <div className="flex items-center gap-2">
-                {isBookmarked && (
+                {bookmarkStatus && session?.user && (
                   <AddToCatalogButton
                     promptId={id}
                     size="sm"
@@ -284,7 +328,6 @@ export function PromptCard({
         onClose={() => setIsModalOpen(false)}
         locale={locale}
         isRTL={isRTL}
-        isBookmarked={isBookmarked}
       />
     </>
   )

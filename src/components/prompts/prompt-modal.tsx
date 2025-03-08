@@ -1,12 +1,12 @@
 'use client'
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/components/ui/use-toast"
-import { Crown, Turtle, Copy, X, BarChart2, Calendar, Bookmark, Share2 } from "lucide-react"
+import { Crown, Turtle, Copy, BarChart2, Calendar, Bookmark, BookmarkCheck, Share2 } from "lucide-react"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
 import { format } from "date-fns"
@@ -25,17 +25,12 @@ export function PromptModal({
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isCopied, setIsCopied] = useState(false)
+  const [isBookmarking, setIsBookmarking] = useState(false)
   const { toast } = useToast()
-  const { data: session, status } = useSession()
+  const { data: session } = useSession()
   const router = useRouter()
 
-  useEffect(() => {
-    if (isOpen && promptId) {
-      fetchPromptDetails()
-    }
-  }, [isOpen, promptId])
-
-  const fetchPromptDetails = async () => {
+  const fetchPromptDetails = useCallback(async () => {
     try {
       setLoading(true)
       setError(null)
@@ -65,7 +60,7 @@ export function PromptModal({
     } finally {
       setLoading(false)
     }
-  }
+  }, [promptId, locale])
 
   const handleCopy = async () => {
     if (!prompt) return
@@ -77,7 +72,8 @@ export function PromptModal({
         title: "Success",
         description: "Prompt copied to clipboard",
       })
-    } catch (error) {
+    } catch (err) {
+      console.error('Error copying prompt:', err)
       toast({
         title: "Error",
         description: "Failed to copy prompt",
@@ -104,7 +100,8 @@ export function PromptModal({
           description: "Link copied to clipboard",
         })
       }
-    } catch (error) {
+    } catch (err) {
+      console.error('Error sharing prompt:', err)
       toast({
         title: "Error",
         description: "Failed to share prompt",
@@ -112,6 +109,70 @@ export function PromptModal({
       })
     }
   }
+
+  const toggleBookmark = useCallback(async () => {
+    if (!prompt || !session?.user) {
+      if (!session?.user) {
+        toast({
+          title: "Authentication required",
+          description: "Please sign in to bookmark prompts",
+          variant: "destructive",
+        })
+        router.push(`/${locale}/auth/login`)
+      }
+      return
+    }
+
+    try {
+      setIsBookmarking(true)
+      const method = prompt.isBookmarked ? 'DELETE' : 'POST'
+      const response = await fetch(`/api/prompts/${promptId}/bookmark`, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to update bookmark')
+      }
+
+      // Update local state
+      setPrompt(prev => prev ? {
+        ...prev,
+        isBookmarked: !prev.isBookmarked,
+        bookmarkCount: prev.isBookmarked 
+          ? Math.max(0, prev.bookmarkCount - 1) 
+          : prev.bookmarkCount + 1
+      } : null)
+
+      toast({
+        title: prompt.isBookmarked ? "Removed from bookmarks" : "Added to bookmarks",
+        description: prompt.isBookmarked 
+          ? "Prompt has been removed from your bookmarks" 
+          : "Prompt has been added to your bookmarks",
+      })
+
+      // Refresh the page to update other components that might display this prompt
+      router.refresh()
+    } catch (error) {
+      console.error('Error toggling bookmark:', error)
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to update bookmark",
+        variant: "destructive",
+      })
+    } finally {
+      setIsBookmarking(false)
+    }
+  }, [prompt, promptId, session, router, toast, locale])
+  
+  useEffect(() => {
+    if (isOpen && promptId) {
+      fetchPromptDetails()
+    }
+  }, [isOpen, promptId, fetchPromptDetails])
 
   if (!isOpen) return null
   if (loading) return (
@@ -145,10 +206,16 @@ export function PromptModal({
             <Button 
               variant="ghost" 
               size="icon" 
-              className="h-8 w-8" 
+              className={cn("h-8 w-8", prompt.isBookmarked && "text-accent-purple")}
+              onClick={toggleBookmark}
+              disabled={isBookmarking || !session?.user}
             >
-              <Bookmark className="h-4 w-4" />
-              <span className="sr-only">Bookmark</span>
+              {prompt.isBookmarked ? (
+                <BookmarkCheck className="h-4 w-4" />
+              ) : (
+                <Bookmark className="h-4 w-4" />
+              )}
+              <span className="sr-only">{prompt.isBookmarked ? "Remove bookmark" : "Bookmark"}</span>
             </Button>
             <Button 
               variant="ghost" 
