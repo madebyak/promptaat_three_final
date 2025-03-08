@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { PlusCircle } from "lucide-react"
@@ -23,8 +23,36 @@ interface CreateCatalogButtonProps {
   className?: string
 }
 
+// Create fallback translations to use when the real translations fail
+const FALLBACK_TRANSLATIONS: Record<string, string> = {
+  "createCatalog": "Create Catalog",
+  "createCatalogDescription": "Create a new catalog to organize your bookmarked prompts.",
+  "name": "Name",
+  "description": "Description (optional)",
+  "cancel": "Cancel",
+  "create": "Create",
+  "error": "Error",
+  "success": "Success",
+  "nameRequired": "Catalog name is required",
+  "catalogCreated": "Catalog created successfully",
+  "createFailed": "Failed to create catalog"
+};
+
 export function CreateCatalogButton({ className }: CreateCatalogButtonProps) {
-  const t = useTranslations("Catalogs")
+  // Always call useTranslations at the top level
+  const rawT = useTranslations("Catalogs");
+  
+  // Create a safe translation function that uses fallbacks if needed
+  // Wrap in useCallback to prevent unnecessary re-renders
+  const t = useCallback((key: string, options?: { defaultValue?: string }): string => {
+    try {
+      return rawT(key, options);
+    } catch (err) {
+      console.error(`Translation error for key '${key}':`, err);
+      return options?.defaultValue || FALLBACK_TRANSLATIONS[key] || key;
+    }
+  }, [rawT]);
+  
   const router = useRouter()
   const { toast } = useToast()
   const [open, setOpen] = useState(false)

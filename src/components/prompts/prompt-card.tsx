@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -33,7 +33,7 @@ export function PromptCard({
   isPro,
   copyCount,
   categories,
-  tools,
+  tools: initialTools,
   isRTL = false,
   locale = 'en',
   isBookmarked = false,
@@ -41,7 +41,25 @@ export function PromptCard({
 }: PromptCardProps) {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isCopied, setIsCopied] = useState(false)
+  const [tools, setTools] = useState(initialTools)
   const { toast } = useToast()
+  
+  // Validate tools on client-side to prevent rendering errors
+  useEffect(() => {
+    try {
+      // Filter out tools with invalid iconUrl
+      const validatedTools = initialTools.map(tool => ({
+        ...tool,
+        // Ensure iconUrl is a valid string or undefined
+        iconUrl: typeof tool.iconUrl === 'string' && tool.iconUrl.trim() !== '' ? tool.iconUrl : undefined
+      }))
+      setTools(validatedTools)
+    } catch (err) {
+      console.error('Error validating tools:', err)
+      // Fallback to tools without icons if there's an error
+      setTools(initialTools.map(tool => ({ ...tool, iconUrl: undefined })))
+    }
+  }, [initialTools])
 
   const handleCopy = async (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -198,18 +216,29 @@ export function PromptCard({
                     <div className="relative h-3 w-3">
                       <div className="relative h-3 w-3 overflow-hidden rounded-sm">
                         <div className="absolute inset-0 bg-muted" />
-                        <Image
-                          src={tool.iconUrl}
-                          alt={tool.name}
-                          fill
-                          className="object-contain"
-                          sizes="12px"
-                          onError={(e) => {
-                            const target = e.target as HTMLImageElement;
-                            target.style.display = 'none';
-                          }}
-                          unoptimized
-                        />
+                        {/* Wrap Image in error boundary */}
+                        {(() => {
+                          try {
+                            return (
+                              <Image
+                                src={tool.iconUrl}
+                                alt={tool.name}
+                                fill
+                                className="object-contain"
+                                sizes="12px"
+                                onError={(e) => {
+                                  console.error('Image load error:', tool.iconUrl);
+                                  const target = e.target as HTMLImageElement;
+                                  target.style.display = 'none';
+                                }}
+                                unoptimized
+                              />
+                            );
+                          } catch (err) {
+                            console.error('Image render error:', err);
+                            return null;
+                          }
+                        })()}
                       </div>
                     </div>
                   ) : (

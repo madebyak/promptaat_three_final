@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { FolderPlus, Check, Loader2 } from "lucide-react"
@@ -40,13 +40,44 @@ interface AddToCatalogButtonProps {
   size?: "default" | "sm" | "lg" | "icon"
 }
 
+// Create fallback translations to use when the real translations fail
+const FALLBACK_TRANSLATIONS: Record<string, string> = {
+  "addToCatalog": "Add to Catalog",
+  "addToCatalogDescription": "Add this prompt to one or more of your catalogs.",
+  "searchCatalogs": "Search catalogs...",
+  "noCatalogs": "No catalogs found.",
+  "createFirst": "Create your first catalog",
+  "yourCatalogs": "Your Catalogs",
+  "cancel": "Cancel",
+  "save": "Save",
+  "error": "Error",
+  "success": "Success",
+  "fetchFailed": "Failed to fetch catalogs",
+  "addedToCatalog": "Added to catalog",
+  "removedFromCatalog": "Removed from catalog",
+  "updateFailed": "Failed to update catalog"
+};
+
 export function AddToCatalogButton({ 
   promptId, 
   className,
   variant = "outline",
   size = "sm"
 }: AddToCatalogButtonProps) {
-  const t = useTranslations("Catalogs")
+  // Always call useTranslations at the top level
+  const rawT = useTranslations("Catalogs");
+  
+  // Create a safe translation function that uses fallbacks if needed
+  // Wrap in useCallback to prevent unnecessary re-renders
+  const t = useCallback((key: string, options?: { defaultValue?: string }): string => {
+    try {
+      return rawT(key, options);
+    } catch (err) {
+      console.error(`Translation error for key '${key}':`, err);
+      return options?.defaultValue || FALLBACK_TRANSLATIONS[key] || key;
+    }
+  }, [rawT]);
+  
   const router = useRouter()
   const { toast } = useToast()
   const [open, setOpen] = useState(false)
@@ -70,6 +101,12 @@ export function AddToCatalogButton({
         // Check which catalogs already contain this prompt
         const catalogPromises = data.map(async (catalog: Catalog) => {
           try {
+            // Add error handling for network requests
+            if (!catalog || !catalog.id) {
+              console.error('Invalid catalog data:', catalog);
+              return;
+            }
+            
             const promptsResponse = await fetch(`/api/catalogs/${catalog.id}/prompts/${promptId}`)
             if (promptsResponse.ok) {
               const result = await promptsResponse.json()
@@ -78,7 +115,7 @@ export function AddToCatalogButton({
               }
             }
           } catch (err) {
-            console.error(`Error checking catalog ${catalog.id}:`, err)
+            console.error(`Error checking catalog ${catalog?.id || 'unknown'}:`, err)
           }
         })
         

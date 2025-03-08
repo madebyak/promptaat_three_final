@@ -30,8 +30,10 @@ interface Catalog {
   name: string
   description?: string
   _count?: {
-    prompts: number
+    prompts?: number
   }
+  // For backward compatibility with older API responses
+  promptCount?: number
 }
 
 interface CatalogListProps {
@@ -191,7 +193,7 @@ export function CatalogList({ catalogs }: CatalogListProps) {
               )}
               <CardDescription>
                 {t("promptCount", { 
-                  count: catalog._count?.prompts || 0,
+                  count: catalog._count?.prompts || catalog.promptCount || 0,
                   defaultValue: "{{count}} prompts", 
                 })}
               </CardDescription>

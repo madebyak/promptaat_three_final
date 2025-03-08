@@ -121,23 +121,55 @@ export default async function MyPromptsPage({
     },
   });
 
+  // Define the catalog interface to match the component's expectations
+  interface CatalogWithCount {
+    id: string;
+    name: string;
+    description?: string;
+    _count?: {
+      prompts?: number;
+    };
+    promptCount?: number;
+    updatedAt?: Date;
+    createdAt?: Date;
+    userId?: string;
+    deletedAt?: Date | null;
+  }
+  
   // Fetch user's catalogs with prompt count
-  const catalogs = await prisma.catalog.findMany({
-    where: {
-      userId: session.user.id,
-      deletedAt: null,
-    },
-    include: {
-      _count: {
-        select: {
-          prompts: true
+  let formattedCatalogs: CatalogWithCount[] = [];
+  try {
+    debugLog('Fetching user catalogs');
+    const catalogs = await prisma.catalog.findMany({
+      where: {
+        userId: session.user.id,
+        deletedAt: null,
+      },
+      include: {
+        _count: {
+          select: {
+            prompts: true
+          }
         }
-      }
-    },
-    orderBy: {
-      updatedAt: "desc"
-    },
-  });
+      },
+      orderBy: {
+        updatedAt: "desc"
+      },
+    });
+    
+    // Ensure the catalogs have the correct structure
+    formattedCatalogs = catalogs.map(catalog => ({
+      ...catalog,
+      // Add promptCount as a fallback for older component versions
+      promptCount: catalog._count?.prompts || 0
+    }));
+    
+    debugLog('Catalogs fetched successfully', { count: formattedCatalogs.length });
+  } catch (err) {
+    debugLog('Error fetching catalogs:', err);
+    // If there's an error, we'll just use an empty array
+    formattedCatalogs = [];
+  }
 
   debugLog('Formatting bookmarked prompts', { count: bookmarkedPrompts.length });
   // Format the bookmarked prompts for the PromptCard component
@@ -233,7 +265,7 @@ export default async function MyPromptsPage({
             <CreateCatalogButton />
           </div>
           
-          <CatalogList catalogs={catalogs} />
+          <CatalogList catalogs={formattedCatalogs} />
         </TabsContent>
       </Tabs>
     </div>
