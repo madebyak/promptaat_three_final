@@ -4,8 +4,9 @@ import Link from "next/link"
 import { getTranslations } from "next-intl/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth/options"
-import { Card, CardContent } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"
 import { prisma } from "@/lib/prisma/client"
 import { PromptCard } from "@/components/prompts/prompt-card"
 import { Category, Tool } from "@/types/prompts"
@@ -13,14 +14,35 @@ import { PlusCircle, ArrowLeft } from "lucide-react"
 import { EditCatalogButton } from "@/components/catalogs/edit-catalog-button"
 import { RemoveFromCatalogButton } from "@/components/catalogs/remove-from-catalog-button"
 
+// Add debugging function to log information safely
+function debugLog(message: string, data?: unknown) {
+  try {
+    console.log(`[CATALOG DEBUG] ${message}`, data ? JSON.stringify(data, null, 2) : '');
+  } catch {
+    // Ignore stringification errors and just log the message
+    console.log(`[CATALOG DEBUG] ${message} (Data could not be stringified)`);
+  }
+}
+
 export async function generateMetadata({
   params,
 }: {
   params: { id: string; locale: string }
 }): Promise<Metadata> {
-  const t = await getTranslations("Catalogs")
+  let t;
+  try {
+    t = await getTranslations("Catalogs");
+    debugLog('Translations loaded for metadata');
+  } catch (err) {
+    console.error('[CATALOG METADATA ERROR]', err);
+    return {
+      title: "Catalog",
+      description: "View and manage your catalog",
+    };
+  }
   
   try {
+    debugLog('Fetching catalog for metadata', { id: params.id });
     const catalog = await prisma.catalog.findUnique({
       where: {
         id: params.id,
@@ -28,16 +50,19 @@ export async function generateMetadata({
     })
     
     if (!catalog) {
+      debugLog('Catalog not found for metadata');
       return {
         title: t("catalogNotFound", { defaultValue: "Catalog Not Found" }),
       }
     }
     
+    debugLog('Catalog found for metadata', { name: catalog.name });
     return {
       title: `${catalog.name} - ${t("catalog", { defaultValue: "Catalog" })}`,
       description: t("catalogDescription", { defaultValue: "View and manage your catalog" }),
     }
-  } catch {
+  } catch (err) {
+    debugLog('Error fetching catalog for metadata', err);
     return {
       title: t("catalog", { defaultValue: "Catalog" }),
       description: t("catalogDescription", { defaultValue: "View and manage your catalog" }),
@@ -50,30 +75,52 @@ export default async function CatalogDetailPage({
 }: {
   params: { id: string; locale: string }
 }) {
-  const t = await getTranslations("Catalogs")
-  // Use the destructured locale and id parameters
-  const defaultLocale = locale || "en"
-  const isRTL = defaultLocale === 'ar'
-  
-  const session = await getServerSession(authOptions)
-  if (!session?.user) {
-    redirect(`/${defaultLocale}/auth/login`)
-  }
-  
   try {
-    // Fetch the catalog and check if it belongs to the current user
-    const catalogData = await prisma.catalog.findFirst({
-      where: {
-        id: id,
-        userId: session.user.id,
-        deletedAt: null,
-      },
-    })
+    debugLog('Rendering catalog detail page', { id, locale });
     
-    // If catalog doesn't exist, return 404
-    if (!catalogData) {
-      notFound()
+    // Get translations
+    let t;
+    try {
+      t = await getTranslations("Catalogs");
+      debugLog('Translations loaded successfully');
+    } catch (err) {
+      debugLog('Error getting translations:', err);
+      throw new Error('Failed to load translations');
     }
+    
+    // Use the destructured locale and id parameters
+    const defaultLocale = locale || "en";
+    const isRTL = defaultLocale === 'ar';
+    debugLog('Locale settings', { defaultLocale, isRTL });
+    
+    // Get session with error handling
+    debugLog('Getting server session');
+    const session = await getServerSession(authOptions);
+    debugLog('Session retrieved', { hasUser: !!session?.user });
+    
+    if (!session?.user) {
+      debugLog('No user in session, redirecting to login');
+      redirect(`/${defaultLocale}/auth/login`);
+    }
+  
+    try {
+      // Fetch the catalog and check if it belongs to the current user
+      debugLog('Fetching catalog data', { id, userId: session.user.id });
+      const catalogData = await prisma.catalog.findFirst({
+        where: {
+          id: id,
+          userId: session.user.id,
+          deletedAt: null,
+        },
+      });
+      
+      // If catalog doesn't exist, return 404
+      if (!catalogData) {
+        debugLog('Catalog not found, returning 404');
+        notFound();
+      }
+      
+      debugLog('Catalog found', { name: catalogData.name });
     
     // Create a catalog object with the description field
     // Use type assertion to include the description field
@@ -228,8 +275,44 @@ export default async function CatalogDetailPage({
         )}
       </div>
     )
-  } catch (error) {
-    console.error("Error fetching catalog:", error);
-    notFound();
+    } catch (err) {
+      debugLog('Error in catalog detail page inner try block', err);
+      throw err; // Re-throw to be caught by outer try-catch
+    }
+  } catch (err) {
+    // Log the error
+    console.error('[CATALOG ERROR]', err);
+    
+    // Return an error UI instead of crashing
+    return (
+      <div className="container mx-auto py-8">
+        <Card className="max-w-2xl mx-auto border-red-200">
+          <CardHeader>
+            <CardTitle>Error Loading Catalog</CardTitle>
+            <CardDescription>
+              There was a problem loading your catalog information.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Alert variant="destructive">
+              <AlertTitle>Error</AlertTitle>
+              <AlertDescription>
+                We encountered an error retrieving your catalog data. Please try refreshing the page.
+                <div className="mt-2">
+                  <pre className="text-xs bg-gray-100 p-2 rounded overflow-auto">
+                    {err instanceof Error ? err.message : 'Unknown error'}
+                  </pre>
+                </div>
+              </AlertDescription>
+            </Alert>
+            <div className="mt-4 flex justify-center">
+              <Link href="/my-prompts">
+                <Button variant="outline">Back to My Prompts</Button>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 }

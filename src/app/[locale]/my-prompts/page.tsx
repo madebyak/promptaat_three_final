@@ -4,9 +4,10 @@ import Link from "next/link"
 import { getTranslations } from "next-intl/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth/options"
-import { Card, CardContent } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"
 import { prisma } from "@/lib/prisma/client"
 import { PromptCard } from "@/components/prompts/prompt-card"
 import { Category, Tool } from "@/types/prompts"
@@ -22,16 +23,43 @@ export async function generateMetadata(): Promise<Metadata> {
   }
 }
 
+// Add debugging function to log information safely
+function debugLog(message: string, data?: unknown) {
+  try {
+    console.log(`[MY-PROMPTS DEBUG] ${message}`, data ? JSON.stringify(data, null, 2) : '');
+  } catch {
+    // Ignore stringification errors and just log the message
+    console.log(`[MY-PROMPTS DEBUG] ${message} (Data could not be stringified)`);
+  }
+}
+
 export default async function MyPromptsPage({
   params: { locale = "en" }
 }: {
   params: { locale: string }
 }) {
-  const t = await getTranslations("MyPrompts")
-  const session = await getServerSession(authOptions)
-  if (!session?.user) {
-    redirect(`/${locale}/auth/login`)
-  }
+  try {
+    debugLog('Rendering my-prompts page, locale:', locale);
+    
+    // Get translations
+    let t;
+    try {
+      t = await getTranslations("MyPrompts");
+      debugLog('Translations loaded successfully');
+    } catch (err) {
+      debugLog('Error getting translations:', err);
+      throw new Error('Failed to load translations');
+    }
+    
+    // Get session with error handling
+    debugLog('Getting server session');
+    const session = await getServerSession(authOptions);
+    debugLog('Session retrieved', session);
+    
+    if (!session?.user) {
+      debugLog('No user in session, redirecting to login');
+      redirect(`/${locale}/auth/login`);
+    }
 
   // Fetch user's bookmarked prompts
   const bookmarkedPrompts = await prisma.prompt.findMany({
@@ -79,6 +107,7 @@ export default async function MyPromptsPage({
     },
   });
 
+  debugLog('Formatting bookmarked prompts', { count: bookmarkedPrompts.length });
   // Format the bookmarked prompts for the PromptCard component
   const formattedBookmarkedPrompts = bookmarkedPrompts.map(prompt => {
     const categories: Category[] = prompt.categories.map(pc => ({
@@ -114,6 +143,7 @@ export default async function MyPromptsPage({
 
   const isRTL = locale === 'ar';
 
+  debugLog('Rendering UI components');
   return (
     <div className="container mx-auto py-8">
       <div className="flex justify-between items-center mb-6">
@@ -175,5 +205,41 @@ export default async function MyPromptsPage({
         </TabsContent>
       </Tabs>
     </div>
-  )
+  );
+  } catch (err) {
+    // Log the error
+    console.error('[MY-PROMPTS ERROR]', err);
+    
+    // Return an error UI instead of crashing
+    return (
+      <div className="container mx-auto py-8">
+        <Card className="max-w-2xl mx-auto border-red-200">
+          <CardHeader>
+            <CardTitle>Error Loading Prompts</CardTitle>
+            <CardDescription>
+              There was a problem loading your prompts information.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Alert variant="destructive">
+              <AlertTitle>Error</AlertTitle>
+              <AlertDescription>
+                We encountered an error retrieving your prompts data. Please try refreshing the page.
+                <div className="mt-2">
+                  <pre className="text-xs bg-gray-100 p-2 rounded overflow-auto">
+                    {err instanceof Error ? err.message : 'Unknown error'}
+                  </pre>
+                </div>
+              </AlertDescription>
+            </Alert>
+            <div className="mt-4 flex justify-center">
+              <Link href="/">
+                <Button variant="outline">Go to Home</Button>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 }
