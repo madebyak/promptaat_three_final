@@ -49,24 +49,31 @@ export async function middleware(request: NextRequest) {
   
   // Special handling for CMS routes
   if (pathname.startsWith("/cms")) {
-    // Always allow access to CMS auth routes without any redirects
-    if (pathname.startsWith("/cms/auth/")) {
-      // Simply allow access to auth routes without any redirects or checks
-      // This prevents circular redirects by completely bypassing auth checks for these routes
+    try {
+      // Always allow access to CMS auth routes without any redirects
+      if (pathname.startsWith("/cms/auth/")) {
+        // Simply allow access to auth routes without any redirects or checks
+        // This prevents circular redirects by completely bypassing auth checks for these routes
+        console.log(`[Middleware] Allowing access to CMS auth path: ${pathname}`)
+        return NextResponse.next()
+      }
+      
+      // For other CMS routes, check for admin authentication
+      if (!hasNextAuthSession) {
+        // Redirect to CMS login if not authenticated
+        // Use a clean URL without callbackUrl to prevent circular redirects
+        console.log(`[Middleware] Redirecting to CMS login from ${pathname} due to missing session`)
+        return NextResponse.redirect(new URL("/cms/auth/login", request.url))
+      }
+      
+      // Successfully authenticated for CMS routes
+      console.log(`[Middleware] User has valid session for CMS path: ${pathname}`)
       return NextResponse.next()
-    }
-    
-    // For other CMS routes, check for admin authentication
-    if (!hasNextAuthSession) {
-      // Redirect to CMS login if not authenticated
-      // Use a clean URL without callbackUrl to prevent circular redirects
+    } catch (error) {
+      console.error(`[Middleware] Error handling CMS route ${pathname}:`, error)
+      // In case of an error, redirect to login for safety
       return NextResponse.redirect(new URL("/cms/auth/login", request.url))
     }
-    
-    // For CMS routes, we won't attempt to set custom headers
-    // This approach is more robust and avoids potential middleware errors
-    // The CMS will use its own locale management
-    return NextResponse.next()
   }
 
   // Handle root path - redirect to default locale
