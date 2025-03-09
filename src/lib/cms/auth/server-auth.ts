@@ -15,21 +15,19 @@ async function safeDbOperation<T>(operation: () => Promise<T>, fallback: T | nul
 }
 
 /**
- * Gets the current admin user from the token or creates a development admin in dev mode.
+ * Gets the current admin user from the session.
  * 
- * This function has different behavior based on the environment:
- * - In production: Requires a valid admin token to authenticate
- * - In development: Falls back to a mock admin account if no token is present
+ * This function will check for a valid session and then verify if the user
+ * exists in the admin_users table. All admin users must be properly registered
+ * in the database with appropriate credentials.
  * 
  * @returns The admin user object or null if not authenticated
  */
 export async function getCurrentAdmin() {
-  // Check if we're in development mode
-  const isDev = process.env.NODE_ENV === 'development';
   const timestamp = new Date().toISOString();
   
   // Log function entry for debugging
-  console.log(`[${timestamp}] getCurrentAdmin called, dev mode: ${isDev}`);
+  console.log(`[${timestamp}] getCurrentAdmin called`);
   
   try {
     // First, try to get the user from NextAuth session
@@ -83,31 +81,9 @@ export async function getCurrentAdmin() {
       console.error(`[${timestamp}] Error accessing cookies:`, cookieError);
     }
     
-    // Log authentication attempt for debugging
-    console.log(`[${timestamp}] Admin auth attempt via custom token - Token present: ${!!token}, Dev mode: ${isDev}`);
-    
-    // Create a mock admin account for development if needed
-    const createDevAdmin = () => {
-      console.log(`[${timestamp}] DEVELOPMENT MODE: Using mock admin account (dev@example.com)`);
-      console.log(`[${timestamp}] WARNING: This is a development-only account and should not be used in production`);
-      return {
-        id: 'dev-admin-id',
-        email: 'dev@example.com',
-        firstName: 'Development',
-        lastName: 'Admin',
-        role: 'admin'
-      };
-    };
-    
-    // If in development mode, return a mock admin user
-    if (isDev) {
-      console.log(`[${timestamp}] Using development mock admin account`);
-      return createDevAdmin();
-    }
-    
-    // If no token is present in production
+    // If no token is present
     if (!token) {
-      console.log(`[${timestamp}] No custom token found in production environment, authentication failed`);
+      console.log(`[${timestamp}] No custom token found, authentication failed`);
       return null;
     }
     
@@ -150,25 +126,7 @@ export async function getCurrentAdmin() {
     
     return admin;
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    const errorStack = error instanceof Error ? error.stack : 'No stack trace';
-    
-    console.error(`[${timestamp}] Error in getCurrentAdmin:`, errorMessage);
-    console.error(`[${timestamp}] Error stack:`, errorStack);
-    
-    // In development mode, return a mock admin as a fallback
-    if (isDev) {
-      console.log(`[${timestamp}] Returning development mock admin after error`);
-      return {
-        id: 'dev-admin-id',
-        email: 'dev@example.com',
-        firstName: 'Development',
-        lastName: 'Admin',
-        role: 'admin'
-      };
-    }
-    
-    console.log(`[${timestamp}] Authentication failed due to error in production environment`);
+    console.error(`[${timestamp}] Critical error in getCurrentAdmin:`, error instanceof Error ? error.message : 'Unknown error');
     return null;
   }
 }

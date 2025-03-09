@@ -10,6 +10,7 @@
     "lint": "next lint",
     "seed": "npx ts-node prisma/seed/index.ts",
     "seed:prompts": "ts-node prisma/seed/prompts-only.ts",
+    "seed:admin": "node prisma/seed-admin.js",
     "build:local": "prisma generate && next build --no-lint && next start",
     "build:test": "tsc --noEmit && next lint && prisma generate && next build",
     "vercel:local": "prisma generate && next build && next start",

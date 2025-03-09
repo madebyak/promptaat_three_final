@@ -15,22 +15,10 @@ export default function LogoutButton() {
     try {
       setIsLoggingOut(true);
       
-      // First, clear the custom JWT tokens through the API
-      const response = await fetch("/api/cms/auth/logout", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-      
-      if (!response.ok) {
-        console.error("Custom token logout failed");
-      }
-      
-      // Then, sign out from NextAuth session
+      // Sign out from NextAuth session
       await signOut({ redirect: false });
       
-      console.log("Successfully logged out from both auth systems");
+      console.log("Successfully logged out from NextAuth");
       
       // Redirect to login page after successful logout
       router.push("/cms/auth/login");

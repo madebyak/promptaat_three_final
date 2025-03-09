@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 import createNextIntlPlugin from 'next-intl/plugin';
 
+// Create the next-intl plugin with the config file path
 const withNextIntl = createNextIntlPlugin('./next-intl.config.ts');
 
 const nextConfig = {
@@ -18,7 +19,15 @@ const nextConfig = {
   },
   // Don't force trailing slashes to prevent redirect loops
   trailingSlash: false,
-  // Remove explicit redirects as they're now handled by middleware
+  // Explicitly handle CMS routes
+  async rewrites() {
+    return [
+      {
+        source: '/cms/:path*',
+        destination: '/cms/:path*',
+      },
+    ];
+  },
 };
 
 export default withNextIntl(nextConfig);

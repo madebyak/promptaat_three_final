@@ -1,7 +1,4 @@
 import { Metadata } from "next";
-import LoginForm from "@/components/cms/auth/login-form";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth/options";
 import { redirect } from "next/navigation";
 
 export const metadata: Metadata = {
@@ -9,14 +6,15 @@ export const metadata: Metadata = {
   description: "Login to Promptaat Admin Panel",
 };
 
-export default async function AdminLoginPage() {
-  // Check if user is already authenticated
-  const session = await getServerSession(authOptions);
+// Force dynamic rendering to ensure the page is always fresh
+export const dynamic = 'force-dynamic';
+
+// Server component that redirects to the standalone CMS login page
+export default function AdminLoginPage() {
+  // Log page load for debugging
+  console.log("[CMS] Login page rendering, redirecting to standalone login");
   
-  // If already authenticated, redirect to dashboard
-  if (session?.user) {
-    redirect("/cms/dashboard");
-  }
-  
-  return <LoginForm />;
+  // Use Next.js redirect for server-side redirection
+  // This avoids client-side React context issues
+  redirect('/cms-login');
 }

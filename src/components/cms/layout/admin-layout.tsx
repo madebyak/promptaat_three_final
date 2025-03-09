@@ -30,12 +30,34 @@ export default function AdminLayout({ children, admin }: AdminLayoutProps) {
 
   const handleLogout = async () => {
     try {
+      // First try to use NextAuth signOut
+      try {
+        const response = await fetch("/api/auth/signout", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ redirect: false, callbackUrl: "/cms-login" })
+        });
+        
+        if (response.ok) {
+          console.log("Successfully signed out with NextAuth");
+        }
+      } catch (nextAuthError) {
+        console.error("NextAuth signout error:", nextAuthError);
+      }
+      
+      // Also try the legacy logout endpoint for backward compatibility
       await fetch("/api/cms/auth/logout", {
         method: "POST",
       });
-      router.push("/cms/auth/login");
+      
+      // Redirect to the cms-login page
+      router.push("/cms-login");
     } catch (error) {
       console.error("Logout error:", error);
+      // Even if there's an error, try to redirect to login
+      router.push("/cms-login");
     }
   };
 

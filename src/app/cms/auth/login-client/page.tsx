@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,7 +22,24 @@ const loginSchema = z.object({
 
 type FormData = z.infer<typeof loginSchema>;
 
-export default function LoginForm() {
+/**
+ * Client component for the login page
+ * This component handles the client-side rendering of the login form
+ * and provides direct authentication without using SessionProvider
+ */
+export default function LoginClientPage() {
+  return (
+    <div className="flex min-h-screen flex-col items-center justify-center p-4 bg-slate-50">
+      <div className="w-full max-w-md p-6 bg-white rounded-lg shadow-md">
+        <h1 className="text-2xl font-bold text-center mb-6">Admin Login</h1>
+        <LoginForm />
+      </div>
+    </div>
+  );
+}
+
+// Login form component with direct API call
+function LoginForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -51,26 +67,38 @@ export default function LoginForm() {
     console.log(`[${timestamp}] [CMS] Login attempt for: ${data.email}`);
     
     try {
-      // Admin authentication with NextAuth
-      console.log(`[${timestamp}] [CMS] Calling NextAuth signIn for admin...`);
-      const nextAuthResult = await signIn("credentials", {
-        email: data.email,
-        password: data.password,
-        isAdmin: 'true', // Flag to indicate this is an admin login
-        redirect: false,
-        callbackUrl: '/cms/dashboard'
+      // Use our custom API endpoint for CMS login
+      const response = await fetch('/api/cms-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: data.email,
+          password: data.password,
+        }),
       });
       
-      console.log(`[${timestamp}] [CMS] NextAuth result:`, nextAuthResult);
+      console.log(`[${timestamp}] [CMS] CMS login API response status:`, response.status);
       
-      if (!nextAuthResult?.ok) {
-        console.error(`[${timestamp}] [CMS] Authentication failed:`, nextAuthResult?.error);
-        throw new Error(nextAuthResult?.error || "Invalid email or password");
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error(`[${timestamp}] [CMS] Authentication failed:`, errorData);
+        throw new Error(errorData.error || "Invalid email or password");
       }
+      
+      const result = await response.json();
       
       // Success - redirect to dashboard
       console.log(`[${timestamp}] [CMS] Authentication successful, redirecting to dashboard`);
-      window.location.href = nextAuthResult.url || "/cms/dashboard";
+      
+      // Store authentication in localStorage for the CMS
+      localStorage.setItem('cms_auth', JSON.stringify({
+        authenticated: true,
+        user: result.user,
+        timestamp: new Date().toISOString()
+      }));
+      
+      // Redirect to dashboard
+      window.location.href = result.url || "/cms/dashboard";
     } catch (err) {
       console.error(`[${timestamp}] [CMS] Login error:`, err);
       setError(err instanceof Error ? err.message : "An unexpected error occurred");

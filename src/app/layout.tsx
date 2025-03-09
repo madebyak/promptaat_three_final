@@ -2,6 +2,7 @@ import { Metadata } from 'next'
 import { Geist } from 'next/font/google'
 import { Toaster } from "@/components/ui/toaster"
 import { SpeedInsights } from "@vercel/speed-insights/next"
+import AuthSessionProvider from '@/components/auth/auth-session-provider'
 import './globals.css'
 
 const geistSans = Geist({
@@ -22,9 +23,11 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${geistSans.variable} font-sans antialiased`}>
-        {children}
-        <Toaster />
-        <SpeedInsights />
+        <AuthSessionProvider>
+          {children}
+          <Toaster />
+          <SpeedInsights />
+        </AuthSessionProvider>
       </body>
     </html>
   )

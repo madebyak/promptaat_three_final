@@ -41,7 +41,7 @@ export async function hashPassword(password: string): Promise<string> {
     }
     
     // Add a static salt to make the hash more secure
-    const saltedPassword = `${password}__promptaat_salt__`;
+    const saltedPassword = `${password}promptaat-static-salt`;
     
     // Log the salting process (without revealing the actual password)
     console.log(`[${timestamp}] [hashPassword] Salting password of length ${password.length}`);

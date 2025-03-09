@@ -56,7 +56,7 @@ export function AppSidebar({ locale, className }: AppSidebarProps) {
   const [searchQuery, setSearchQuery] = useState("")
   const [categories, setCategories] = useState<Category[]>([])
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
-  const [activeCategoryPath, setActiveCategoryPath] = useState<string>("")
+  const [activeCategoryPath, setActiveCategoryPath] = useState<string>(locale === "ar" ? "جميع الفئات" : "All Categories")
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isMobileOpen, setIsMobileOpen] = useState(false)
@@ -68,29 +68,55 @@ export function AppSidebar({ locale, className }: AppSidebarProps) {
         setIsLoading(true)
         setError(null)
         
+        // Add a small delay to ensure API is ready (helps during development)
+        if (process.env.NODE_ENV === 'development') {
+          await new Promise(resolve => setTimeout(resolve, 500))
+        }
+        
         const params = new URLSearchParams()
         params.append("locale", locale)
         if (debouncedSearch) {
           params.append("query", debouncedSearch)
         }
         
-        const response = await fetch(`/api/categories?${params.toString()}`)
+        console.log("[Sidebar] Fetching categories with params:", params.toString())
+        
+        // Use absolute URL to avoid path resolution issues
+        const apiUrl = window.location.origin + `/api/categories?${params.toString()}`
+        console.log("[Sidebar] Full API URL:", apiUrl)
+        
+        const response = await fetch(apiUrl, {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          },
+          // Add cache control to avoid stale data
+          cache: 'no-cache'
+        })
+        
         if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`)
+          const errorText = await response.text()
+          console.error(`[Sidebar] HTTP error! status: ${response.status}, response:`, errorText)
+          throw new Error(`API error (${response.status}): ${errorText || 'Unknown error'}`)
         }
         
-        const { success, data, message, error }: APIResponse = await response.json()
+        const responseData = await response.json()
+        const { success, data, message, error }: APIResponse = responseData
+        
+        console.log("[Sidebar] Categories API response:", { success, dataCount: data?.length, message, error })
         
         if (success && Array.isArray(data)) {
           setCategories(data)
         } else {
           console.error("[Sidebar Error]:", error || message)
-          setError(message)
+          setError(message || "Failed to load categories data")
           setCategories([])
         }
       } catch (error) {
-        console.error("[Sidebar Error]:", error)
-        setError("Failed to load categories")
+        const errorMessage = error instanceof Error ? error.message : String(error)
+        console.error("[Sidebar Error]:", errorMessage)
+        setError("Failed to load categories. Try Again")
         setCategories([])
       } finally {
         setIsLoading(false)
@@ -135,6 +161,12 @@ export function AppSidebar({ locale, className }: AppSidebarProps) {
   const CategoryList = () => (
     <>
       <SidebarHeader>
+        {/* Display current category path for better navigation context */}
+        {activeCategoryPath && (
+          <div className="px-3 py-1 mb-2 text-sm font-medium text-muted-foreground overflow-hidden text-ellipsis whitespace-nowrap">
+            {activeCategoryPath}
+          </div>
+        )}
         <div className="relative flex-1">
           <Search className={cn(
             "absolute top-2.5 h-4 w-4 text-light-grey",

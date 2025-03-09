@@ -1,10 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,6 +12,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { FiMail, FiLock, FiAlertCircle } from "react-icons/fi";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { signIn } from "next-auth/react";
 
 // Simple login schema
 const loginSchema = z.object({
@@ -23,7 +23,24 @@ const loginSchema = z.object({
 
 type FormData = z.infer<typeof loginSchema>;
 
-export default function LoginForm() {
+/**
+ * Client component for the login page
+ * This component handles the client-side rendering of the login form
+ * and provides direct authentication using NextAuth
+ */
+export default function CMSLoginPage() {
+  return (
+    <div className="flex min-h-screen flex-col items-center justify-center p-4">
+      <div className="w-full max-w-md p-6 bg-white rounded-lg shadow-md">
+        <h1 className="text-2xl font-bold text-center mb-6">Admin Login</h1>
+        <LoginForm />
+      </div>
+    </div>
+  );
+}
+
+// Login form component using NextAuth signIn
+function LoginForm(): React.ReactElement {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -51,30 +68,57 @@ export default function LoginForm() {
     console.log(`[${timestamp}] [CMS] Login attempt for: ${data.email}`);
     
     try {
-      // Admin authentication with NextAuth
-      console.log(`[${timestamp}] [CMS] Calling NextAuth signIn for admin...`);
-      const nextAuthResult = await signIn("credentials", {
+      // Get the callback URL from the query string if available
+      const urlParams = new URLSearchParams(window.location.search);
+      const callbackUrl = urlParams.get('callbackUrl') || '/cms/dashboard';
+      
+      console.log(`[${timestamp}] [CMS] Using NextAuth signIn with callback: ${callbackUrl}`);
+      
+      // Use NextAuth's signIn method with the credentials provider
+      const result = await signIn('credentials', {
+        redirect: false,
         email: data.email,
         password: data.password,
-        isAdmin: 'true', // Flag to indicate this is an admin login
-        redirect: false,
-        callbackUrl: '/cms/dashboard'
+        isAdmin: 'true', // This flag tells the auth provider this is an admin login
+        callbackUrl: callbackUrl
       });
       
-      console.log(`[${timestamp}] [CMS] NextAuth result:`, nextAuthResult);
+      const logTimestamp = new Date().toISOString();
+      console.log(`[${logTimestamp}] [CMS] SignIn result:`, result);
       
-      if (!nextAuthResult?.ok) {
-        console.error(`[${timestamp}] [CMS] Authentication failed:`, nextAuthResult?.error);
-        throw new Error(nextAuthResult?.error || "Invalid email or password");
+      if (result?.error) {
+        const errorTimestamp = new Date().toISOString();
+        console.error(`[${errorTimestamp}] [CMS] Authentication failed:`, result.error);
+        setError("Invalid email or password");
+        setIsLoading(false);
+        return;
       }
       
-      // Success - redirect to dashboard
-      console.log(`[${timestamp}] [CMS] Authentication successful, redirecting to dashboard`);
-      window.location.href = nextAuthResult.url || "/cms/dashboard";
-    } catch (err) {
-      console.error(`[${timestamp}] [CMS] Login error:`, err);
-      setError(err instanceof Error ? err.message : "An unexpected error occurred");
-    } finally {
+      if (result?.url) {
+        console.log(`[${timestamp}] [CMS] Authentication successful, redirecting to: ${result.url}`);
+        
+        // Store additional auth info in localStorage if needed
+        try {
+          localStorage.setItem('cms_auth', JSON.stringify({
+            authenticated: true,
+            timestamp: new Date().toISOString()
+          }));
+        } catch (storageError) {
+          console.error(`[${timestamp}] [CMS] Error storing auth in localStorage:`, storageError);
+          // Non-critical error, continue with redirect
+        }
+        
+        // Redirect to the URL provided by NextAuth
+        window.location.replace(result.url);
+      } else {
+        // Fallback in case result.url is not provided
+        console.log(`[${timestamp}] [CMS] No redirect URL provided, using fallback: ${callbackUrl}`);
+        window.location.replace(callbackUrl);
+      }
+    } catch (error) {
+      const errorTimestamp = new Date().toISOString();
+      console.error(`[${errorTimestamp}] [CMS] Login error:`, error);
+      setError(error instanceof Error ? error.message : "An unexpected error occurred");
       setIsLoading(false);
     }
   };

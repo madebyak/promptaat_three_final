@@ -13,6 +13,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { FiMail, FiLock, FiAlertCircle } from "react-icons/fi";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { SessionProvider } from "next-auth/react";
 
 // Simple login schema
 const loginSchema = z.object({
@@ -23,7 +24,26 @@ const loginSchema = z.object({
 
 type FormData = z.infer<typeof loginSchema>;
 
-export default function LoginForm() {
+/**
+ * Client component for the login page
+ * This component handles the client-side rendering of the login form
+ * and provides the SessionProvider for authentication
+ */
+export default function LoginClient() {
+  return (
+    <SessionProvider>
+      <div className="flex min-h-screen flex-col items-center justify-center p-4 bg-slate-50">
+        <div className="w-full max-w-md p-6 bg-white rounded-lg shadow-md">
+          <h1 className="text-2xl font-bold text-center mb-6">Admin Login</h1>
+          <LoginFormInternal />
+        </div>
+      </div>
+    </SessionProvider>
+  );
+}
+
+// Internal login form component to avoid context issues
+function LoginFormInternal() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
