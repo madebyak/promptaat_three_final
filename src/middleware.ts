@@ -30,74 +30,71 @@ const authPaths = [
   "/ar/auth/"
 ]
 
-export async function middleware(request: NextRequest) {
-  const token = request.cookies.get("token")?.value
-  const pathname = request.nextUrl.pathname
+// Function to handle CMS routes completely separately
+export function handleCmsRoutes(request: NextRequest) {
+  const pathname = request.nextUrl.pathname;
+  const timestamp = new Date().toISOString();
   
-  // Check for NextAuth.js session cookie
-  const hasNextAuthSession = request.cookies.has("next-auth.session-token") || 
-                            request.cookies.has("__Secure-next-auth.session-token")
-
-  // Skip middleware for static files and API routes
-  if (
-    pathname.startsWith("/_next") ||
-    pathname.startsWith("/api") ||
-    pathname.includes(".")
-  ) {
-    return NextResponse.next()
+  // Skip all middleware processing for static files
+  if (pathname.includes('.') || pathname.startsWith('/_next')) {
+    return NextResponse.next();
   }
   
-  // Special handling for CMS routes
-  if (pathname.startsWith("/cms")) {
-    const timestamp = new Date().toISOString();
-    console.log(`[${timestamp}] [Middleware] Processing CMS route: ${pathname}`);
+  console.log(`[${timestamp}] [CMS] Processing: ${pathname}`);
+  
+  // Special case: If accessing /cms without a trailing route, redirect to dashboard or login
+  if (pathname === '/cms' || pathname === '/cms/') {
+    const hasSession = request.cookies.has("next-auth.session-token") || 
+                       request.cookies.has("__Secure-next-auth.session-token");
+    const adminToken = request.cookies.get("admin_token")?.value;
     
-    try {
-      // Always allow access to CMS auth routes without any redirects
-      // Handle both with and without trailing slash to prevent redirect loops
-      if (pathname.startsWith("/cms/auth/") || pathname === "/cms/auth" || pathname === "/cms/auth/login" || pathname === "/cms/auth/login/") {
-        // Skip authentication checks for auth-related routes
-        // This prevents circular redirects by completely bypassing auth checks for these routes
-        console.log(`[${timestamp}] [Middleware] Allowing access to CMS auth path: ${pathname}`);
-        return NextResponse.next();
-      }
-      
-      // Also always allow access to API routes
-      if (pathname.startsWith("/cms/api/")) {
-        console.log(`[${timestamp}] [Middleware] Allowing access to CMS API path: ${pathname}`);
-        return NextResponse.next();
-      }
-      
-      // For other CMS routes, check for authentication
-      // We check for either NextAuth session or custom admin token for maximum compatibility
-      const adminToken = request.cookies.get("admin_token")?.value;
-      const hasAdminToken = !!adminToken;
-      
-      console.log(`[${timestamp}] [Middleware] Auth check for ${pathname}:`, {
-        hasNextAuthSession,
-        hasAdminToken
-      });
-      
-      // If either authentication method is present, allow access
-      if (hasNextAuthSession || hasAdminToken) {
-        console.log(`[${timestamp}] [Middleware] User authenticated for CMS path: ${pathname}`);
-        return NextResponse.next();
-      }
-      
-      // No valid authentication found, redirect to login
-      console.log(`[${timestamp}] [Middleware] Redirecting to CMS login from ${pathname} - No valid auth`);
-      return NextResponse.redirect(new URL("/cms/auth/login/", request.url));
-    } catch (error) {
-      // Detailed error logging
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      console.error(`[${timestamp}] [Middleware] Error handling CMS route ${pathname}:`, errorMessage);
-      
-      // In case of an error, redirect to login for safety
-      // But add a debug parameter to help identify the source of redirects
-      const loginUrl = new URL("/cms/auth/login/", request.url);
-      loginUrl.searchParams.set("error", "middleware_error");
-      return NextResponse.redirect(loginUrl);
+    if (hasSession || adminToken) {
+      return NextResponse.redirect(new URL('/cms/dashboard', request.url));
+    } else {
+      return NextResponse.redirect(new URL('/cms/auth/login', request.url));
     }
+  }
+  
+  // Always allow access to auth pages without checks
+  if (pathname.startsWith('/cms/auth')) {
+    console.log(`[${timestamp}] [CMS] Auth page access: ${pathname}`);
+    return NextResponse.next();
+  }
+  
+  // Also always allow access to API routes
+  if (pathname.startsWith('/cms/api')) {
+    console.log(`[${timestamp}] [CMS] API access: ${pathname}`);
+    return NextResponse.next();
+  }
+  
+  // For all other CMS routes, check authentication
+  const hasSession = request.cookies.has("next-auth.session-token") || 
+                     request.cookies.has("__Secure-next-auth.session-token");
+  const adminToken = request.cookies.get("admin_token")?.value;
+  
+  if (hasSession || adminToken) {
+    console.log(`[${timestamp}] [CMS] Authenticated access: ${pathname}`);
+    return NextResponse.next();
+  }
+  
+  // Not authenticated - redirect to login
+  console.log(`[${timestamp}] [CMS] Not authenticated, redirecting to login`);
+  return NextResponse.redirect(new URL('/cms/auth/login', request.url));
+}
+
+export async function middleware(request: NextRequest) {
+  const pathname = request.nextUrl.pathname;
+  
+  // Skip middleware processing for static files and API routes
+  if (pathname.startsWith('/_next') || 
+      pathname.startsWith('/api') || 
+      pathname.includes('.')) {
+    return NextResponse.next();
+  }
+  
+  // Handle CMS routes completely separately
+  if (pathname.startsWith('/cms')) {
+    return handleCmsRoutes(request);
   }
 
   // Handle root path - redirect to default locale
@@ -110,6 +107,11 @@ export async function middleware(request: NextRequest) {
 
   // Get locale from URL for proper path handling
   const locale = pathname.split("/")[1] || defaultLocale
+  
+  // Get authentication tokens and session information
+  const token = request.cookies.get("token")?.value
+  const hasNextAuthSession = request.cookies.has("next-auth.session-token") || 
+                          request.cookies.has("__Secure-next-auth.session-token")
   
   // Improved path matching for protected and auth paths
   const isProtectedPath = protectedPaths.some((p) => pathname.includes(p))
@@ -159,9 +161,12 @@ export async function middleware(request: NextRequest) {
 
 
 export const config = {
+  // Define precise matching patterns to avoid confusion
   matcher: [
-    "/((?!_next|api|.*\\..*).*)", 
-    // Explicitly include CMS paths
-    "/cms/:path*"
+    // Match all paths except excluded ones like API and static files
+    '/((?!_next|api|.*\\..*).*)',
+    
+    // Explicitly match all CMS routes
+    '/cms/:path*'
   ]
 }

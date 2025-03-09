@@ -4,14 +4,20 @@ import { getRequestConfig } from "next-intl/server"
 export const locales = ['en', 'ar'];
 export const defaultLocale = 'en';
 
+// Define paths that should be excluded from internationalization
+export const nonLocalizedPaths = ['/cms', '/api/cms'];
+
 export default getRequestConfig(async ({ locale }) => {
+  // Check if we're using the default locale as a fallback for CMS routes
+  const localeToUse = locale || defaultLocale;
+  
   // Load messages for the requested locale
   let messages;
   try {
-    messages = (await import(`./messages/${locale}.json`)).default;
-    console.log(`Successfully loaded messages for locale: ${locale}`);
+    messages = (await import(`./messages/${localeToUse}.json`)).default;
+    console.log(`Successfully loaded messages for locale: ${localeToUse}`);
   } catch (error) {
-    console.error(`Failed to load messages for locale: ${locale}`, error);
+    console.error(`Failed to load messages for locale: ${localeToUse}`, error);
     // Fallback to English if the requested locale fails
     messages = (await import(`./messages/en.json`)).default;
   }
