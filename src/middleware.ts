@@ -85,7 +85,7 @@ export async function middleware(request: NextRequest) {
       
       // No valid authentication found, redirect to login
       console.log(`[${timestamp}] [Middleware] Redirecting to CMS login from ${pathname} - No valid auth`);
-      return NextResponse.redirect(new URL("/cms/auth/login", request.url));
+      return NextResponse.redirect(new URL("/cms/auth/login/", request.url));
     } catch (error) {
       // Detailed error logging
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -93,7 +93,7 @@ export async function middleware(request: NextRequest) {
       
       // In case of an error, redirect to login for safety
       // But add a debug parameter to help identify the source of redirects
-      const loginUrl = new URL("/cms/auth/login", request.url);
+      const loginUrl = new URL("/cms/auth/login/", request.url);
       loginUrl.searchParams.set("error", "middleware_error");
       return NextResponse.redirect(loginUrl);
     }
