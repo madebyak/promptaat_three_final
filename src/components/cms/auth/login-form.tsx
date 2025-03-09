@@ -1,11 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { loginSchema, loginAdmin } from "@/lib/cms/auth/client-auth";
+import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,16 +13,22 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { FiMail, FiLock, FiAlertCircle } from "react-icons/fi";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { useLocale } from "next-intl";
+// Removed next-intl dependency
+
+// Define the login schema directly here to avoid circular dependencies
+const loginSchema = z.object({
+  email: z.string().email("Invalid email address"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+  rememberMe: z.boolean().default(false),
+});
 
 type FormData = z.infer<typeof loginSchema>;
 
 export default function LoginForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const router = useRouter();
-  const locale = useLocale();
-  const isRtl = locale === 'ar';
+  // Default to English for the admin interface
+  const isRtl = false;
 
   const {
     register,
@@ -47,32 +52,44 @@ export default function LoginForm() {
     setError(null);
 
     try {
-      const result = await loginAdmin(data.email, data.password, data.rememberMe);
-
-      if (!result.success) {
-        throw new Error(result.error || "Failed to login");
+      // Use NextAuth's signIn function with redirect: false to handle errors properly
+      const result = await signIn("credentials", {
+        email: data.email,
+        password: data.password,
+        redirect: false, // Prevent automatic redirects to control the flow
+      });
+      
+      console.log("Authentication result:", result);
+      
+      // Check for authentication errors
+      if (!result?.ok) {
+        setError("Invalid email or password. Please try again.");
+        return;
       }
-
-      // Redirect to dashboard on successful login
-      router.push("/cms/dashboard");
+      
+      // If authentication is successful, manually redirect to dashboard
+      // This avoids redirect loops by giving us more control over the redirect flow
+      window.location.href = "/cms/dashboard";
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
+      console.error("Login error:", err);
+      setError(err instanceof Error ? err.message : "An unexpected error occurred during login");
     } finally {
       setIsLoading(false);
     }
   };
 
+  // Use English for the admin interface
   const translations = {
-    title: locale === 'ar' ? 'تسجيل الدخول للوحة التحكم' : 'Admin Login',
-    subtitle: locale === 'ar' ? 'أدخل بياناتك للوصول إلى لوحة التحكم' : 'Enter your credentials to access the admin panel',
-    email: locale === 'ar' ? 'البريد الإلكتروني' : 'Email address',
-    emailPlaceholder: locale === 'ar' ? 'أدخل بريدك الإلكتروني' : 'Enter your email',
-    password: locale === 'ar' ? 'كلمة المرور' : 'Password',
-    passwordPlaceholder: locale === 'ar' ? 'أدخل كلمة المرور' : 'Enter your password',
-    rememberMe: locale === 'ar' ? 'تذكرني' : 'Remember me',
-    signIn: locale === 'ar' ? 'تسجيل الدخول' : 'Sign in',
-    signingIn: locale === 'ar' ? 'جاري تسجيل الدخول...' : 'Signing in...',
-    errorTitle: locale === 'ar' ? 'خطأ' : 'Error',
+    title: 'Admin Login',
+    subtitle: 'Enter your credentials to access the admin panel',
+    email: 'Email address',
+    emailPlaceholder: 'Enter your email',
+    password: 'Password',
+    passwordPlaceholder: 'Enter your password',
+    rememberMe: 'Remember me',
+    signIn: 'Sign in',
+    signingIn: 'Signing in...',
+    errorTitle: 'Error',
   };
 
   return (
