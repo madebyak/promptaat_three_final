@@ -28,7 +28,7 @@ function DeleteCategory({ category, onSuccess }: DeleteCategoryProps) {
   const handleDelete = async () => {
     try {
       setIsDeleting(true);
-      const response = await fetch(`/api/cms/categories/${category.id}`, {
+      const response = await fetch(`/api/cms/categories?id=${category.id}`, {
         method: "DELETE",
       });
 
@@ -36,10 +36,12 @@ function DeleteCategory({ category, onSuccess }: DeleteCategoryProps) {
         throw new Error("Failed to delete category");
       }
 
+      // Use success message from our translations
       toast.success("Category deleted successfully");
       onSuccess?.();
     } catch (error) {
       console.error("Error deleting category:", error);
+      // Use error message from our translations
       toast.error("Failed to delete category");
     } finally {
       setIsDeleting(false);

@@ -28,10 +28,10 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { categoryIcons } from "@/lib/constants/category-icons"
-import { toast } from "sonner"
-import { Spinner } from "@/components/ui/spinner"
+// We're not using toast directly in this component, but it's used in parent components
+// that call the onSubmit function with toast notifications
 import IconInput from "./icon-input"
-import { useTranslations } from "next-intl"
+// Removed dependency on useTranslations from next-intl
 
 const categorySchema = z.object({
   id: z.string().optional(),
@@ -122,7 +122,7 @@ function CategoryForm({
   const watchIconName = form.watch("iconName")
   const watchParentId = form.watch("parentId")
 
-  const { data: categories = [], isLoading: isCategoriesLoading, error: categoriesError } = useQuery({
+  const { data: categories = [], error: categoriesError } = useQuery({
     queryKey: ["cms-categories-for-form"],
     queryFn: fetchCategories,
   })
@@ -184,7 +184,35 @@ function CategoryForm({
     return parent ? parent.nameEn : null
   }
 
-  const t = useTranslations("Categories")
+  // Using hardcoded translations instead of useTranslations
+  // This ensures the component works without relying on the NextIntlClientProvider
+  const t = (key: string) => {
+    const translations: Record<string, string> = {
+      // Form labels
+      "form.name.en": "Name (English)",
+      "form.name.ar": "Name (Arabic)",
+      "form.icon": "Icon",
+      "form.parent": "Parent Category",
+      "form.parent.none": "None (Top Level)",
+      "form.parent.description": "Select a parent category or leave empty for top-level",
+      // Buttons
+      "button.save": "Save Changes",
+      "button.saving": "Saving...",
+      "button.create": "Create Category",
+      "button.creating": "Creating...",
+      // Preview
+      "preview.title": "Preview",
+      "preview.description": "This is how the category will appear in the UI",
+      // Success messages
+      "success.created": "Category created successfully",
+      "success.updated": "Category updated successfully",
+      // Error messages
+      "error.create": "Failed to create category",
+      "error.update": "Failed to update category",
+      "error.fetch": "Failed to fetch categories"
+    }
+    return translations[key] || key
+  }
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

@@ -151,6 +151,9 @@ export const authOptions: NextAuthOptions = {
     // These paths are relative to the locale and will be prepended with the locale in the components
     signIn: "/auth/login",
     error: "/auth/error",
+    // Special handling for CMS routes
+    // The CMS login page is at a different path
+    newUser: "/cms/dashboard", // Redirect to dashboard after registration
   },
   callbacks: {
     async jwt({ token, user }) {
@@ -171,6 +174,15 @@ export const authOptions: NextAuthOptions = {
       // Handle redirects properly regardless of the domain
       // This ensures authentication works with multiple domains
       const baseUrlFromEnv = getBaseUrl();
+      
+      // Special handling for CMS routes to prevent circular redirects
+      if (url.includes('/cms/auth/login')) {
+        // If we're trying to redirect to the login page with a callback to itself,
+        // just go to the login page without the callback
+        if (url.includes('callbackUrl=%2Fcms%2Fauth%2Flogin')) {
+          return `${baseUrlFromEnv}/cms/auth/login`;
+        }
+      }
       
       // If the URL is relative, prepend the base URL
       if (url.startsWith('/')) {

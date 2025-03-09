@@ -1,6 +1,5 @@
 import { getCurrentAdmin } from "@/lib/cms/auth/server-auth";
 import { redirect } from "next/navigation";
-import AdminLayout from "@/components/cms/layout/admin-layout";
 
 export default async function CategoriesLayout({
   children,
@@ -19,20 +18,8 @@ export default async function CategoriesLayout({
     
     if (isDev) {
       console.log(`[${new Date().toISOString()}] DEVELOPMENT MODE: Bypassing authentication redirect for testing`);
-      // Create a mock admin for development purposes
-      const mockAdmin = {
-        id: 'dev-admin-id',
-        email: 'dev@example.com',
-        firstName: 'Development',
-        lastName: 'Admin',
-        role: 'admin'
-      };
-      
-      return (
-        <AdminLayout admin={mockAdmin}>
-          {children}
-        </AdminLayout>
-      );
+      // Return children directly without AdminLayout to prevent duplicate sidebars
+      return children;
     } else {
       // In production, redirect to login
       console.log(`[${new Date().toISOString()}] Redirecting to login page due to failed authentication`);
@@ -40,9 +27,7 @@ export default async function CategoriesLayout({
     }
   }
   
-  return (
-    <AdminLayout admin={admin}>
-      {children}
-    </AdminLayout>
-  );
+  // Return children directly without AdminLayout to prevent duplicate sidebars
+  // The main CMS layout already provides the sidebar
+  return children;
 }

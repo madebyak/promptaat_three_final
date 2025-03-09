@@ -1,6 +1,7 @@
 "use client";
 
 import { z } from "zod";
+import { signIn } from "next-auth/react";
 
 // Login schema for validation (client-side version)
 export const loginSchema = z.object({
@@ -27,9 +28,21 @@ export async function logoutAdmin() {
   }
 }
 
-// Client-side login function
+// Client-side login function using NextAuth
 export async function loginAdmin(email: string, password: string, rememberMe: boolean = false) {
   try {
+    // First, try to use NextAuth's signIn function
+    const result = await signIn("credentials", {
+      email,
+      password,
+      redirect: false,
+    });
+
+    if (result?.ok) {
+      return { success: true, admin: { email } };
+    }
+
+    // If NextAuth fails, fall back to the API route
     const response = await fetch("/api/cms/auth/login", {
       method: "POST",
       headers: {

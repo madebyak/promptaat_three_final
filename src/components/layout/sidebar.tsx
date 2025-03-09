@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -8,8 +8,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { useTheme } from 'next-themes'
 import { cn } from '@/lib/utils'
 import { useDebounce } from '@/hooks/use-debounce'
-import { AlertCircle, ChevronDown, ChevronLeft, ChevronRight, Search } from 'lucide-react'
-import { DynamicIcon } from 'lucide-react/dynamic'
+import { AlertCircle, ChevronDown, ChevronLeft, ChevronRight, Search, LayoutDashboard, MessageSquare, FolderTree, Wrench, Users } from 'lucide-react'
 import { SidebarSkeleton } from './sidebar-skeleton'
 import CategoryDrawer from './category-drawer'
 import { Category as BaseCategory } from '@/types/prompts'
@@ -36,7 +35,7 @@ interface Category extends BaseCategory {
 type NavigationItem = {
   href: string
   label: string
-  icon?: React.ComponentType<{ className?: string }>
+  icon?: string
 }
 
 interface SidebarProps {
@@ -53,10 +52,11 @@ interface APIResponse {
   error?: string
 }
 
-export function Sidebar({ locale, className, items, children }: SidebarProps) {
+export function Sidebar({ locale, className, items = [] }: SidebarProps) {
   const router = useRouter()
   const pathname = usePathname()
-  const { theme } = useTheme()
+  // We need the useTheme hook for dark mode support, but don't need to use the theme value directly
+  const { } = useTheme()
   const [isRTL, setIsRTL] = useState(false)
   const [isCollapsed, setIsCollapsed] = useState<boolean>(
     typeof window !== 'undefined' ? localStorage.getItem('sidebarCollapsed') === 'true' : false
@@ -95,7 +95,7 @@ export function Sidebar({ locale, className, items, children }: SidebarProps) {
     localStorage.setItem('sidebarCollapsed', isCollapsed.toString())
   }, [isCollapsed])
 
-  const fetchCategories = async () => {
+  const fetchCategories = useCallback(async () => {
     setIsLoading(true)
     setError(null)
     
@@ -136,17 +136,17 @@ export function Sidebar({ locale, className, items, children }: SidebarProps) {
         console.error('[Sidebar Error]:', error || message)
         setError(error || message || 'Failed to fetch categories')
       }
-    } catch (err) {
+    } catch (err: unknown) {
       console.error('[Sidebar Error]:', err)
       setError('Failed to fetch categories')
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [locale, debouncedSearch])
 
   useEffect(() => {
     fetchCategories()
-  }, [debouncedSearch, locale])
+  }, [debouncedSearch, fetchCategories])
 
   // Auto-collapse sidebar on mobile when navigating
   useEffect(() => {
@@ -212,27 +212,43 @@ export function Sidebar({ locale, className, items, children }: SidebarProps) {
   }
 
   // Render icon with fallback
+  const renderIcon = (iconName: string | undefined) => {
+    if (!iconName) {
+      return <div className="h-4 w-4 bg-muted rounded-sm" />;
+    }
+    
+    // Map string icon names to actual components
+    const iconMap: Record<string, React.ReactNode> = {
+      'LayoutDashboard': <LayoutDashboard className="h-4 w-4" />,
+      'MessageSquare': <MessageSquare className="h-4 w-4" />,
+      'FolderTree': <FolderTree className="h-4 w-4" />,
+      'Wrench': <Wrench className="h-4 w-4" />,
+      'Users': <Users className="h-4 w-4" />,
+      'Search': <Search className="h-4 w-4" />,
+      'AlertCircle': <AlertCircle className="h-4 w-4" />,
+      // Add more icons as needed
+    };
+    
+    return iconMap[iconName] || <div className="h-4 w-4 bg-muted rounded-sm" />;
+  };
+  
+  // Render category icon with fallback
   const renderCategoryIcon = (iconName: string | undefined) => {
     if (!iconName) {
-      console.log('[Sidebar Debug] No icon name provided');
       return <div className="h-4 w-4 bg-muted rounded-sm" />;
     }
     
     try {
-      console.log(`[Sidebar Debug] Rendering icon: ${iconName}`);
-      return (
-        <DynamicIcon 
-          name={iconName as any}
-          className="h-4 w-4"
-          aria-label={`Category icon`}
-        />
-      );
+      return renderIcon(iconName);
     } catch (error) {
       console.error(`[Sidebar Error] Failed to render icon: ${iconName}`, error);
       return <div className="h-4 w-4 bg-muted rounded-sm" />;
     }
   };
 
+  // Determine if we should render CMS navigation items or categories
+  const isCmsPath = pathname?.startsWith('/cms');
+  
   return (
     <>
       {/* Desktop Sidebar */}
@@ -285,7 +301,36 @@ export function Sidebar({ locale, className, items, children }: SidebarProps) {
         </div>
 
         <ScrollArea className="flex-1 px-2">
-          {isLoading ? (
+          {isCmsPath && items.length > 0 ? (
+            // Render CMS navigation items
+            <div className="space-y-1 py-2">
+              {items.map((item, index) => (
+                <Button
+                  key={index}
+                  variant="ghost"
+                  className={cn(
+                    'w-full text-sm hover:bg-light-grey-light dark:hover:bg-dark-grey px-4 py-2',
+                    pathname === item.href && 'bg-light-grey-light dark:bg-dark-grey',
+                    'flex items-center',
+                    isRTL ? 'text-right' : 'text-left'
+                  )}
+                  onClick={() => router.push(item.href)}
+                >
+                  <div className={cn(
+                    'flex items-center gap-x-3 w-full',
+                    isRTL ? 'flex-row-reverse' : 'flex-row'
+                  )}>
+                    {item.icon && (
+                      <span className="text-light-grey flex-shrink-0">
+                        {renderIcon(item.icon)}
+                      </span>
+                    )}
+                    <span className="flex-1">{item.label}</span>
+                  </div>
+                </Button>
+              ))}
+            </div>
+          ) : isLoading ? (
             <SidebarSkeleton locale={locale} isCollapsed={isCollapsed} />
           ) : error ? (
             <div className="flex flex-col items-center justify-center h-full p-4 text-center">
@@ -454,7 +499,34 @@ export function Sidebar({ locale, className, items, children }: SidebarProps) {
 
       {/* Mobile Drawer */}
       <CategoryDrawer
-        categories={categories as any}
+        // The Category type is compatible with CategoryItem in category-drawer.tsx
+        // but TypeScript has issues with the recursive nature of the types
+        // We need to use a type assertion here because of the recursive structure
+        categories={categories.map(cat => ({
+          id: cat.id,
+          nameEn: cat.nameEn,
+          nameAr: cat.nameAr,
+          iconName: cat.iconName,
+          parentId: cat.parentId || null,
+          sortOrder: cat.sortOrder,
+          // Explicitly handle the recursive structure
+          children: cat.children ? cat.children.map(child => ({
+            id: child.id,
+            nameEn: child.nameEn,
+            nameAr: child.nameAr,
+            iconName: child.iconName,
+            parentId: child.parentId || null,
+            sortOrder: child.sortOrder
+          })) : undefined,
+          subcategories: cat.subcategories ? cat.subcategories.map(sub => ({
+            id: sub.id,
+            nameEn: sub.nameEn,
+            nameAr: sub.nameAr,
+            iconName: sub.iconName,
+            parentId: sub.parentId || null,
+            sortOrder: sub.sortOrder
+          })) : undefined
+        }))}
         activeCategory={activeCategory}
         onCategoryClick={handleCategoryClick}
         onSubcategoryClick={handleSubcategoryClick}

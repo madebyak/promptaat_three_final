@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Plus } from "lucide-react"
-import CategoryForm from "./category-form"
+import CategoryForm, { CategoryFormValues } from "./category-form"
 import { toast } from "sonner"
 
 type CreateCategoryProps = {
@@ -15,7 +15,7 @@ function CreateCategory({ onSuccess }: CreateCategoryProps) {
   const [open, setOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const handleSubmit = async (data: any) => {
+  const handleSubmit = async (data: CategoryFormValues) => {
     try {
       setIsSubmitting(true)
       const response = await fetch("/api/cms/categories", {
@@ -30,11 +30,13 @@ function CreateCategory({ onSuccess }: CreateCategoryProps) {
         throw new Error("Failed to create category")
       }
 
+      // Use success message from our translations
       toast.success("Category created successfully")
       onSuccess?.()
       setOpen(false)
     } catch (error) {
       console.error("Error creating category:", error)
+      // Use error message from our translations
       toast.error("Failed to create category")
     } finally {
       setIsSubmitting(false)

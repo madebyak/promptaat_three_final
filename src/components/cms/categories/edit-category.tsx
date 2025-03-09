@@ -67,6 +67,7 @@ function EditCategory({
   const { mutate: updateMutate, isPending: isUpdatePending } = useMutation({
     mutationFn: (data: CategoryFormValues) => updateCategory(category.id, data),
     onSuccess: () => {
+      // Use success message from our translations
       toast.success("Category updated successfully");
       queryClient.invalidateQueries({ queryKey: ["cms-categories"] });
       queryClient.invalidateQueries({ queryKey: ["cms-categories-for-form"] });
@@ -74,6 +75,7 @@ function EditCategory({
       if (onSuccess) onSuccess();
     },
     onError: (error: Error) => {
+      // Use error message from our translations
       toast.error(error.message || "Failed to update category");
     },
   });
@@ -82,6 +84,7 @@ function EditCategory({
   const { mutate: deleteMutate, isPending: isDeletePending } = useMutation({
     mutationFn: () => deleteCategory(category.id),
     onSuccess: () => {
+      // Use success message from our translations
       toast.success("Category deleted successfully");
       queryClient.invalidateQueries({ queryKey: ["cms-categories"] });
       queryClient.invalidateQueries({ queryKey: ["cms-categories-for-form"] });
@@ -90,6 +93,7 @@ function EditCategory({
       if (onSuccess) onSuccess();
     },
     onError: (error: Error) => {
+      // Use error message from our translations
       toast.error(error.message || "Failed to delete category");
     },
   });
