@@ -54,7 +54,8 @@ export async function middleware(request: NextRequest) {
     
     try {
       // Always allow access to CMS auth routes without any redirects
-      if (pathname.startsWith("/cms/auth/")) {
+      // Handle both with and without trailing slash to prevent redirect loops
+      if (pathname.startsWith("/cms/auth/") || pathname === "/cms/auth" || pathname === "/cms/auth/login" || pathname === "/cms/auth/login/") {
         // Skip authentication checks for auth-related routes
         // This prevents circular redirects by completely bypassing auth checks for these routes
         console.log(`[${timestamp}] [Middleware] Allowing access to CMS auth path: ${pathname}`);

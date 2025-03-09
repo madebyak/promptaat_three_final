@@ -16,23 +16,9 @@ const nextConfig = {
     // your project has ESLint errors.
     ignoreDuringBuilds: true,
   },
-  // Always add trailing slashes to URLs
-  trailingSlash: true,
-  // Configure redirects for paths without trailing slashes
-  async redirects() {
-    return [
-      {
-        source: '/cms/auth/login',
-        destination: '/cms/auth/login/',
-        permanent: true,
-      },
-      {
-        source: '/api/cms/auth/login',
-        destination: '/api/cms/auth/login/',
-        permanent: true,
-      }
-    ];
-  }
+  // Don't force trailing slashes to prevent redirect loops
+  trailingSlash: false,
+  // Remove explicit redirects as they're now handled by middleware
 };
 
 export default withNextIntl(nextConfig);
