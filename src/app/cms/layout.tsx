@@ -21,39 +21,51 @@ export default async function CMSLayout({
   children: React.ReactNode
   params: { locale?: string }
 }) {
-  // Check if user is authenticated and is admin
-  const session = await getServerSession(authOptions)
-  
-  // Get the default locale if none is provided
+  // Initialize variables with default values
+  let admin = null;
   const currentLocale = locale || 'en';
-  
-  if (!session?.user) {
-    // Redirect to the CMS auth login page
-    redirect(`/cms/auth/login`)
-  }
-  
-  // Get admin information for the header
-  const admin = await getCurrentAdmin()
-  
-  // Load messages for the current locale
   let messages = {};
+
   try {
-    // Use dynamic import to load messages
-    messages = (await import(`../../../messages/${currentLocale}.json`)).default;
-    console.log(`Successfully loaded messages for locale: ${currentLocale}`);
-  } catch (error) {
-    console.error(`Failed to load messages for locale: ${currentLocale}`, error);
-    // Fallback to English if the requested locale is not available
-    if (currentLocale !== 'en') {
-      try {
-        messages = (await import(`../../../messages/en.json`)).default;
-        console.log('Falling back to English messages');
-      } catch (fallbackError) {
-        console.error('Failed to load fallback English messages', fallbackError);
-        // Initialize with an empty object if all else fails
-        messages = {};
+    // Check if user is authenticated and is admin
+    const session = await getServerSession(authOptions);
+    
+    if (!session?.user) {
+      // Redirect to the CMS auth login page
+      redirect(`/cms/auth/login`);
+    }
+    
+    // Get admin information for the header - with error handling
+    try {
+      admin = await getCurrentAdmin();
+    } catch (adminError) {
+      console.error('Error getting admin information:', adminError);
+      // Continue without admin info - it's better than crashing the page
+    }
+    
+    // Load messages for the current locale
+    try {
+      // Use dynamic import to load messages
+      messages = (await import(`../../../messages/${currentLocale}.json`)).default;
+      console.log(`Successfully loaded messages for locale: ${currentLocale}`);
+    } catch (error) {
+      console.error(`Failed to load messages for locale: ${currentLocale}`, error);
+      // Fallback to English if the requested locale is not available
+      if (currentLocale !== 'en') {
+        try {
+          messages = (await import(`../../../messages/en.json`)).default;
+          console.log('Falling back to English messages');
+        } catch (fallbackError) {
+          console.error('Failed to load fallback English messages', fallbackError);
+          // Initialize with an empty object if all else fails
+          messages = {};
+        }
       }
     }
+  } catch (error) {
+    console.error('Critical error in CMS layout:', error);
+    // Redirect to login on critical errors
+    redirect(`/cms/auth/login`);
   }
 
   return (
