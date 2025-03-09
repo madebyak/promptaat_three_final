@@ -4,7 +4,17 @@ import { prisma } from "@/lib/db";
 import { z } from "zod";
 import { comparePasswords } from "@/lib/crypto";
 
-const secretKey = process.env.ADMIN_JWT_SECRET || "fallback-secret-key-for-admin";
+// Get the JWT secret with proper fallback and logging
+const getAdminJwtSecret = () => {
+  const secret = process.env.ADMIN_JWT_SECRET;
+  if (!secret) {
+    console.warn('[ADMIN AUTH WARNING] ADMIN_JWT_SECRET is not set. Using fallback secret. This is not secure for production.');
+    return "fallback-secret-key-for-admin";
+  }
+  return secret;
+};
+
+const secretKey = getAdminJwtSecret();
 const key = new TextEncoder().encode(secretKey);
 
 // Login schema for validation
@@ -14,7 +24,16 @@ export const loginSchema = z.object({
   rememberMe: z.boolean().optional().default(false),
 });
 
-export async function encrypt(payload: any) {
+// Define a type for the JWT payload to avoid using 'any'
+type JWTPayload = {
+  adminId: string;
+  email: string;
+  role?: string;
+  exp?: number;
+  [key: string]: unknown; // Allow for additional properties if needed
+};
+
+export async function encrypt(payload: JWTPayload) {
   return await new SignJWT(payload)
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
@@ -23,14 +42,15 @@ export async function encrypt(payload: any) {
 }
 
 export async function decrypt(token: string) {
-  console.log(`[${new Date().toISOString()}] Attempting to decrypt token...`);
+  const timestamp = new Date().toISOString();
+  console.log(`[${timestamp}] Attempting to decrypt token...`);
   
   // For development environments, we can bypass jwt verification
   const isDev = process.env.NODE_ENV === 'development';
   
   // Return mock admin payload in development mode regardless
   if (isDev) {
-    console.log(`[${new Date().toISOString()}] DEV MODE: Returning mock admin payload`);
+    console.log(`[${timestamp}] DEV MODE: Returning mock admin payload`);
     return {
       adminId: 'dev-admin-id',
       email: 'dev@example.com',
@@ -40,19 +60,33 @@ export async function decrypt(token: string) {
   
   // Validate token
   if (!token || typeof token !== 'string' || token.trim() === '') {
-    console.log(`[${new Date().toISOString()}] Token validation failed: token is empty or not a string`);
+    console.log(`[${timestamp}] Token validation failed: token is empty or not a string`);
     return null;
   }
   
   try {
+    // Add more detailed logging for debugging
+    console.log(`[${timestamp}] Verifying JWT token with algorithm HS256`);
+    
     const { payload } = await jwtVerify(token, key, {
       algorithms: ["HS256"],
     });
     
-    console.log(`[${new Date().toISOString()}] Token successfully decrypted`);
+    // Log successful decryption with minimal payload info for security
+    console.log(`[${timestamp}] Token successfully decrypted. Payload contains adminId: ${!!payload.adminId}`);
     return payload;
   } catch (error) {
-    console.error(`[${new Date().toISOString()}] JWT verification error:`, error instanceof Error ? error.message : 'Unknown error');
+    // Enhanced error logging
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error(`[${timestamp}] JWT verification error:`, errorMessage);
+    
+    // Log additional context for troubleshooting
+    if (error instanceof Error && error.message.includes('signature')) {
+      console.error(`[${timestamp}] This may indicate a mismatch between the token signature and the current ADMIN_JWT_SECRET`);
+    } else if (error instanceof Error && error.message.includes('expired')) {
+      console.error(`[${timestamp}] Token has expired. User needs to log in again.`);
+    }
+    
     return null;
   }
 }
@@ -70,43 +104,68 @@ export async function generateRefreshToken(adminId: string) {
 
 // Validate admin credentials
 export async function validateAdminCredentials(email: string, password: string) {
-  const admin = await prisma.adminUser.findUnique({
-    where: { email, isActive: true },
-  });
+  const timestamp = new Date().toISOString();
+  console.log(`[${timestamp}] Validating admin credentials for email: ${email}`);
+  
+  try {
+    // Find the admin user
+    const admin = await prisma.adminUser.findUnique({
+      where: { email, isActive: true },
+    });
 
-  if (!admin) {
+    if (!admin) {
+      console.log(`[${timestamp}] No active admin found with email: ${email}`);
+      return null;
+    }
+
+    // Verify the password
+    console.log(`[${timestamp}] Verifying password for admin: ${admin.id}`);
+    const passwordMatch = await comparePasswords(password, admin.passwordHash);
+    
+    if (!passwordMatch) {
+      console.log(`[${timestamp}] Password verification failed for admin: ${admin.id}`);
+      return null;
+    }
+
+    // Update last login time
+    try {
+      await prisma.adminUser.update({
+        where: { id: admin.id },
+        data: { lastLogin: new Date() },
+      });
+    } catch (updateError) {
+      // Non-critical error, log but continue
+      console.error(`[${timestamp}] Failed to update last login time:`, updateError);
+    }
+
+    // Create audit log for login
+    try {
+      await prisma.auditLog.create({
+        data: {
+          adminId: admin.id,
+          action: "login",
+          entityType: "admin",
+          entityId: admin.id,
+          details: { ip: "system" },
+        },
+      });
+    } catch (auditError) {
+      // Non-critical error, log but continue
+      console.error(`[${timestamp}] Failed to create audit log:`, auditError);
+    }
+
+    console.log(`[${timestamp}] Admin authentication successful: ${admin.id}`);
+    return {
+      id: admin.id,
+      email: admin.email,
+      firstName: admin.firstName,
+      lastName: admin.lastName,
+      role: admin.role,
+    };
+  } catch (error) {
+    console.error(`[${timestamp}] Error in validateAdminCredentials:`, error);
     return null;
   }
-
-  const passwordMatch = await comparePasswords(password, admin.passwordHash);
-  if (!passwordMatch) {
-    return null;
-  }
-
-  // Update last login time
-  await prisma.adminUser.update({
-    where: { id: admin.id },
-    data: { lastLogin: new Date() },
-  });
-
-  // Create audit log for login
-  await prisma.auditLog.create({
-    data: {
-      adminId: admin.id,
-      action: "login",
-      entityType: "admin",
-      entityId: admin.id,
-      details: { ip: "system" },
-    },
-  });
-
-  return {
-    id: admin.id,
-    email: admin.email,
-    firstName: admin.firstName,
-    lastName: admin.lastName,
-    role: admin.role,
-  };
 }
 
 // Set auth cookies - server-side only
