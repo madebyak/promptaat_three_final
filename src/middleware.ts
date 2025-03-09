@@ -50,32 +50,12 @@ export async function middleware(request: NextRequest) {
   if (pathname.startsWith("/cms")) {
     // Always allow access to CMS auth routes without any redirects
     if (pathname.startsWith("/cms/auth/")) {
-      // Check for admin cookies to detect potential redirect loops
-      const adminTokenCookie = request.cookies.get("admin-token")?.value
-      const adminRefreshTokenCookie = request.cookies.get("admin-refresh-token")?.value
-      
-      // Log authentication status in production for debugging
-      if (process.env.NODE_ENV === 'production') {
-        console.log(`[CMS AUTH MIDDLEWARE] Path: ${pathname}, HasAdminToken: ${!!adminTokenCookie}, HasNextAuthSession: ${hasNextAuthSession}`);
-      }
-      
-      // If we detect cookies but still hitting login page, clear them to break redirect loop
-      if (pathname === "/cms/auth/login" && (adminTokenCookie || adminRefreshTokenCookie)) {
-        const response = NextResponse.next()
-        // Clear potentially corrupted cookies
-        response.cookies.delete("admin-token")
-        response.cookies.delete("admin-refresh-token")
-        return response
-      }
-      
       // Simply allow access to auth routes without any redirects or checks
       return NextResponse.next()
     }
     
     // For other CMS routes, check for admin authentication
-    // Check both NextAuth session and admin-specific cookies
-    const adminTokenCookie = request.cookies.get("admin-token")?.value
-    if (!hasNextAuthSession && !adminTokenCookie) {
+    if (!hasNextAuthSession) {
       // Redirect to CMS login if not authenticated
       // Use a clean URL without callbackUrl to prevent circular redirects
       return NextResponse.redirect(new URL("/cms/auth/login", request.url))
