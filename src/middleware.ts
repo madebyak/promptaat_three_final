@@ -46,39 +46,8 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
   
-  // Special handling for CMS routes
-  if (pathname.startsWith("/cms")) {
-    // Always allow access to CMS auth routes without any redirects
-    if (pathname.startsWith("/cms/auth/")) {
-      // Simply allow access to auth routes without any redirects or checks
-      return NextResponse.next()
-    }
-    
-    // For other CMS routes, check for admin authentication
-    if (!hasNextAuthSession) {
-      // Redirect to CMS login if not authenticated
-      // Use a clean URL without callbackUrl to prevent circular redirects
-      return NextResponse.redirect(new URL("/cms/auth/login", request.url))
-    }
-    
-    // Apply internationalization to CMS routes as well
-    // This ensures that the i18n context is available in CMS components
-    try {
-      // We still want to apply the intl middleware to CMS routes
-      // but we don't want it to redirect or change the URL
-      const response = NextResponse.next()
-      
-      // Copy headers from what the intl middleware would have set
-      // This makes the locale information available to the CMS routes
-      // Using the standardized header name for Next.js 15
-      response.headers.set('x-next-intl-locale', defaultLocale)
-      
-      return response
-    } catch (err) {
-      console.error('Error applying i18n to CMS route:', err)
-      return NextResponse.next()
-    }
-  }
+  // CMS routes are now completely excluded from middleware processing via the matcher config
+  // This ensures no middleware code runs for any CMS routes, preventing the MIDDLEWARE_INVOCATION_FAILED error
 
   // Handle root path - redirect to default locale
   if (pathname === "/") {
@@ -140,8 +109,7 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next|api|.*\\..*).*)", 
-    // Explicitly include CMS paths
-    "/cms/:path*"
+    // Exclude CMS paths completely from middleware processing
+    "/((?!_next|api|cms|.*\\..*).*)"
   ]
 }
