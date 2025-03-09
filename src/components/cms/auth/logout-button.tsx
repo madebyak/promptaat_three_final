@@ -3,6 +3,7 @@
 import { LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { signOut } from "next-auth/react";
 
 export default function LogoutButton() {
   const router = useRouter();
@@ -14,6 +15,7 @@ export default function LogoutButton() {
     try {
       setIsLoggingOut(true);
       
+      // First, clear the custom JWT tokens through the API
       const response = await fetch("/api/cms/auth/logout", {
         method: "POST",
         headers: {
@@ -21,14 +23,18 @@ export default function LogoutButton() {
         },
       });
       
-      if (response.ok) {
-        // Redirect to login page after successful logout
-        router.push("/cms/auth/login");
-        router.refresh();
-      } else {
-        console.error("Logout failed");
-        setIsLoggingOut(false);
+      if (!response.ok) {
+        console.error("Custom token logout failed");
       }
+      
+      // Then, sign out from NextAuth session
+      await signOut({ redirect: false });
+      
+      console.log("Successfully logged out from both auth systems");
+      
+      // Redirect to login page after successful logout
+      router.push("/cms/auth/login");
+      router.refresh();
     } catch (error) {
       console.error("Logout error:", error);
       setIsLoggingOut(false);

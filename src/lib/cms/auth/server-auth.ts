@@ -28,10 +28,21 @@ export async function getCurrentAdmin() {
   const isDev = process.env.NODE_ENV === 'development';
   const timestamp = new Date().toISOString();
   
+  // Log function entry for debugging
+  console.log(`[${timestamp}] getCurrentAdmin called, dev mode: ${isDev}`);
+  
   try {
     // First, try to get the user from NextAuth session
     // This should be the primary authentication method after our changes
-    const session = await getServerSession(authOptions);
+    let session;
+    try {
+      session = await getServerSession(authOptions);
+      console.log(`[${timestamp}] NextAuth session check result:`, session ? "Session found" : "No session");
+    } catch (sessionError) {
+      console.error(`[${timestamp}] Error retrieving NextAuth session:`, sessionError);
+      session = null;
+    }
+    
     if (session?.user?.email) {
       const userEmail = session.user.email; // Assign to a const to satisfy TypeScript
       console.log(`[${timestamp}] User authenticated via NextAuth session: ${userEmail}`);
@@ -54,16 +65,26 @@ export async function getCurrentAdmin() {
       });
       
       if (admin) {
+        console.log(`[${timestamp}] Admin found in database for email: ${userEmail}`);
         return admin;
+      } else {
+        console.log(`[${timestamp}] No admin found in database for email: ${userEmail}`);
       }
     }
     
+    console.log(`[${timestamp}] NextAuth session check failed or no admin found, trying custom token authentication`);
+    
     // As a fallback (for compatibility), try to get admin from token
-    const cookieStore = await cookies();
-    const token = cookieStore.get("admin_token")?.value;
+    let token = null;
+    try {
+      const cookieStore = await cookies();
+      token = cookieStore.get("admin_token")?.value;
+    } catch (cookieError) {
+      console.error(`[${timestamp}] Error accessing cookies:`, cookieError);
+    }
     
     // Log authentication attempt for debugging
-    console.log(`[${timestamp}] Admin auth attempt via token - Token present: ${!!token}, Dev mode: ${isDev}`);
+    console.log(`[${timestamp}] Admin auth attempt via custom token - Token present: ${!!token}, Dev mode: ${isDev}`);
     
     // Create a mock admin account for development if needed
     const createDevAdmin = () => {
@@ -80,27 +101,37 @@ export async function getCurrentAdmin() {
     
     // If in development mode, return a mock admin user
     if (isDev) {
+      console.log(`[${timestamp}] Using development mock admin account`);
       return createDevAdmin();
     }
     
     // If no token is present in production
     if (!token) {
+      console.log(`[${timestamp}] No custom token found in production environment, authentication failed`);
       return null;
     }
     
     // Try to decrypt the token
-    const payload = await decrypt(token);
+    let payload = null;
+    try {
+      payload = await decrypt(token);
+    } catch (decryptError) {
+      console.error(`[${timestamp}] Error decrypting token:`, decryptError);
+    }
     
     // If token decryption failed
     if (!payload) {
-      console.log(`[${timestamp}] Token decryption failed`);
+      console.log(`[${timestamp}] Token decryption failed or returned null payload`);
       return null;
     }
+    
+    const adminId = payload.adminId as string;
+    console.log(`[${timestamp}] Token decrypted successfully, adminId: ${adminId}`);
     
     // Use the safe database operation function to handle errors gracefully
     const admin = await safeDbOperation(async () => {
       return await prisma.adminUser.findUnique({
-        where: { id: payload.adminId as string, isActive: true },
+        where: { id: adminId, isActive: true },
         select: {
           id: true,
           email: true,
@@ -111,12 +142,23 @@ export async function getCurrentAdmin() {
       });
     });
     
+    if (admin) {
+      console.log(`[${timestamp}] Admin found in database via token authentication: ${admin.email}`);
+    } else {
+      console.log(`[${timestamp}] No admin found in database for adminId: ${adminId}`);
+    }
+    
     return admin;
   } catch (error) {
-    console.error(`[${timestamp}] Error in getCurrentAdmin:`, error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorStack = error instanceof Error ? error.stack : 'No stack trace';
+    
+    console.error(`[${timestamp}] Error in getCurrentAdmin:`, errorMessage);
+    console.error(`[${timestamp}] Error stack:`, errorStack);
     
     // In development mode, return a mock admin as a fallback
     if (isDev) {
+      console.log(`[${timestamp}] Returning development mock admin after error`);
       return {
         id: 'dev-admin-id',
         email: 'dev@example.com',
@@ -126,6 +168,7 @@ export async function getCurrentAdmin() {
       };
     }
     
+    console.log(`[${timestamp}] Authentication failed due to error in production environment`);
     return null;
   }
 }

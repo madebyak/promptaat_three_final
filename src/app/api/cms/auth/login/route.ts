@@ -68,17 +68,27 @@ export async function POST(request: NextRequest) {
       const session = await getServerSession(authOptions);
       if (session?.user) {
         logWithTimestamp('User already authenticated via NextAuth', { userId: session.user.id });
-        // User is already authenticated, return success
-        return NextResponse.json(
-          { 
-            success: true,
-            admin: {
-              id: session.user.id,
-              email: session.user.email,
-            }
-          },
-          { status: 200 }
-        );
+        
+        // If this is a revalidation request, return the existing session info
+        const isRevalidation = request.headers.get('x-revalidate') === 'true' || 
+                              new URL(request.url).searchParams.get('revalidate') === 'true';
+        
+        if (isRevalidation) {
+          logWithTimestamp('Revalidation request detected, returning existing session');
+          return NextResponse.json(
+            { 
+              success: true,
+              admin: {
+                id: session.user.id,
+                email: session.user.email,
+              }
+            },
+            { status: 200 }
+          );
+        }
+        
+        // Otherwise, we'll continue with the login flow to set up custom tokens as well
+        logWithTimestamp('Existing session found, will also set up custom tokens');
       }
     } catch (sessionError) {
       // Non-critical error, log but continue with normal login flow

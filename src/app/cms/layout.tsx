@@ -22,25 +22,84 @@ export default async function CMSLayout({
   params: { locale?: string }
 }) {
   // Initialize variables with default values
-  let admin = null;
   const currentLocale = locale || 'en';
   let messages = {};
+  // Define types to avoid TypeScript errors
+  type AdminData = {
+    id: string;
+    email: string;
+    firstName?: string;
+    lastName?: string;
+    role: string;
+  } | null;
+  
+  // Define session type
+  type SessionData = {
+    user?: {
+      id?: string;
+      email?: string;
+      name?: string;
+    };
+  } | null;
+  
+  let adminData: AdminData = null;
 
   try {
-    // Check if user is authenticated and is admin
-    const session = await getServerSession(authOptions);
+    const timestamp = new Date().toISOString();
+    console.log(`[${timestamp}] CMS Layout - Checking authentication`);
     
-    if (!session?.user) {
-      // Redirect to the CMS auth login page
-      redirect(`/cms/auth/login`);
+    // Check both authentication methods
+    const results = await Promise.allSettled([
+      getServerSession(authOptions),
+      getCurrentAdmin()
+    ]);
+    const sessionResult = results[0];
+    const adminResult = results[1];
+    
+    // Log authentication status for debugging
+    console.log(`[${timestamp}] CMS Layout - Auth check results:`, {
+      sessionStatus: sessionResult.status,
+      hasSession: sessionResult.status === 'fulfilled' && !!(sessionResult as PromiseFulfilledResult<SessionData>).value?.user,
+      adminStatus: adminResult.status,
+      hasAdmin: adminResult.status === 'fulfilled' && !!(adminResult as PromiseFulfilledResult<AdminData>).value
+    });
+    
+    // Check if the user is authenticated through either method
+    const hasSession = sessionResult.status === 'fulfilled' && !!(sessionResult as PromiseFulfilledResult<SessionData>).value?.user;
+    const hasAdmin = adminResult.status === 'fulfilled' && !!(adminResult as PromiseFulfilledResult<AdminData>).value;
+    
+    if (!hasSession && !hasAdmin) {
+      // Neither authentication method succeeded, redirect to login
+      console.log(`[${timestamp}] CMS Layout - No valid authentication found, redirecting to login`);
+      redirect(`/cms/auth/login?source=layout`);
     }
     
-    // Get admin information for the header - with error handling
-    try {
-      admin = await getCurrentAdmin();
-    } catch (adminError) {
-      console.error('Error getting admin information:', adminError);
-      // Continue without admin info - it's better than crashing the page
+    // Set admin information from the result we already have
+    if (adminResult.status === 'fulfilled' && (adminResult as PromiseFulfilledResult<AdminData>).value) {
+      console.log(`[${timestamp}] CMS Layout - Using admin info from getCurrentAdmin`);
+      adminData = (adminResult as PromiseFulfilledResult<AdminData>).value;
+    } else {
+      // If getCurrentAdmin failed but we still have a session, try to create a minimal admin object
+      if (hasSession && sessionResult.status === 'fulfilled' && (sessionResult as PromiseFulfilledResult<SessionData>).value?.user) {
+        console.log(`[${timestamp}] CMS Layout - Creating admin info from session`);
+        const sessionData = (sessionResult as PromiseFulfilledResult<SessionData>).value;
+        const sessionUser = sessionData?.user;
+        
+        if (sessionUser) {
+          adminData = {
+            id: sessionUser.id ?? 'unknown',
+            email: sessionUser.email ?? 'unknown@example.com',
+            firstName: sessionUser.name ? sessionUser.name.split(' ')[0] : 'Admin',
+            lastName: sessionUser.name ? sessionUser.name.split(' ').slice(1).join(' ') : 'User',
+            role: 'admin'
+          };
+        }
+      }
+      
+      if (!adminData) {
+        console.error(`[${timestamp}] CMS Layout - Failed to get or create admin information`);
+        // Continue without admin info - it's better than crashing the page
+      }
     }
     
     // Load messages for the current locale
@@ -63,9 +122,15 @@ export default async function CMSLayout({
       }
     }
   } catch (error) {
-    console.error('Critical error in CMS layout:', error);
-    // Redirect to login on critical errors
-    redirect(`/cms/auth/login`);
+    const timestamp = new Date().toISOString();
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorStack = error instanceof Error ? error.stack : 'No stack trace';
+    
+    console.error(`[${timestamp}] Critical error in CMS layout:`, errorMessage);
+    console.error(`[${timestamp}] Error stack:`, errorStack);
+    
+    // Redirect to login on critical errors with error parameter for tracking
+    redirect(`/cms/auth/login?error=layout_error`);
   }
 
   return (
@@ -113,9 +178,9 @@ export default async function CMSLayout({
                 <UserCircle className="h-5 w-5 text-blue-600" />
                 <div>
                   <p className="text-sm font-medium">
-                    {admin?.firstName ? `${admin.firstName} ${admin.lastName || ''}` : admin?.email}
+                    {adminData?.firstName ? `${adminData.firstName} ${adminData.lastName || ''}` : adminData?.email}
                   </p>
-                  <p className="text-xs text-gray-500">Logged in as: {admin?.email}</p>
+                  <p className="text-xs text-gray-500">Logged in as: {adminData?.email}</p>
                 </div>
               </div>
               

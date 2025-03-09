@@ -50,28 +50,57 @@ export default function LoginForm() {
   const onSubmit = async (data: FormData) => {
     setIsLoading(true);
     setError(null);
+    const timestamp = new Date().toISOString();
 
     try {
-      // Use NextAuth's signIn function with redirect: false to handle errors properly
-      const result = await signIn("credentials", {
+      console.log(`[${timestamp}] Starting admin login process for: ${data.email}`);
+      
+      // Step 1: Use NextAuth's signIn function with redirect: false to handle errors properly
+      console.log(`[${timestamp}] Authenticating with NextAuth...`);
+      const nextAuthResult = await signIn("credentials", {
         email: data.email,
         password: data.password,
         redirect: false, // Prevent automatic redirects to control the flow
       });
       
-      console.log("Authentication result:", result);
+      console.log(`[${timestamp}] NextAuth authentication result:`, nextAuthResult?.ok ? 'success' : 'failed');
       
-      // Check for authentication errors
-      if (!result?.ok) {
+      // Check for NextAuth authentication errors
+      if (!nextAuthResult?.ok) {
+        console.error(`[${timestamp}] NextAuth authentication failed`);
         setError("Invalid email or password. Please try again.");
         return;
       }
       
+      // Step 2: Also call the custom API to set up the admin JWT tokens
+      // This ensures both authentication systems are in sync
+      console.log(`[${timestamp}] Setting up admin JWT tokens...`);
+      const customAuthResponse = await fetch("/api/cms/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: data.email,
+          password: data.password,
+          rememberMe: data.rememberMe,
+        }),
+      });
+      
+      if (!customAuthResponse.ok) {
+        console.error(`[${timestamp}] Custom JWT setup failed:`, await customAuthResponse.text());
+        // Even if custom JWT setup fails, we proceed if NextAuth succeeded
+        console.warn(`[${timestamp}] Proceeding with NextAuth session only`);
+      } else {
+        console.log(`[${timestamp}] Custom JWT tokens set successfully`);
+      }
+      
       // If authentication is successful, manually redirect to dashboard
       // This avoids redirect loops by giving us more control over the redirect flow
+      console.log(`[${timestamp}] Authentication successful, redirecting to dashboard`);
       window.location.href = "/cms/dashboard";
     } catch (err) {
-      console.error("Login error:", err);
+      console.error(`[${timestamp}] Login error:`, err);
       setError(err instanceof Error ? err.message : "An unexpected error occurred during login");
     } finally {
       setIsLoading(false);

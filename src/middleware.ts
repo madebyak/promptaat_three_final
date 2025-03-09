@@ -49,30 +49,53 @@ export async function middleware(request: NextRequest) {
   
   // Special handling for CMS routes
   if (pathname.startsWith("/cms")) {
+    const timestamp = new Date().toISOString();
+    console.log(`[${timestamp}] [Middleware] Processing CMS route: ${pathname}`);
+    
     try {
       // Always allow access to CMS auth routes without any redirects
       if (pathname.startsWith("/cms/auth/")) {
-        // Simply allow access to auth routes without any redirects or checks
+        // Skip authentication checks for auth-related routes
         // This prevents circular redirects by completely bypassing auth checks for these routes
-        console.log(`[Middleware] Allowing access to CMS auth path: ${pathname}`)
-        return NextResponse.next()
+        console.log(`[${timestamp}] [Middleware] Allowing access to CMS auth path: ${pathname}`);
+        return NextResponse.next();
       }
       
-      // For other CMS routes, check for admin authentication
-      if (!hasNextAuthSession) {
-        // Redirect to CMS login if not authenticated
-        // Use a clean URL without callbackUrl to prevent circular redirects
-        console.log(`[Middleware] Redirecting to CMS login from ${pathname} due to missing session`)
-        return NextResponse.redirect(new URL("/cms/auth/login", request.url))
+      // Also always allow access to API routes
+      if (pathname.startsWith("/cms/api/")) {
+        console.log(`[${timestamp}] [Middleware] Allowing access to CMS API path: ${pathname}`);
+        return NextResponse.next();
       }
       
-      // Successfully authenticated for CMS routes
-      console.log(`[Middleware] User has valid session for CMS path: ${pathname}`)
-      return NextResponse.next()
+      // For other CMS routes, check for authentication
+      // We check for either NextAuth session or custom admin token for maximum compatibility
+      const adminToken = request.cookies.get("admin_token")?.value;
+      const hasAdminToken = !!adminToken;
+      
+      console.log(`[${timestamp}] [Middleware] Auth check for ${pathname}:`, {
+        hasNextAuthSession,
+        hasAdminToken
+      });
+      
+      // If either authentication method is present, allow access
+      if (hasNextAuthSession || hasAdminToken) {
+        console.log(`[${timestamp}] [Middleware] User authenticated for CMS path: ${pathname}`);
+        return NextResponse.next();
+      }
+      
+      // No valid authentication found, redirect to login
+      console.log(`[${timestamp}] [Middleware] Redirecting to CMS login from ${pathname} - No valid auth`);
+      return NextResponse.redirect(new URL("/cms/auth/login", request.url));
     } catch (error) {
-      console.error(`[Middleware] Error handling CMS route ${pathname}:`, error)
+      // Detailed error logging
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error(`[${timestamp}] [Middleware] Error handling CMS route ${pathname}:`, errorMessage);
+      
       // In case of an error, redirect to login for safety
-      return NextResponse.redirect(new URL("/cms/auth/login", request.url))
+      // But add a debug parameter to help identify the source of redirects
+      const loginUrl = new URL("/cms/auth/login", request.url);
+      loginUrl.searchParams.set("error", "middleware_error");
+      return NextResponse.redirect(loginUrl);
     }
   }
 
