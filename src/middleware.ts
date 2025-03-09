@@ -30,69 +30,44 @@ const authPaths = [
   "/ar/auth/"
 ]
 
-// Function to handle CMS routes completely separately
-export function handleCmsRoutes(request: NextRequest) {
+// Simple function to handle CMS routes
+function handleCmsRoutes(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
-  const timestamp = new Date().toISOString();
   
-  // Skip all middleware processing for static files
-  if (pathname.includes('.') || pathname.startsWith('/_next')) {
-    return NextResponse.next();
-  }
-  
-  console.log(`[${timestamp}] [CMS] Processing: ${pathname}`);
-  
-  // Special case: If accessing /cms without a trailing route, redirect to dashboard or login
-  if (pathname === '/cms' || pathname === '/cms/') {
-    const hasSession = request.cookies.has("next-auth.session-token") || 
-                       request.cookies.has("__Secure-next-auth.session-token");
-    const adminToken = request.cookies.get("admin_token")?.value;
-    
-    if (hasSession || adminToken) {
-      return NextResponse.redirect(new URL('/cms/dashboard', request.url));
-    } else {
-      return NextResponse.redirect(new URL('/cms/auth/login', request.url));
-    }
-  }
-  
-  // Always allow access to auth pages without checks
+  // Allow access to CMS auth routes without any checks
   if (pathname.startsWith('/cms/auth')) {
-    console.log(`[${timestamp}] [CMS] Auth page access: ${pathname}`);
     return NextResponse.next();
   }
   
-  // Also always allow access to API routes
+  // Allow access to CMS API routes
   if (pathname.startsWith('/cms/api')) {
-    console.log(`[${timestamp}] [CMS] API access: ${pathname}`);
     return NextResponse.next();
   }
   
-  // For all other CMS routes, check authentication
-  const hasSession = request.cookies.has("next-auth.session-token") || 
-                     request.cookies.has("__Secure-next-auth.session-token");
-  const adminToken = request.cookies.get("admin_token")?.value;
+  // For other CMS routes, check for authentication
+  const hasSession = request.cookies.has('next-auth.session-token') || 
+                    request.cookies.has('__Secure-next-auth.session-token');
+  const hasAdminToken = !!request.cookies.get('admin_token')?.value;
   
-  if (hasSession || adminToken) {
-    console.log(`[${timestamp}] [CMS] Authenticated access: ${pathname}`);
+  // If user is authenticated, allow access
+  if (hasSession || hasAdminToken) {
     return NextResponse.next();
   }
   
-  // Not authenticated - redirect to login
-  console.log(`[${timestamp}] [CMS] Not authenticated, redirecting to login`);
+  // Not authenticated, redirect to login page
   return NextResponse.redirect(new URL('/cms/auth/login', request.url));
 }
 
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   
-  // Skip middleware processing for static files and API routes
+  // Skip middleware for static files, API routes, etc.
   if (pathname.startsWith('/_next') || 
-      pathname.startsWith('/api') || 
       pathname.includes('.')) {
     return NextResponse.next();
   }
   
-  // Handle CMS routes completely separately
+  // Handle CMS routes - completely separate path
   if (pathname.startsWith('/cms')) {
     return handleCmsRoutes(request);
   }
@@ -161,12 +136,8 @@ export async function middleware(request: NextRequest) {
 
 
 export const config = {
-  // Define precise matching patterns to avoid confusion
   matcher: [
-    // Match all paths except excluded ones like API and static files
-    '/((?!_next|api|.*\\..*).*)',
-    
-    // Explicitly match all CMS routes
-    '/cms/:path*'
+    // Match ALL paths (both regular ones and CMS paths)
+    '/(.*)',
   ]
 }
