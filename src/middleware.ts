@@ -3,8 +3,9 @@ import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 import { verifyToken } from "@/lib/auth/token"
 
-// Import locales from next-intl.config.ts to ensure consistency
-import { locales, defaultLocale } from '../next-intl.config'
+// Supported locales
+const locales = ["en", "ar"]
+const defaultLocale = "en"
 
 // Create the next-intl middleware with proper configuration
 const intlMiddleware = createIntlMiddleware({
@@ -46,8 +47,27 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
   
-  // CMS routes are now completely excluded from middleware processing via the matcher config
-  // This ensures no middleware code runs for any CMS routes, preventing the MIDDLEWARE_INVOCATION_FAILED error
+  // Special handling for CMS routes
+  if (pathname.startsWith("/cms")) {
+    // Always allow access to CMS auth routes without any redirects
+    if (pathname.startsWith("/cms/auth/")) {
+      // Simply allow access to auth routes without any redirects or checks
+      // This prevents circular redirects by completely bypassing auth checks for these routes
+      return NextResponse.next()
+    }
+    
+    // For other CMS routes, check for admin authentication
+    if (!hasNextAuthSession) {
+      // Redirect to CMS login if not authenticated
+      // Use a clean URL without callbackUrl to prevent circular redirects
+      return NextResponse.redirect(new URL("/cms/auth/login", request.url))
+    }
+    
+    // For CMS routes, we won't attempt to set custom headers
+    // This approach is more robust and avoids potential middleware errors
+    // The CMS will use its own locale management
+    return NextResponse.next()
+  }
 
   // Handle root path - redirect to default locale
   if (pathname === "/") {
@@ -109,7 +129,8 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // Exclude CMS paths completely from middleware processing
-    "/((?!_next|api|cms|.*\\..*).*)"
+    "/((?!_next|api|.*\\..*).*)", 
+    // Explicitly include CMS paths
+    "/cms/:path*"
   ]
 }
