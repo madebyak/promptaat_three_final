@@ -1,6 +1,5 @@
 import { getCurrentAdmin } from "@/lib/cms/auth/server-auth";
 import { redirect } from "next/navigation";
-import AdminLayout from "@/components/cms/layout/admin-layout";
 
 export default async function PromptsLayout({
   children,
@@ -15,9 +14,7 @@ export default async function PromptsLayout({
     redirect("/cms/auth/login");
   }
   
-  return (
-    <AdminLayout admin={admin}>
-      {children}
-    </AdminLayout>
-  );
+  // Return children directly without the AdminLayout wrapper
+  // This prevents duplicate sidebars since the main CMS layout already has a sidebar
+  return children;
 }

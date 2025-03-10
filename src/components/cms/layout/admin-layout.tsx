@@ -63,7 +63,7 @@ export default function AdminLayout({ children, admin }: AdminLayoutProps) {
 
   return (
     <div>
-      {/* Mobile sidebar */}
+      {/* Mobile sidebar overlay */}
       <div
         className={`fixed inset-0 z-50 bg-gray-900/80 lg:hidden ${
           sidebarOpen ? "block" : "hidden"
@@ -71,6 +71,7 @@ export default function AdminLayout({ children, admin }: AdminLayoutProps) {
         onClick={() => setSidebarOpen(false)}
       />
 
+      {/* Mobile sidebar */}
       <div
         className={`fixed inset-y-0 left-0 z-50 w-64 bg-white lg:hidden transform ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
@@ -94,7 +95,7 @@ export default function AdminLayout({ children, admin }: AdminLayoutProps) {
             <X className="h-6 w-6" />
           </button>
         </div>
-        <div className="h-[calc(100vh-64px)]">
+        <div className="h-[calc(100vh-64px)] overflow-y-auto">
           <SidebarNav onLogout={handleLogout} />
         </div>
       </div>
@@ -113,7 +114,7 @@ export default function AdminLayout({ children, admin }: AdminLayoutProps) {
               />
             </Link>
           </div>
-          <div className="flex flex-col flex-grow">
+          <div className="flex flex-col flex-grow overflow-y-auto">
             <SidebarNav onLogout={handleLogout} />
           </div>
         </div>

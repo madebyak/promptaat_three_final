@@ -21,10 +21,8 @@ import {
 import { 
   Search,
   MoveVertical,
-  Copy,
   Check,
   ChevronRight,
-  ChevronDown,
   GripVertical
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -81,8 +79,8 @@ type SortableCategoryRowProps = {
   isExpanded: boolean
   expandedCategories: Set<string>
   copiedId: string | null
-  onSortOrderChange: (id: string, order: number) => void
   queryClient: QueryClient
+  onCopyId: (id: string) => void
 }
 
 async function fetchCategories(): Promise<Category[]> {
@@ -94,21 +92,7 @@ async function fetchCategories(): Promise<Category[]> {
   return data.data || [];
 }
 
-async function updateCategorySortOrder(id: string, sortOrder: number): Promise<Category> {
-  const response = await fetch('/api/cms/categories', {
-    method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ id, sortOrder }),
-  });
-  
-  if (!response.ok) {
-    throw new Error('Failed to update category sort order');
-  }
-  
-  return response.json();
-}
+
 
 async function reorderCategories(categories: { id: string; sortOrder: number }[]): Promise<Category[]> {
   const response = await fetch('/api/cms/categories/reorder', {
@@ -157,8 +141,8 @@ function SortableCategoryRow({
   isExpanded,
   expandedCategories,
   copiedId, 
-  onSortOrderChange,
   queryClient,
+  onCopyId,
 }: SortableCategoryRowProps) {
   const { data: categories = [] } = useQuery({
     queryKey: ['cms-categories'],
@@ -177,7 +161,7 @@ function SortableCategoryRow({
   
   const formatDate = (dateString: string) => {
     try {
-      return new Date(dateString).toLocaleDateString()
+      return format(new Date(dateString), 'MMM d, yyyy')
     } catch {
       return dateString
     }
@@ -186,6 +170,8 @@ function SortableCategoryRow({
   const truncateId = (id: string) => {
     return id.length > 8 ? `${id.substring(0, 8)}...` : id
   }
+  
+
 
   return (
     <TableRow 
@@ -219,7 +205,16 @@ function SortableCategoryRow({
       <TableCell>
         <div 
           className="flex items-center space-x-1 cursor-pointer"
-          onClick={() => onToggleExpand(category.id)}
+          onClick={(e) => {
+            e.stopPropagation();
+            try {
+              navigator.clipboard.writeText(category.id);
+              // Call the parent's onCopyId function
+              onCopyId(category.id);
+            } catch {
+              toast.error("Failed to copy category ID");
+            }
+          }}
           title={category.id}
           role="button"
           aria-label="Copy category ID"
@@ -255,7 +250,18 @@ function SortableCategoryRow({
           />
           <DeleteCategory 
             category={category} 
-            onSuccess={() => queryClient.invalidateQueries({ queryKey: ['cms-categories'] })} 
+            onSuccess={() => {
+              // Invalidate all related queries to ensure data is refreshed correctly
+              queryClient.invalidateQueries({ queryKey: ['cms-categories'] });
+              queryClient.invalidateQueries({ queryKey: ['cms-categories-for-form'] });
+              
+              // If this is an expanded category, remove it from the expanded set
+              if (expandedCategories.has(category.id)) {
+                const newSet = new Set(expandedCategories);
+                newSet.delete(category.id);
+                onToggleExpand(category.id);
+              }
+            }} 
           />
         </div>
       </TableCell>
@@ -269,6 +275,15 @@ function CategoriesManagement() {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
   const queryClient = useQueryClient();
+  
+  // Function to handle copying category ID
+  const handleCopyId = (id: string) => {
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2000);
+    toast.success("Category ID copied to clipboard");
+  };
+  
+
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -283,19 +298,13 @@ function CategoriesManagement() {
 
   const { 
     data: categoriesData = [], 
-    isLoading 
+    isLoading
   } = useQuery({
     queryKey: ['cms-categories'],
     queryFn: fetchCategories,
   });
 
-  const { mutate: updateSortOrder } = useMutation({
-    mutationFn: ({ id, sortOrder }: { id: string; sortOrder: number }) => 
-      updateCategorySortOrder(id, sortOrder),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['cms-categories'] });
-    },
-  });
+
 
   const { mutate: batchReorderCategories } = useMutation({
     mutationFn: (categories: { id: string; sortOrder: number }[]) => 
@@ -341,7 +350,8 @@ function CategoriesManagement() {
       return;
     }
 
-    const updatedCategories = categoriesData.map((cat: Category) => {
+    // Update the categories with new sort orders
+    categoriesData.map((cat: Category) => {
       if (cat.id === activeCategory.id) {
         return { ...cat, sortOrder: overCategory.sortOrder };
       }
@@ -359,21 +369,9 @@ function CategoriesManagement() {
     batchReorderCategories(sortOrderUpdates);
   };
 
-  const handleCopyId = async (id: string) => {
-    try {
-      await navigator.clipboard.writeText(id);
-      setCopiedId(id);
-      setTimeout(() => setCopiedId(null), 2000);
-      toast.success("Category ID copied to clipboard");
-    } catch (error) {
-      toast.error("Failed to copy category ID");
-    }
-  };
 
-  const handleSortOrderChange = (id: string, order: number) => {
-    if (isNaN(order)) return;
-    updateSortOrder({ id, sortOrder: order });
-  };
+  
+
 
   if (isLoading) {
     return (
@@ -460,8 +458,8 @@ function CategoriesManagement() {
                           isExpanded={expandedCategories.has(category.id)}
                           expandedCategories={expandedCategories}
                           copiedId={copiedId}
-                          onSortOrderChange={handleSortOrderChange}
                           queryClient={queryClient}
+                          onCopyId={handleCopyId}
                         />
                         {expandedCategories.has(category.id) && category.children?.map((child) => (
                           <SortableCategoryRow
@@ -472,8 +470,8 @@ function CategoriesManagement() {
                             isExpanded={expandedCategories.has(child.id)}
                             expandedCategories={expandedCategories}
                             copiedId={copiedId}
-                            onSortOrderChange={handleSortOrderChange}
                             queryClient={queryClient}
+                            onCopyId={handleCopyId}
                           />
                         ))}
                       </React.Fragment>

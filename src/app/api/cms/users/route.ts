@@ -45,6 +45,7 @@ export async function GET(request: NextRequest) {
           createdAt: true,
           updatedAt: true,
           isActive: true,
+          country: true,
           _count: {
             select: {
               bookmarks: true,

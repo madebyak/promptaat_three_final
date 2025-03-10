@@ -27,17 +27,24 @@ function CreateCategory({ onSuccess }: CreateCategoryProps) {
       })
 
       if (!response.ok) {
-        throw new Error("Failed to create category")
+        const errorData = await response.json().catch(() => null)
+        throw new Error(errorData?.message || "Failed to create category")
       }
 
+      await response.json() // Get the result but we don't need to use it
+      
       // Use success message from our translations
-      toast.success("Category created successfully")
+      toast.success("Category created successfully", {
+        description: `${data.nameEn} has been added to your categories.`,
+      })
       onSuccess?.()
       setOpen(false)
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Error creating category:", error)
       // Use error message from our translations
-      toast.error("Failed to create category")
+      toast.error("Failed to create category", {
+        description: error instanceof Error ? error.message : "There was an error creating the category. Please try again.",
+      })
     } finally {
       setIsSubmitting(false)
     }
@@ -51,11 +58,13 @@ function CreateCategory({ onSuccess }: CreateCategoryProps) {
           Add Category
         </Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>Create Category</DialogTitle>
         </DialogHeader>
-        <CategoryForm onSubmit={handleSubmit} isSubmitting={isSubmitting} />
+        <div className="mt-4">
+          <CategoryForm onSubmit={handleSubmit} isSubmitting={isSubmitting} />
+        </div>
       </DialogContent>
     </Dialog>
   )

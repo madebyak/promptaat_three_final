@@ -7,42 +7,12 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: '**.brandfetch.io',
+        hostname: '**',
         pathname: '/**',
       },
       {
-        protocol: 'https',
-        hostname: '**.githubusercontent.com',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: '**.wikimedia.org',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'cdn.jsdelivr.net',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'img.icons8.com',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'api.iconify.design',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'promptaat.com',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'vercel.app',
+        protocol: 'http',
+        hostname: '**',
         pathname: '/**',
       }
     ],

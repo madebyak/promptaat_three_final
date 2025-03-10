@@ -1,6 +1,5 @@
 import { getCurrentAdmin } from "@/lib/cms/auth/server-auth";
 import { redirect } from "next/navigation";
-import AdminLayout from "@/components/cms/layout/admin-layout";
 
 export default async function SettingsLayout({
   children,
@@ -15,9 +14,5 @@ export default async function SettingsLayout({
     redirect("/cms/auth/login");
   }
   
-  return (
-    <AdminLayout admin={admin}>
-      {children}
-    </AdminLayout>
-  );
+  return children;
 }

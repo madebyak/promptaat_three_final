@@ -68,7 +68,9 @@ function EditCategory({
     mutationFn: (data: CategoryFormValues) => updateCategory(category.id, data),
     onSuccess: () => {
       // Use success message from our translations
-      toast.success("Category updated successfully");
+      toast.success("Category updated successfully", {
+        description: `${category.nameEn} has been updated.`,
+      });
       queryClient.invalidateQueries({ queryKey: ["cms-categories"] });
       queryClient.invalidateQueries({ queryKey: ["cms-categories-for-form"] });
       setOpen(false);
@@ -76,7 +78,9 @@ function EditCategory({
     },
     onError: (error: Error) => {
       // Use error message from our translations
-      toast.error(error.message || "Failed to update category");
+      toast.error("Failed to update category", {
+        description: error.message || "There was an error updating the category. Please try again.",
+      });
     },
   });
 
@@ -85,7 +89,9 @@ function EditCategory({
     mutationFn: () => deleteCategory(category.id),
     onSuccess: () => {
       // Use success message from our translations
-      toast.success("Category deleted successfully");
+      toast.success("Category deleted successfully", {
+        description: `${category.nameEn} has been permanently removed.`,
+      });
       queryClient.invalidateQueries({ queryKey: ["cms-categories"] });
       queryClient.invalidateQueries({ queryKey: ["cms-categories-for-form"] });
       setDeleteDialogOpen(false);
@@ -94,7 +100,9 @@ function EditCategory({
     },
     onError: (error: Error) => {
       // Use error message from our translations
-      toast.error(error.message || "Failed to delete category");
+      toast.error("Failed to delete category", {
+        description: error.message || "There was an error deleting the category. Please try again.",
+      });
     },
   });
 
@@ -105,6 +113,7 @@ function EditCategory({
 
   // Handle delete confirmation
   const handleDelete = () => {
+    console.log('Delete category triggered for:', category.id);
     deleteMutate();
   };
 
@@ -188,7 +197,10 @@ function EditCategory({
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isDeletePending}>Cancel</AlertDialogCancel>
             <AlertDialogAction 
-              onClick={handleDelete}
+              onClick={(e) => {
+                e.preventDefault();
+                handleDelete();
+              }}
               disabled={isDeletePending}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >

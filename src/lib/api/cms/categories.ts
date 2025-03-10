@@ -58,17 +58,24 @@ export async function updateCategory(id: string, data: CategoryData) {
  * Delete a category
  */
 export async function deleteCategory(id: string) {
-  const response = await fetch(`/api/cms/categories?id=${id}`, {
-    method: "DELETE",
-  });
-  
-  const responseData = await response.json();
-  
-  if (!response.ok) {
-    throw new Error(responseData.message || "Failed to delete category");
+  console.log('Deleting category with ID:', id);
+  try {
+    const response = await fetch(`/api/cms/categories?id=${id}`, {
+      method: "DELETE",
+    });
+    
+    const responseData = await response.json();
+    console.log('Delete category response:', responseData);
+    
+    if (!response.ok) {
+      throw new Error(responseData.message || "Failed to delete category");
+    }
+    
+    return responseData;
+  } catch (error) {
+    console.error('Error deleting category:', error);
+    throw error;
   }
-  
-  return responseData;
 }
 
 /**

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import React, { useEffect, useState, useCallback } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -9,6 +9,7 @@ import { useTheme } from 'next-themes'
 import { cn } from '@/lib/utils'
 import { useDebounce } from '@/hooks/use-debounce'
 import { AlertCircle, ChevronDown, ChevronLeft, ChevronRight, Search, LayoutDashboard, MessageSquare, FolderTree, Wrench, Users } from 'lucide-react'
+import { DynamicIcon } from 'lucide-react/dynamic'
 import { SidebarSkeleton } from './sidebar-skeleton'
 import CategoryDrawer from './category-drawer'
 import { Category as BaseCategory } from '@/types/prompts'
@@ -229,7 +230,24 @@ export function Sidebar({ locale, className, items = [] }: SidebarProps) {
       // Add more icons as needed
     };
     
-    return iconMap[iconName] || <div className="h-4 w-4 bg-muted rounded-sm" />;
+    // Try to find the icon in our map
+    if (iconName in iconMap) {
+      return iconMap[iconName];
+    }
+    
+    // If not found, use DynamicIcon
+    try {
+      return (
+        <DynamicIcon
+          // @ts-expect-error - Lucide expects specific icon names but we're using dynamic names from DB
+          name={iconName}
+          className="h-4 w-4"
+        />
+      );
+    } catch (error) {
+      console.error(`Failed to render icon: ${iconName}`, error);
+      return <div className="h-4 w-4 bg-muted rounded-sm" />;
+    }
   };
   
   // Render category icon with fallback
@@ -239,6 +257,7 @@ export function Sidebar({ locale, className, items = [] }: SidebarProps) {
     }
     
     try {
+      // Directly use renderIcon which now handles both static and dynamic icons
       return renderIcon(iconName);
     } catch (error) {
       console.error(`[Sidebar Error] Failed to render icon: ${iconName}`, error);
@@ -356,8 +375,17 @@ export function Sidebar({ locale, className, items = [] }: SidebarProps) {
             </div>
           ) : (
             <div className="space-y-1 py-2">
+              {/* Categories header - only show when not collapsed */}
+              {!isCollapsed && (
+                <div className="px-4 py-2">
+                  <h3 className="text-sm font-medium text-light-grey">
+                    {locale === 'ar' ? 'الفئات' : 'Categories'}
+                  </h3>
+                </div>
+              )}
+              
               {/* All Categories */}
-              {!searchQuery && !isCollapsed && (
+              {!isCollapsed && (
                 <Button
                   variant="ghost"
                   className={cn(
@@ -372,7 +400,9 @@ export function Sidebar({ locale, className, items = [] }: SidebarProps) {
                     'flex items-center gap-x-3 w-full',
                     isRTL ? 'flex-row-reverse' : 'flex-row'
                   )}>
-                    <Search className="h-4 w-4 text-light-grey" />
+                    <span className="text-light-grey flex-shrink-0">
+                      <Search className="h-4 w-4" />
+                    </span>
                     <span className="flex-1">{locale === 'ar' ? 'جميع الفئات' : 'All Categories'}</span>
                   </div>
                 </Button>
@@ -412,10 +442,10 @@ export function Sidebar({ locale, className, items = [] }: SidebarProps) {
                         'flex items-center gap-x-3 w-full',
                         isRTL ? 'flex-row-reverse' : 'flex-row'
                       )}>
-                        <span className="text-light-grey flex-shrink-0">
+                        <span className="text-light-grey flex-shrink-0 inline-flex items-center justify-center w-5 h-5">
                           {renderCategoryIcon(category.iconName)}
                         </span>
-                        <span className="flex-1">{category.name}</span>
+                        <span className="flex-1">{locale === 'ar' ? category.nameAr : category.nameEn}</span>
                         {category.subcategories && category.subcategories.length > 0 && (
                           <ChevronDown
                             className={cn(
@@ -441,7 +471,7 @@ export function Sidebar({ locale, className, items = [] }: SidebarProps) {
                       onClick={() => handleCategoryClick(category.id)}
                       title={category.name}
                     >
-                      <span className="text-light-grey">
+                      <span className="text-light-grey flex-shrink-0 inline-flex items-center justify-center w-5 h-5">
                         {renderCategoryIcon(category.iconName)}
                       </span>
                     </Button>
@@ -475,10 +505,10 @@ export function Sidebar({ locale, className, items = [] }: SidebarProps) {
                                 'flex items-center gap-x-3 w-full',
                                 isRTL ? 'flex-row-reverse' : 'flex-row'
                               )}>
-                                <span className="text-light-grey flex-shrink-0">
+                                <span className="text-light-grey flex-shrink-0 inline-flex items-center justify-center w-5 h-5">
                                   {renderCategoryIcon(sub.iconName)}
                                 </span>
-                                <span className="flex-1">{sub.name}</span>
+                                <span className="flex-1">{locale === 'ar' ? sub.nameAr : sub.nameEn}</span>
                               </div>
                             </Button>
                           ))}

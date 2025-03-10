@@ -9,7 +9,6 @@ import {
   FileText,
   Users,
   Settings,
-  Home,
   LogOut,
   Wrench,
 } from "lucide-react";
@@ -57,16 +56,7 @@ export function SidebarNav({ onLogout }: SidebarNavProps) {
 
   return (
     <div className="flex flex-col h-full justify-between">
-      <div className="space-y-1">
-        <div className="px-3 py-2">
-          <Link
-            href="/cms/dashboard"
-            className="flex items-center px-2 py-2 mb-6"
-          >
-            <Home className="mr-2 h-5 w-5" />
-            <span className="text-xl font-bold">Promptaat Admin</span>
-          </Link>
-        </div>
+      <div className="space-y-1 pt-2">
         <nav className="grid gap-1 px-2">
           {navItems.map((item) => (
             <Link

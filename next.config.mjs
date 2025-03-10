@@ -17,6 +17,29 @@ const nextConfig = {
     // your project has ESLint errors.
     ignoreDuringBuilds: true,
   },
+  // Configure image domains to allow external images
+  images: {
+    // Allow images from any domain
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '**',
+        pathname: '/**',
+      },
+      {
+        protocol: 'http',
+        hostname: '**',
+        pathname: '/**',
+      }
+    ],
+    // Keep the domains for backward compatibility
+    domains: [
+      's3-us-west-2.amazonaws.com',
+      'via.placeholder.com',
+      'placehold.co',
+      'encrypted-tbn0.gstatic.com'
+    ],
+  },
   // Don't force trailing slashes to prevent redirect loops
   trailingSlash: false,
   // Explicitly handle CMS routes

@@ -33,16 +33,25 @@ function DeleteCategory({ category, onSuccess }: DeleteCategoryProps) {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to delete category");
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.message || "Failed to delete category");
       }
 
       // Use success message from our translations
-      toast.success("Category deleted successfully");
-      onSuccess?.();
-    } catch (error) {
+      toast.success("Category deleted successfully", {
+        description: `${category.nameEn} has been permanently removed.`,
+      });
+      
+      // Wait a moment before triggering the success callback to ensure UI updates properly
+      setTimeout(() => {
+        onSuccess?.();
+      }, 300);
+    } catch (error: unknown) {
       console.error("Error deleting category:", error);
       // Use error message from our translations
-      toast.error("Failed to delete category");
+      toast.error("Failed to delete category", {
+        description: error instanceof Error ? error.message : "There was an error deleting the category. Please try again.",
+      });
     } finally {
       setIsDeleting(false);
     }
@@ -55,11 +64,19 @@ function DeleteCategory({ category, onSuccess }: DeleteCategoryProps) {
           <Trash2 className="h-4 w-4" />
         </Button>
       </AlertDialogTrigger>
-      <AlertDialogContent>
+      <AlertDialogContent className="max-w-md">
         <AlertDialogHeader>
           <AlertDialogTitle>Delete Category</AlertDialogTitle>
           <AlertDialogDescription>
-            Are you sure you want to delete &ldquo;{category.nameEn}&rdquo;? This action cannot be undone.
+            Are you sure you want to delete &ldquo;{category.nameEn}&rdquo;? 
+            {category.parentId === null ? (
+              <div className="mt-2 text-destructive font-medium">
+                Warning: Deleting this category will also delete all its subcategories!
+              </div>
+            ) : null}
+            <div className="mt-2">
+              This action cannot be undone.
+            </div>
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

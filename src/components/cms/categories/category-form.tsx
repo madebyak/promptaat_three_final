@@ -27,7 +27,7 @@ import { Loader2 } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { categoryIcons } from "@/lib/constants/category-icons"
+import { DynamicIcon } from "lucide-react/dynamic"
 // We're not using toast directly in this component, but it's used in parent components
 // that call the onSubmit function with toast notifications
 import IconInput from "./icon-input"
@@ -51,7 +51,10 @@ const categorySchema = z.object({
     .max(50, {
       message: "Arabic name must not be longer than 50 characters.",
     }),
-  iconName: z.string(),
+  iconName: z.string()
+    .min(1, {
+      message: "Icon name is required.",
+    }),
   parentId: z.string().nullable(),
   sortOrder: z.number().int().default(0),
 })
@@ -174,6 +177,9 @@ function CategoryForm({
     if (values.sortOrder === undefined && nextAvailableSortOrder !== null) {
       values.sortOrder = nextAvailableSortOrder
     }
+    
+    // Ensure the iconName is trimmed to avoid whitespace issues
+    values.iconName = values.iconName.trim()
 
     onSubmit(values)
   }
@@ -260,13 +266,11 @@ function CategoryForm({
                 control={form.control}
                 name="iconName"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t("form.icon")}</FormLabel>
-                    <FormControl>
-                      <IconInput {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
+                  <IconInput 
+                    {...field} 
+                    label={t("form.icon")} 
+                    error={form.formState.errors.iconName?.message}
+                  />
                 )}
               />
             </FormSection>
@@ -287,7 +291,7 @@ function CategoryForm({
                           <SelectValue placeholder="Select a parent category" />
                         </SelectTrigger>
                       </FormControl>
-                      <SelectContent>
+                      <SelectContent className="max-h-[300px] overflow-y-auto">
                         <SelectItem value="none">None (Top Level)</SelectItem>
                         {filteredCategories.map((category: Category) => (
                           <SelectItem key={category.id} value={category.id}>
@@ -332,8 +336,18 @@ function CategoryForm({
               {watchIconName && (
                 <div>
                   <span className="text-sm text-muted-foreground">Icon:</span>
-                  <div className="mt-1">
-                    {categoryIcons[watchIconName]?.icon}
+                  <div className="mt-1 flex items-center gap-2">
+                    {/* Using type assertion to handle the string type */}
+                    <div className="relative">
+                      <div className="text-primary">
+                        {/* Using try-catch pattern with the DynamicIcon */}
+                        <DynamicIcon 
+                          name={watchIconName as any} 
+                          className="h-5 w-5" 
+                        />
+                      </div>
+                    </div>
+                    <span className="text-sm">{watchIconName}</span>
                   </div>
                 </div>
               )}

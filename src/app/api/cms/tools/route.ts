@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma/client"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth/options"
 import { z } from "zod"
+import { Prisma } from "@prisma/client"
 
 const toolSchema = z.object({
   name: z.string().min(1),
@@ -35,35 +36,51 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url)
     const page = parseInt(searchParams.get("page") || "1")
-    const limit = parseInt(searchParams.get("limit") || "10")
+    // Support pageSize parameter with default of 50, limited to 20, 50, or 100
+    const pageSizeParam = searchParams.get("pageSize") || "50"
+    const pageSize = ["20", "50", "100"].includes(pageSizeParam) ? parseInt(pageSizeParam) : 50
     const search = searchParams.get("search") || ""
-    const isPublished = searchParams.get("isPublished")
 
-    const where: any = {
+    // Use Prisma-generated type for the where clause
+    const where: Prisma.ToolWhereInput = {
       ...(search && {
         OR: [
           { name: { contains: search, mode: "insensitive" } },
-          { description: { contains: search, mode: "insensitive" } },
+          // Only search in name since Tool model doesn't have a description field
         ],
       }),
-      ...(isPublished !== null && { isPublished: isPublished === "true" }),
+      // Tool model doesn't have isPublished field, so we ignore this filter
+      deletedAt: null, // Only fetch non-deleted tools
     }
 
     const [tools, total] = await Promise.all([
       prisma.tool.findMany({
         where,
-        skip: (page - 1) * limit,
-        take: limit,
+        skip: (page - 1) * pageSize,
+        take: pageSize,
         orderBy: { createdAt: "desc" },
+        include: {
+          _count: {
+            select: {
+              promptTools: true
+            }
+          }
+        }
       }) as unknown as Promise<ToolData[]>,
       prisma.tool.count({ where }),
     ])
 
+    // Calculate total pages
+    const totalPages = Math.ceil(total / pageSize)
+    
     return NextResponse.json({
       data: tools,
-      total,
-      page,
-      limit,
+      pagination: {
+        total,
+        page,
+        pageSize,
+        totalPages
+      }
     })
   } catch (error) {
     if (error instanceof Error) {

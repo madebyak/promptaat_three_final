@@ -44,7 +44,7 @@ export function MobileNav({
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden">
-      <div className="grid h-16 grid-cols-4 items-center border-t border-light-grey-light bg-white-pure dark:border-dark-grey dark:bg-black-main">
+      <div className="grid h-20 grid-cols-4 items-center border-t border-light-grey-light bg-white-pure dark:border-dark-grey dark:bg-black-main">
         {categories.slice(0, 3).map((category) => (
           <Button
             key={category.id}
@@ -57,12 +57,17 @@ export function MobileNav({
             onClick={() => onCategoryClick(category.id)}
           >
             {category.iconName && (
-              <DynamicIcon 
-                name={category.iconName as any}
-                className="h-5 w-5"
-                aria-label={`${locale === 'en' ? category.nameEn : category.nameAr} icon`}
-              />
+              <div className="relative flex-shrink-0">
+                {/* Using type assertion to handle dynamic icon names */}
+                <DynamicIcon 
+                  // @ts-expect-error - Lucide expects specific icon names but we're using dynamic names from DB
+                  name={category.iconName}
+                  className="h-5 w-5"
+                  aria-label={`${locale === 'en' ? category.nameEn : category.nameAr} icon`}
+                />
+              </div>
             )}
+            <span className="text-xs mt-1">{locale === 'en' ? category.nameEn : category.nameAr}</span>
           </Button>
         ))}
         
@@ -87,7 +92,7 @@ export function MobileNav({
           </SheetContent>
         </Sheet>
       </div>
-      <nav className="fixed bottom-0 left-0 right-0 z-30 flex h-16 items-center justify-around border-t border-light-grey-light bg-white-pure dark:border-dark-grey dark:bg-black-main md:hidden">
+      <nav className="fixed bottom-0 left-0 right-0 z-30 flex h-20 items-center justify-around border-t border-light-grey-light bg-white-pure dark:border-dark-grey dark:bg-black-main md:hidden">
         {items.map((item) => (
           <Link
             key={item.href}

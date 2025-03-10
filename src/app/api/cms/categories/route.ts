@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
     const includeDeleted = searchParams.get('includeDeleted') === 'true';
     
     // Base query conditions
-    const whereConditions: any = {};
+    const whereConditions: Record<string, unknown> = {};
     
     // Handle soft-deleted items
     if (!includeDeleted) {
@@ -444,15 +444,15 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    // Check for associated subcategories
+    // If category has subcategories, we'll also soft delete them
     if (existingCategory.children.length > 0) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: 'Cannot delete a category that has subcategories',
+      // Soft delete all subcategories
+      await prisma.category.updateMany({
+        where: { parentId: id },
+        data: {
+          deletedAt: new Date(),
         },
-        { status: 400 }
-      );
+      });
     }
 
     // Soft delete the category

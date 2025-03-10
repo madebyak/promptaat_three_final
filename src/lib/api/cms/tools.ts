@@ -69,13 +69,38 @@ export async function deleteTool(id: string) {
 }
 
 /**
- * Fetch all tools
+ * Fetch tools with pagination
  */
-export async function fetchTools(search?: string) {
+export interface PaginationParams {
+  page?: number;
+  pageSize?: number;
+}
+
+export interface PaginatedResponse<T> {
+  data: T[];
+  pagination: {
+    total: number;
+    page: number;
+    pageSize: number;
+    totalPages: number;
+  };
+}
+
+export async function fetchTools(search?: string, pagination?: PaginationParams) {
   const url = new URL("/api/cms/tools", window.location.origin);
   
   if (search) {
     url.searchParams.append("search", search);
+  }
+  
+  // Add pagination parameters if provided
+  if (pagination) {
+    if (pagination.page !== undefined) {
+      url.searchParams.append("page", pagination.page.toString());
+    }
+    if (pagination.pageSize !== undefined) {
+      url.searchParams.append("pageSize", pagination.pageSize.toString());
+    }
   }
   
   const response = await fetch(url.toString());
@@ -86,7 +111,21 @@ export async function fetchTools(search?: string) {
     throw new Error(responseData.message || "Failed to fetch tools");
   }
   
-  return responseData.tools || [];
+  // If the API returns paginated data, use it, otherwise assume all data is returned
+  if (responseData.pagination) {
+    return responseData as PaginatedResponse<Record<string, unknown>>;
+  }
+  
+  // For backward compatibility, if the API doesn't support pagination yet
+  return {
+    data: responseData.data || [],
+    pagination: {
+      total: (responseData.data || []).length,
+      page: 1,
+      pageSize: (responseData.data || []).length,
+      totalPages: 1
+    }
+  };
 }
 
 /**
