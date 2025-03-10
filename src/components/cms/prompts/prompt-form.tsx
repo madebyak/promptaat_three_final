@@ -29,6 +29,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Spinner } from "@/components/ui/spinner";
 import { Badge } from "@/components/ui/badge";
+
+
 import { X } from "lucide-react";
 
 type Category = {
@@ -75,7 +77,7 @@ const promptFormSchema = z.object({
 type PromptFormValues = z.infer<typeof promptFormSchema>;
 
 // Fetch categories
-async function getCategories(): Promise<{ categories: Category[] }> {
+async function getCategories(): Promise<{ data: Category[] }> {
   const response = await fetch("/api/cms/categories?simplified=true");
 
   if (!response.ok) {
@@ -86,7 +88,7 @@ async function getCategories(): Promise<{ categories: Category[] }> {
 }
 
 // Fetch tools
-async function getTools(): Promise<{ tools: Tool[] }> {
+async function getTools(): Promise<{ data: Tool[] }> {
   const response = await fetch("/api/cms/tools");
 
   if (!response.ok) {
@@ -151,11 +153,8 @@ function PromptForm({
     queryFn: getTools,
   });
 
-  // Get subcategories based on selected category
+  // Watch for changes in categoryId
   const selectedCategoryId = form.watch("categoryId");
-  const subcategories = categoriesData?.categories?.filter(
-    (category: Category) => category.parentId === selectedCategoryId
-  ) || [];
 
   // Add keyword
   const addKeyword = () => {
@@ -178,6 +177,13 @@ function PromptForm({
   const handleSubmit = (values: PromptFormValues) => {
     // Include keywords in the submission
     values.keywords = keywords;
+    
+    // Ensure categoryId is included
+    if (!values.categoryId) {
+      form.setError("categoryId", { message: "Category is required" });
+      return;
+    }
+    
     onSubmit(values);
   };
 
@@ -370,30 +376,31 @@ function PromptForm({
             control={form.control}
             name="categoryId"
             render={({ field }) => (
-              <FormItem>
+              <FormItem className="flex flex-col">
                 <FormLabel>Category</FormLabel>
                 <Select
+                  onValueChange={(value) => {
+                    field.onChange(value);
+                    form.setValue("subcategoryId", "", { shouldValidate: true });
+                    form.trigger("categoryId");
+                  }}
                   value={field.value}
-                  onValueChange={field.onChange}
                 >
                   <FormControl>
-                    <SelectTrigger>
+                    <SelectTrigger className="w-full">
                       <SelectValue placeholder="Select a category" />
                     </SelectTrigger>
                   </FormControl>
-                  <SelectContent>
+                  <SelectContent className="max-h-[300px] overflow-y-auto">
                     {isCategoriesLoading ? (
                       <div className="flex items-center justify-center p-4">
                         <Spinner />
                       </div>
                     ) : (
-                      categoriesData?.categories
+                      categoriesData?.data
                         ?.filter((cat: Category) => !cat.parentId)
                         .map((category: Category) => (
-                          <SelectItem
-                            key={category.id}
-                            value={category.id}
-                          >
+                          <SelectItem key={category.id} value={category.id}>
                             {category.nameEn}
                           </SelectItem>
                         ))
@@ -410,26 +417,31 @@ function PromptForm({
               control={form.control}
               name="subcategoryId"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="flex flex-col">
                   <FormLabel>Subcategory</FormLabel>
                   <Select
+                    onValueChange={(value) => {
+                      field.onChange(value);
+                      form.trigger("subcategoryId");
+                    }}
                     value={field.value}
-                    onValueChange={field.onChange}
                   >
                     <FormControl>
-                      <SelectTrigger>
+                      <SelectTrigger className="w-full">
                         <SelectValue placeholder="Select a subcategory" />
                       </SelectTrigger>
                     </FormControl>
-                    <SelectContent>
-                      {subcategories.map((category: Category) => (
-                        <SelectItem
-                          key={category.id}
-                          value={category.id}
-                        >
-                          {category.nameEn}
-                        </SelectItem>
-                      ))}
+                    <SelectContent className="max-h-[200px] overflow-y-auto">
+                      {categoriesData?.data
+                        ?.filter((cat: Category) => cat.parentId === selectedCategoryId)
+                        .map((subcategory: Category) => (
+                          <SelectItem key={subcategory.id} value={subcategory.id}>
+                            {subcategory.nameEn}
+                          </SelectItem>
+                        ))}
+                      {categoriesData?.data?.filter((cat: Category) => cat.parentId === selectedCategoryId).length === 0 && (
+                        <div className="p-2 text-sm text-center text-muted-foreground">No subcategories available</div>
+                      )}
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -503,7 +515,7 @@ function PromptForm({
             </CardContent>
           </Card>
 
-          {!isToolsLoading && toolsData?.tools && toolsData.tools.length > 0 && (
+          {!isToolsLoading && toolsData?.data && toolsData.data.length > 0 && (
             <FormField
               control={form.control}
               name="toolIds"
@@ -511,7 +523,7 @@ function PromptForm({
                 <FormItem>
                   <FormLabel>Required Tools</FormLabel>
                   <div className="grid grid-cols-2 gap-4 mt-2">
-                    {toolsData.tools.map((tool: Tool) => (
+                    {toolsData.data.map((tool: Tool) => (
                       <FormField
                         key={tool.id}
                         control={form.control}
