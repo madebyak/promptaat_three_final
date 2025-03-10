@@ -7,6 +7,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Button } from "@/components/ui/button"
 import { useDebounce } from "@/hooks/use-debounce"
 import { AlertCircle, ChevronDown, ChevronLeft, ChevronRight, Search } from "lucide-react"
+import { DynamicIcon } from "lucide-react/dynamic"
 import { cn } from "@/lib/utils"
 import { 
   Sidebar, 
@@ -56,11 +57,30 @@ export function AppSidebar({ locale, className }: AppSidebarProps) {
   const [searchQuery, setSearchQuery] = useState("")
   const [categories, setCategories] = useState<Category[]>([])
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
-  const [activeCategoryPath, setActiveCategoryPath] = useState<string>(locale === "ar" ? "جميع الفئات" : "All Categories")
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isMobileOpen, setIsMobileOpen] = useState(false)
   const debouncedSearch = useDebounce(searchQuery, 300)
+
+  // Helper function to render category icons
+  const renderCategoryIcon = (iconName: string | undefined) => {
+    if (!iconName) {
+      return <div className="h-4 w-4 bg-muted rounded-sm" />;
+    }
+    
+    try {
+      return (
+        <DynamicIcon
+          // @ts-expect-error - Lucide expects specific icon names but we're using dynamic names from DB
+          name={iconName}
+          className="h-4 w-4"
+        />
+      );
+    } catch (error) {
+      console.error(`[Sidebar Error] Failed to render icon: ${iconName}`, error);
+      return <div className="h-4 w-4 bg-muted rounded-sm" />;
+    }
+  };
 
   useEffect(() => {
     async function fetchCategories() {
@@ -132,14 +152,8 @@ export function AppSidebar({ locale, className }: AppSidebarProps) {
     }
   }, [pathname])
 
-  const handleCategoryClick = (categoryId: string | null, categoryName?: string) => {
+  const handleCategoryClick = (categoryId: string | null) => {
     setActiveCategory(activeCategory === categoryId ? null : categoryId)
-    
-    if (categoryId === null) {
-      setActiveCategoryPath(locale === "ar" ? "جميع الفئات" : "All Categories")
-    } else if (categoryName) {
-      setActiveCategoryPath(categoryName)
-    }
     
     if (categoryId === null || !categories.find(c => c.id === categoryId)?.subcategories?.length) {
       router.push(categoryId === null ? `/${locale}` : `/${locale}/category/${categoryId}`)
@@ -154,19 +168,12 @@ export function AppSidebar({ locale, className }: AppSidebarProps) {
     e: React.MouseEvent
   ) => {
     e.stopPropagation()
-    setActiveCategoryPath(`${categoryName} > ${subcategoryName}`)
     router.push(`/${locale}/category/${categoryId}/subcategory/${subcategoryId}`)
   }
 
   const CategoryList = () => (
     <>
       <SidebarHeader>
-        {/* Display current category path for better navigation context */}
-        {activeCategoryPath && (
-          <div className="px-3 py-1 mb-2 text-sm font-medium text-muted-foreground overflow-hidden text-ellipsis whitespace-nowrap">
-            {activeCategoryPath}
-          </div>
-        )}
         <div className="relative flex-1">
           <Search className={cn(
             "absolute top-2.5 h-4 w-4 text-light-grey",
@@ -237,6 +244,11 @@ export function AppSidebar({ locale, className }: AppSidebarProps) {
 
   const CategoryItems = () => (
     <>
+      <div className="px-4 py-2">
+        <h3 className="text-sm font-medium text-light-grey">
+          {locale === "ar" ? "الفئات" : "Categories"}
+        </h3>
+      </div>
       <Button
         variant={activeCategory === null ? "secondary" : "ghost"}
         className={cn(
@@ -245,7 +257,12 @@ export function AppSidebar({ locale, className }: AppSidebarProps) {
         )}
         onClick={() => handleCategoryClick(null)}
       >
-        {locale === "ar" ? "جميع الفئات" : "All Categories"}
+        <div className="flex items-center gap-2">
+          <span className="flex-shrink-0 inline-flex items-center justify-center w-5 h-5">
+            <Search className="h-4 w-4" />
+          </span>
+          <span>{locale === "ar" ? "جميع الفئات" : "All Categories"}</span>
+        </div>
       </Button>
 
       {categories.map((category) => (
@@ -256,9 +273,16 @@ export function AppSidebar({ locale, className }: AppSidebarProps) {
               "w-full justify-between",
               activeCategory === category.id && "bg-muted"
             )}
-            onClick={() => handleCategoryClick(category.id, category.nameEn)}
+            onClick={() => handleCategoryClick(category.id)}
           >
-            <span>{locale === "ar" ? category.nameAr : category.nameEn}</span>
+            <div className="flex items-center gap-2">
+              {category.iconName && (
+                <span className="flex-shrink-0 inline-flex items-center justify-center w-5 h-5">
+                  {renderCategoryIcon(category.iconName)}
+                </span>
+              )}
+              <span>{locale === "ar" ? category.nameAr : category.nameEn}</span>
+            </div>
             {(category.subcategories?.length ?? 0) > 0 && (
               <ChevronDown
                 className={cn(
@@ -286,7 +310,14 @@ export function AppSidebar({ locale, className }: AppSidebarProps) {
                     )
                   }
                 >
-                  {locale === "ar" ? subcategory.nameAr : subcategory.nameEn}
+                  <div className="flex items-center gap-2">
+                    {subcategory.iconName && (
+                      <span className="flex-shrink-0 inline-flex items-center justify-center w-5 h-5">
+                        {renderCategoryIcon(subcategory.iconName)}
+                      </span>
+                    )}
+                    <span>{locale === "ar" ? subcategory.nameAr : subcategory.nameEn}</span>
+                  </div>
                 </Button>
               ))}
             </div>
