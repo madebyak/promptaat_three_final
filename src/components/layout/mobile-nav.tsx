@@ -63,11 +63,11 @@ export function MobileNav({
                   // @ts-expect-error - Lucide expects specific icon names but we're using dynamic names from DB
                   name={category.iconName}
                   className="h-5 w-5"
-                  aria-label={`${locale === 'en' ? category.nameEn : category.nameAr} icon`}
+                  aria-label={`${locale === 'ar' ? category.nameAr : category.nameEn} icon`}
                 />
               </div>
             )}
-            <span className="text-xs mt-1">{locale === 'en' ? category.nameEn : category.nameAr}</span>
+            <span className="text-xs mt-1">{locale === 'ar' ? category.nameAr : category.nameEn}</span>
           </Button>
         ))}
         
@@ -97,7 +97,10 @@ export function MobileNav({
           <Link
             key={item.href}
             href={item.href}
-            className="flex flex-col items-center justify-center text-sm text-light-grey hover:text-accent-purple"
+            className={cn(
+              "flex flex-col items-center justify-center text-sm text-light-grey hover:text-accent-purple",
+              isRTL && "flex-row-reverse"
+            )}
           >
             {item.icon && (
               <item.icon className="h-5 w-5" />

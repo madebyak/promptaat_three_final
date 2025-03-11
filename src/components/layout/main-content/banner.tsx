@@ -209,7 +209,7 @@ export const Banner = memo(function Banner({ locale = 'en', className }: BannerP
         aria-label="Previous slide"
         disabled={isTransitioning}
       >
-        <ChevronLeft className="h-6 w-6" />
+        {isRTL ? <ChevronRight className="h-6 w-6" /> : <ChevronLeft className="h-6 w-6" />}
       </button>
       <button
         onClick={handleNext}
@@ -220,7 +220,7 @@ export const Banner = memo(function Banner({ locale = 'en', className }: BannerP
         aria-label="Next slide"
         disabled={isTransitioning}
       >
-        <ChevronRight className="h-6 w-6" />
+        {isRTL ? <ChevronLeft className="h-6 w-6" /> : <ChevronRight className="h-6 w-6" />}
       </button>
     </div>
   )

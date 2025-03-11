@@ -1,15 +1,23 @@
 'use client'
 
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { useParams, useSearchParams } from 'next/navigation'
 import { SearchSection } from '@/components/search/search-section'
 import { PromptsGrid } from '@/components/prompts/prompts-grid'
+
+interface Category {
+  id: string;
+  name: string;
+  nameEn: string;
+  nameAr: string;
+}
 
 export default function CategoryPage() {
   const params = useParams();
   const searchParams = useSearchParams();
   const categoryId = params.categoryId as string;
   const locale = params.locale as string;
+  const [category, setCategory] = useState<Category | null>(null);
   
   // Get search parameters
   const sort = searchParams.get('sort') || undefined;
@@ -21,6 +29,25 @@ export default function CategoryPage() {
   const toolsParam = searchParams.get('tools');
   const tools = toolsParam ? toolsParam.split(',') : undefined;
   
+  // Fetch category details
+  useEffect(() => {
+    const fetchCategory = async () => {
+      try {
+        const response = await fetch(`/api/categories/${categoryId}?locale=${locale}`);
+        if (response.ok) {
+          const data = await response.json();
+          setCategory(data.data);
+        }
+      } catch (error) {
+        console.error('Error fetching category:', error);
+      }
+    };
+    
+    if (categoryId) {
+      fetchCategory();
+    }
+  }, [categoryId, locale]);
+  
   return (
     <div className="flex flex-col gap-6 p-6">
       {/* Search Section */}
@@ -31,7 +58,9 @@ export default function CategoryPage() {
       {/* Prompts Grid Section with category filter */}
       <section className="w-full">
         <h2 className="text-xl font-semibold mb-4">
-          {locale === 'ar' ? `تصفح محتوى القسم: ${categoryId}` : `Browse Category: ${categoryId}`}
+          {locale === 'ar' 
+            ? `تصفح محتوى القسم: ${category?.nameAr || category?.name || categoryId}` 
+            : `Browse Category: ${category?.nameEn || category?.name || categoryId}`}
         </h2>
         <PromptsGrid 
           locale={locale}

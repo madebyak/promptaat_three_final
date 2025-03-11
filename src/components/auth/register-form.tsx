@@ -15,6 +15,7 @@ import Link from 'next/link';
 import { Checkbox } from '@/components/ui/checkbox';
 import { FiMail, FiLock, FiUser, FiGlobe } from 'react-icons/fi';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
 
 const schema = z.object({
   firstName: z.string().min(2, 'First name must be at least 2 characters'),
@@ -127,14 +128,18 @@ export function RegisterForm({ countries = [], locale = 'en' }: RegisterFormProp
   };
 
   return (
-    <Card className="w-full mx-auto shadow-md border-0">
-      <CardHeader className="space-y-2 pb-8">
-        <CardTitle className="text-2xl font-bold text-center">{translations.title}</CardTitle>
-        <CardDescription className="text-center text-base">{translations.subtitle}</CardDescription>
+    <Card className="w-full shadow-md max-w-md mx-auto">
+      <CardHeader className="space-y-1">
+        <CardTitle className={cn("text-2xl font-bold text-center", isRtl && "text-right")}>{translations.title}</CardTitle>
+        <CardDescription className={cn("text-center", isRtl && "text-right")}>{translations.subtitle}</CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          {/* First and Last Name - Responsive Grid */}
+          <div className={cn(
+            "grid grid-cols-1 sm:grid-cols-2 gap-4",
+            isRtl && "sm:flex-row-reverse"
+          )}>
             <div className="space-y-2.5">
               <Label htmlFor="firstName" className={`text-sm font-medium ${isRtl ? 'text-right block' : ''}`}>
                 {translations.firstName}
@@ -279,14 +284,23 @@ export function RegisterForm({ countries = [], locale = 'en' }: RegisterFormProp
             )}
           </div>
 
-          <div className="flex items-center space-x-2 mt-6">
+          <div className={cn(
+            "flex items-center space-x-2",
+            isRtl && "flex-row-reverse justify-end space-x-reverse"
+          )}>
             <Checkbox
               id="termsAccepted"
               checked={termsAccepted}
-              onCheckedChange={(checked: boolean) => setValue('termsAccepted', checked)}
+              onCheckedChange={(checked) => setValue('termsAccepted', checked as boolean)}
               disabled={isLoading}
             />
-            <Label htmlFor="termsAccepted" className="text-sm">
+            <Label
+              htmlFor="termsAccepted"
+              className={cn(
+                "text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer",
+                isRtl && "text-right"
+              )}
+            >
               {translations.termsText}{' '}
               <Link href={`/${locale}/terms`} className="text-primary hover:underline">
                 {translations.termsLink}

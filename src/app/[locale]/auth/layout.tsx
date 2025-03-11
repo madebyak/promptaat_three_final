@@ -1,7 +1,6 @@
 "use client";
 
 import React from 'react';
-import Link from 'next/link';
 import Image from 'next/image';
 import { LanguageSwitcher } from '@/components/layout/language-switcher';
 import { ThemeSwitcher } from '@/components/layout/theme-switcher';
@@ -23,9 +22,7 @@ export default function AuthLayout({
     <div className="min-h-screen flex flex-col bg-light-white dark:bg-dark">
       {/* Header with Logo and Controls */}
       <header className="flex justify-between items-center px-4 sm:px-6 h-16 border-b bg-white-pure dark:bg-black-main">
-        <Link href={`/${locale}`} className="flex items-center">
-          <Logo className="h-5 w-auto" />
-        </Link>
+        <Logo className="h-5 w-auto" />
         <div className="flex items-center gap-3">
           <LanguageSwitcher locale={locale} />
           <ThemeSwitcher />

@@ -13,6 +13,7 @@ import { DynamicIcon } from 'lucide-react/dynamic'
 import { Button } from '@/components/ui/button'
 import { useTheme } from 'next-themes'
 import { useState, useEffect } from 'react'
+import { cn } from '@/lib/utils'
 
 type CategoryItem = {
   id: string
@@ -108,10 +109,16 @@ function CategoryDrawer({
               <div key={category.id} className="space-y-1">
                 <Button
                   variant={activeCategory === category.id ? "secondary" : "ghost"}
-                  className={`w-full justify-${isRTL ? 'end' : 'start'}`}
+                  className={cn('w-full', {
+                    'justify-end': isRTL,
+                    'justify-start': !isRTL,
+                  })}
                   onClick={() => handleCategoryClick(category.id)}
                 >
-                  <div className={`flex items-center w-full ${isRTL ? 'flex-row-reverse' : 'flex-row'} gap-2`}>
+                  <div className={cn('flex items-center w-full', {
+                    'flex-row-reverse': isRTL,
+                    'flex-row': !isRTL,
+                  }, 'gap-2')}>
                     {category.iconName && (
                       <span className="text-light-grey flex-shrink-0 inline-flex items-center justify-center w-5 h-5">
                         {/* Using type assertion to handle dynamic icon names */}
@@ -124,13 +131,19 @@ function CategoryDrawer({
                 
                 {/* Render subcategories if this category is active */}
                 {activeCategory === category.id && category.subcategories && category.subcategories.length > 0 && (
-                  <div className={`pl-${isRTL ? '0 pr-4' : '4 pr-0'} space-y-1`}>
+                  <div className={cn({
+                    'pl-0 pr-4': isRTL,
+                    'pl-4 pr-0': !isRTL,
+                  }, 'space-y-1')}>
                     {category.subcategories.map((subcategory) => (
                       <Button
                         key={subcategory.id}
                         variant="ghost"
                         size="sm"
-                        className={`w-full justify-${isRTL ? 'end' : 'start'} text-sm`}
+                        className={cn('w-full', {
+                          'justify-end': isRTL,
+                          'justify-start': !isRTL,
+                        }, 'text-sm')}
                         onClick={(e) => {
                           if (onSubcategoryClick) {
                             onSubcategoryClick(category.id, subcategory.id, e);
@@ -138,7 +151,10 @@ function CategoryDrawer({
                           }
                         }}
                       >
-                        <div className={`flex items-center w-full ${isRTL ? 'flex-row-reverse' : 'flex-row'} gap-2`}>
+                        <div className={cn('flex items-center w-full', {
+                          'flex-row-reverse': isRTL,
+                          'flex-row': !isRTL,
+                        }, 'gap-2')}>
                           {subcategory.iconName && (
                             <span className="text-light-grey flex-shrink-0 inline-flex items-center justify-center w-5 h-5">
                               {renderCategoryIcon(subcategory.iconName)}

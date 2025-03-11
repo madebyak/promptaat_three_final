@@ -312,6 +312,7 @@ export async function refreshAccessTokenServerSide(request: NextRequest) {
     // Generate new access token
     const newToken = await encrypt({
       adminId: admin.id,
+      email: admin.email,
       role: admin.role,
     });
     

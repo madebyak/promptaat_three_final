@@ -15,6 +15,7 @@ import Link from "next/link"
 import { FiMail, FiLock } from "react-icons/fi"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Spinner } from "@/components/ui/spinner"
+import { cn } from "@/lib/utils"
 
 const schema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -148,10 +149,10 @@ export function LoginForm({ locale = 'en' }: LoginFormProps) {
   }
 
   return (
-    <Card className="w-full shadow-md">
+    <Card className="w-full shadow-md max-w-md mx-auto">
       <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl font-bold text-center">{translations.title}</CardTitle>
-        <CardDescription className="text-center">{translations.subtitle}</CardDescription>
+        <CardTitle className={cn("text-2xl font-bold text-center", isRtl && "text-right")}>{translations.title}</CardTitle>
+        <CardDescription className={cn("text-center", isRtl && "text-right")}>{translations.subtitle}</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -178,7 +179,10 @@ export function LoginForm({ locale = 'en' }: LoginFormProps) {
             )}
           </div>
           <div className="space-y-2">
-            <div className="flex items-center justify-between">
+            <div className={cn(
+              "flex items-center justify-between flex-wrap gap-2",
+              isRtl && "flex-row-reverse"
+            )}>
               <Label htmlFor="password" className={`text-sm font-medium ${isRtl ? 'text-right block' : ''}`}>
                 {translations.password}
               </Label>

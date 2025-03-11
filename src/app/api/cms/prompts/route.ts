@@ -14,6 +14,7 @@ const promptCreateSchema = z.object({
   promptTextEn: z.string().min(10, "Prompt text must be at least 10 characters"),
   promptTextAr: z.string().min(10, "Arabic prompt text must be at least 10 characters"),
   isPro: z.boolean().default(false),
+  copyCount: z.number().int().nonnegative().default(0),
   categoryId: z.string({
     required_error: "Category is required",
   }),
@@ -23,22 +24,6 @@ const promptCreateSchema = z.object({
   keywords: z.array(z.string()).optional(),
   toolIds: z.array(z.string()).optional(),
 });
-
-type PromptInput = z.infer<typeof promptCreateSchema>;
-
-interface SearchParams {
-  page?: string;
-  limit?: string;
-  search?: string;
-  categoryId?: string;
-  sortBy?: string;
-  sortOrder?: string;
-}
-
-interface ErrorResponse {
-  error: string;
-  status: number;
-}
 
 type PromptData = {
   id: string;
@@ -52,11 +37,13 @@ type PromptData = {
     id: string;
     nameEn: string;
     nameAr: string;
+    name: string;
   } | null;
   subcategory: {
     id: string;
     nameEn: string;
     nameAr: string;
+    name: string;
   } | null;
 };
 
@@ -85,18 +72,26 @@ export async function GET(request: NextRequest) {
     const skip = (page - 1) * limit;
 
     // Build filter conditions
-    let where: any = {
+    let where: {
+      deletedAt: null;
+      OR?: Array<Record<string, { contains: string; mode: 'insensitive' }>>;
+      categories?: {
+        some: {
+          categoryId: string;
+        };
+      };
+    } = {
       deletedAt: null, // Only show non-deleted prompts
     };
 
     if (search) {
       where.OR = [
-        { titleEn: { contains: search, mode: "insensitive" } },
-        { titleAr: { contains: search, mode: "insensitive" } },
-        { promptTextEn: { contains: search, mode: "insensitive" } },
-        { promptTextAr: { contains: search, mode: "insensitive" } },
-        { descriptionEn: { contains: search, mode: "insensitive" } },
-        { descriptionAr: { contains: search, mode: "insensitive" } },
+        { titleEn: { contains: search, mode: "insensitive" as const } },
+        { titleAr: { contains: search, mode: "insensitive" as const } },
+        { promptTextEn: { contains: search, mode: "insensitive" as const } },
+        { promptTextAr: { contains: search, mode: "insensitive" as const } },
+        { descriptionEn: { contains: search, mode: "insensitive" as const } },
+        { descriptionAr: { contains: search, mode: "insensitive" as const } },
       ];
     }
 
@@ -115,23 +110,9 @@ export async function GET(request: NextRequest) {
       where = { ...where, ...categoryFilter };
     }
 
-    // Build sort object
-    const validSortFields = [
-      "titleEn",
-      "titleAr",
-      "createdAt",
-      "updatedAt",
-      "copyCount",
-      "isPro",
-    ];
-
-    // Default sort
-    let orderBy: any = { createdAt: "desc" };
-
-    // If valid sort field is provided
-    if (validSortFields.includes(sortBy)) {
-      orderBy = { [sortBy]: sortOrder };
-    }
+    // Build sort options
+    const orderBy: Record<string, string> = {};
+    orderBy[sortBy] = sortOrder;
 
     // Get prompts with pagination
     const [prompts, total] = await Promise.all([
@@ -177,18 +158,20 @@ export async function GET(request: NextRequest) {
         createdAt: prompt.createdAt,
         updatedAt: prompt.updatedAt,
         copyCount: prompt.copyCount,
-        category: firstCategory
+        category: firstCategory && firstCategory.category
           ? {
               id: firstCategory.category.id,
               nameEn: firstCategory.category.nameEn,
               nameAr: firstCategory.category.nameAr,
+              name: firstCategory.category.nameEn,
             }
           : null,
-        subcategory: firstCategory?.subcategory
+        subcategory: firstCategory && firstCategory.subcategory
           ? {
               id: firstCategory.subcategory.id,
               nameEn: firstCategory.subcategory.nameEn,
               nameAr: firstCategory.subcategory.nameAr,
+              name: firstCategory.subcategory.nameEn,
             }
           : null,
       } as PromptData;
@@ -260,8 +243,8 @@ export async function POST(request: NextRequest) {
       const prompt = await tx.prompt.create({
         data: {
           ...promptData,
-          initialCopyCount: 0,
-          copyCount: 0,
+          initialCopyCount: promptData.copyCount || 0,
+          copyCount: promptData.copyCount || 0,
         },
       });
 

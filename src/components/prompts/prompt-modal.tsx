@@ -256,7 +256,7 @@ export function PromptModal({
   if (!isOpen) return null
   if (loading) return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-2xl">
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogTitle className="sr-only">Prompt Details</DialogTitle>
         <div className="flex items-center justify-center p-8">
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
@@ -266,7 +266,7 @@ export function PromptModal({
   )
   if (error || !prompt) return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-2xl">
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogTitle className="sr-only">Error</DialogTitle>
         <div className="flex items-center justify-center p-8 text-destructive">
           {error || 'Failed to load prompt'}
@@ -277,7 +277,7 @@ export function PromptModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-2xl">
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogTitle className="sr-only">Prompt Details</DialogTitle>
         <div className="relative">
           {/* Header Actions */}

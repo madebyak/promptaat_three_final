@@ -30,7 +30,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Spinner } from "@/components/ui/spinner";
 import { Badge } from "@/components/ui/badge";
 
-
 import { X } from "lucide-react";
 
 type Category = {
@@ -64,6 +63,7 @@ const promptFormSchema = z.object({
     message: "Arabic prompt text must be at least 10 characters.",
   }),
   isPro: z.boolean().default(false),
+  copyCount: z.number().int().nonnegative().optional(),
   categoryId: z.string({
     required_error: "Please select a category.",
   }),
@@ -128,6 +128,7 @@ function PromptForm({
       promptTextEn: "",
       promptTextAr: "",
       isPro: false,
+      copyCount: 0,
       categoryId: "",
       subcategoryId: "",
       keywords: [],
@@ -462,11 +463,34 @@ function PromptForm({
                   />
                 </FormControl>
                 <div className="space-y-1 leading-none">
-                  <FormLabel>Pro Feature</FormLabel>
+                  <FormLabel>Pro Prompt</FormLabel>
                   <FormDescription>
-                    This prompt will only be available to pro users.
+                    This prompt will only be available to Pro users.
                   </FormDescription>
                 </div>
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="copyCount"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Copy Count</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    min="0"
+                    placeholder="0"
+                    {...field}
+                    onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                    value={field.value || 0}
+                  />
+                </FormControl>
+                <FormDescription>
+                  Number of times this prompt has been copied by users
+                </FormDescription>
               </FormItem>
             )}
           />

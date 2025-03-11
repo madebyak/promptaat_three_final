@@ -102,8 +102,11 @@ export function MainLayout({
           {children}
         </UserAccountLayout>
       ) : (
-        <div className="flex min-h-[calc(100vh-64px)]">
-          <AppSidebar locale={locale} />
+        <div className={cn(
+          "flex min-h-[calc(100vh-64px)]",
+          isRTL ? "flex-row-reverse" : "flex-row"
+        )}>
+          <AppSidebar locale={locale} className={isRTL ? "right-0" : "left-0"} />
           <main className={cn(
             "flex-1",
             isRTL ? "md:mr-64" : "md:ml-64"

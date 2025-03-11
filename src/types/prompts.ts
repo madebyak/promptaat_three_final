@@ -94,8 +94,9 @@ export interface PromptsQueryParams {
   limit: number;
   sort?: 'popular' | 'newest' | 'most_used';
   category?: string;
-  tool?: string;       // Single tool (legacy support)
-  tools?: string[];    // Multiple tools (new implementation)
+  subcategory?: string;
+  tool?: string;
+  tools?: string[];
   search?: string;
   type?: 'free' | 'pro';
   locale?: string;

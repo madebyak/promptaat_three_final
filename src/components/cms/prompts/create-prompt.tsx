@@ -32,6 +32,7 @@ async function createPrompt(data: PromptFormValues) {
       promptTextEn: data.promptTextEn,
       promptTextAr: data.promptTextAr,
       isPro: data.isPro,
+      copyCount: data.copyCount || 0,
       categoryId: data.categoryId,
       subcategoryId: data.subcategoryId,
       keywords: data.keywords,

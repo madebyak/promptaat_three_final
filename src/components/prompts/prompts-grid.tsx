@@ -13,6 +13,7 @@ interface PromptsGridProps {
   locale: string;
   sort?: 'popular' | 'newest' | 'most_used';
   category?: string;
+  subcategory?: string;
   tool?: string;       // Single tool (legacy support)
   tools?: string[];    // Multiple tools (new implementation)
   search?: string;
@@ -22,7 +23,7 @@ interface PromptsGridProps {
 // Memoize the PromptCard component to prevent unnecessary re-renders
 const MemoizedPromptCard = memo(PromptCard);
 
-export function PromptsGrid({ locale, sort, category, tool, tools, search, type }: PromptsGridProps) {
+export function PromptsGrid({ locale, sort, category, subcategory, tool, tools, search, type }: PromptsGridProps) {
   const { ref, inView } = useInView({
     threshold: 0.1, // Trigger when 10% of the element is visible
     rootMargin: '200px', // Start loading 200px before the element is visible to improve perceived performance
@@ -35,11 +36,12 @@ export function PromptsGrid({ locale, sort, category, tool, tools, search, type 
     limit: PROMPTS_PER_PAGE,
     sort,
     category,
+    subcategory,
     tool,        // Keep for backward compatibility
     tools,       // Add support for multiple tools
     search,
     type
-  }, locale), [locale, sort, category, tool, tools, search, type]);
+  }, locale), [locale, sort, category, subcategory, tool, tools, search, type]);
 
   const {
     data,
@@ -49,7 +51,7 @@ export function PromptsGrid({ locale, sort, category, tool, tools, search, type 
     isFetchingNextPage,
     error
   } = useInfiniteQuery({
-    queryKey: ['prompts', locale, sort, category, tool, tools, search, type],
+    queryKey: ['prompts', locale, sort, category, subcategory, tool, tools, search, type],
     queryFn,
     initialPageParam: 1,
     getNextPageParam: (lastPage) => lastPage.hasMore ? lastPage.nextPage : undefined,
@@ -82,7 +84,7 @@ export function PromptsGrid({ locale, sort, category, tool, tools, search, type 
 
   return (
     <div className="w-full">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
         {data?.pages.map((page, pageIndex) =>
           page.prompts.map((prompt: Prompt, promptIndex) => (
             <MemoizedPromptCard
@@ -99,7 +101,7 @@ export function PromptsGrid({ locale, sort, category, tool, tools, search, type 
 
       {/* Loading states */}
       {isLoading && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
           {/* Only show 6 skeleton cards instead of 20 to improve initial load performance */}
           {Array.from({ length: 6 }).map((_, index) => (
             <div

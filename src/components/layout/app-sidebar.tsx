@@ -252,12 +252,16 @@ export function AppSidebar({ locale, className }: AppSidebarProps) {
       <Button
         variant={activeCategory === null ? "secondary" : "ghost"}
         className={cn(
-          "w-full justify-start",
+          "w-full",
+          isRTL ? "justify-end" : "justify-start",
           activeCategory === null && "bg-muted"
         )}
         onClick={() => handleCategoryClick(null)}
       >
-        <div className="flex items-center gap-2">
+        <div className={cn(
+          "flex items-center gap-2",
+          isRTL && "flex-row-reverse"
+        )}>
           <span className="flex-shrink-0 inline-flex items-center justify-center w-5 h-5">
             <Search className="h-4 w-4" />
           </span>
@@ -271,11 +275,15 @@ export function AppSidebar({ locale, className }: AppSidebarProps) {
             variant={activeCategory === category.id ? "secondary" : "ghost"}
             className={cn(
               "w-full justify-between",
+              isRTL && "flex-row-reverse",
               activeCategory === category.id && "bg-muted"
             )}
             onClick={() => handleCategoryClick(category.id)}
           >
-            <div className="flex items-center gap-2">
+            <div className={cn(
+              "flex items-center gap-2",
+              isRTL && "flex-row-reverse"
+            )}>
               {category.iconName && (
                 <span className="flex-shrink-0 inline-flex items-center justify-center w-5 h-5">
                   {renderCategoryIcon(category.iconName)}
@@ -287,14 +295,18 @@ export function AppSidebar({ locale, className }: AppSidebarProps) {
               <ChevronDown
                 className={cn(
                   "h-4 w-4 transition-transform",
-                  activeCategory === category.id && "rotate-180"
+                  activeCategory === category.id && "rotate-180",
+                  isRTL && activeCategory !== category.id && "rotate-180",
+                  isRTL && activeCategory === category.id && "rotate-0"
                 )}
               />
             )}
           </Button>
 
           {activeCategory === category.id && (category.subcategories?.length ?? 0) > 0 && (
-            <div className={cn("ml-4", isRTL && "mr-4 ml-0")}>
+            <div className={cn(
+              isRTL ? "mr-4 ml-0" : "ml-4 mr-0"
+            )}>
               {category.subcategories?.map((subcategory) => (
                 <Button
                   key={subcategory.id}
@@ -310,7 +322,10 @@ export function AppSidebar({ locale, className }: AppSidebarProps) {
                     )
                   }
                 >
-                  <div className="flex items-center gap-2">
+                  <div className={cn(
+                    "flex items-center gap-2",
+                    isRTL && "flex-row-reverse"
+                  )}>
                     {subcategory.iconName && (
                       <span className="flex-shrink-0 inline-flex items-center justify-center w-5 h-5">
                         {renderCategoryIcon(subcategory.iconName)}
@@ -329,12 +344,12 @@ export function AppSidebar({ locale, className }: AppSidebarProps) {
 
   return (
     <>
-      <Sidebar className={cn("hidden lg:flex", className)}>
+      <Sidebar className={cn("hidden lg:flex", className)} direction={isRTL ? "rtl" : "ltr"}>
         <CategoryList />
       </Sidebar>
 
       <Sheet open={isMobileOpen} onOpenChange={setIsMobileOpen}>
-        <SheetContent side="left" className="p-0">
+        <SheetContent side={isRTL ? "right" : "left"} className="p-0">
           <SheetHeader className="px-4 py-2">
             <h2 className="text-lg font-semibold">
               {locale === "ar" ? "الفئات" : "Categories"}

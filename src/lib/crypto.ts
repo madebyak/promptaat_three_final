@@ -77,7 +77,7 @@ export async function hashPassword(password: string): Promise<string> {
     }
     
     console.log(`[${timestamp}] [hashPassword] Using Web Crypto API for hashing`);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer as ArrayBuffer);
     const result = ab2hex(hashBuffer);
     
     console.log(`[${timestamp}] [hashPassword] Successfully hashed password`);

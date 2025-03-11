@@ -12,12 +12,13 @@ export async function GET(req: Request) {
     const limit = parseInt(searchParams.get("limit") || "20")
     const locale = searchParams.get("locale") || "en"
     const category = searchParams.get("category")
+    const subcategory = searchParams.get("subcategory")
     const tool = searchParams.get("tool")
     const sort = searchParams.get("sort") || "newest"
     const type = searchParams.get("type")
     const search = searchParams.get("search")
     
-    console.log('Query params:', { page, limit, locale, category, tool, sort, type, search })
+    console.log('Query params:', { page, limit, locale, category, subcategory, tool, sort, type, search })
     
     const skip = (page - 1) * limit
 
@@ -27,7 +28,8 @@ export async function GET(req: Request) {
       ...(category && {
         categories: {
           some: {
-            categoryId: category
+            categoryId: category,
+            ...(subcategory && { subcategoryId: subcategory })
           }
         }
       }),

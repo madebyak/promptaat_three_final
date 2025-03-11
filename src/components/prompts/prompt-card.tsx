@@ -229,7 +229,10 @@ export function PromptCard({
       >
         <div className="flex flex-col h-full p-4">
           {/* Top row with badges */}
-          <div className="flex items-center justify-between gap-2">
+          <div className={cn(
+            "flex items-center justify-between gap-2",
+            isRTL && "flex-row-reverse"
+          )}>
             <div className="flex items-center gap-2">
               {isPro ? (
                 <Badge variant="purple" className="inline-flex items-center gap-1.5 px-2.5 py-1">
@@ -275,9 +278,15 @@ export function PromptCard({
           </h3>
 
           {/* Categories below title */}
-          <div className="flex flex-wrap gap-2 mb-4">
+          <div className={cn(
+            "flex flex-wrap gap-2 mb-4",
+            isRTL && "justify-end"
+          )}>
             {categories.map((category) => (
-              <div key={category.id} className="flex items-center gap-1.5">
+              <div key={category.id} className={cn(
+                "flex items-center gap-1.5",
+                isRTL && "flex-row-reverse"
+              )}>
                 <Badge variant="outline" className="text-xs px-2 py-0.5">
                   {category.name}
                 </Badge>
@@ -295,8 +304,8 @@ export function PromptCard({
 
           {/* Preview text */}
           <p className={cn(
-            "text-sm text-muted-foreground mb-4 line-clamp-3",
-            isRTL ? "text-right" : "text-left"
+            "text-sm text-light-grey line-clamp-3 mb-4",
+            isRTL && "text-right"
           )}>
             {preview}
           </p>
@@ -304,7 +313,10 @@ export function PromptCard({
           {/* Bottom section */}
           <div className="mt-auto">
             {/* Tools */}
-            <div className="flex flex-wrap gap-2 mb-3">
+            <div className={cn(
+              "flex flex-wrap gap-2 mb-3",
+              isRTL && "justify-end"
+            )}>
               {tools.map((tool) => (
                 <Badge 
                   key={tool.id} 
@@ -350,8 +362,14 @@ export function PromptCard({
             </div>
 
             {/* Bottom row with copy count and buttons */}
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-1 text-muted-foreground">
+            <div className={cn(
+              "flex items-center justify-between gap-3",
+              isRTL && "flex-row-reverse"
+            )}>
+              <div className={cn(
+                "flex items-center gap-1 text-muted-foreground",
+                isRTL && "flex-row-reverse"
+              )}>
                 <BarChart2 className="h-4 w-4" />
                 <span className="text-sm">{copyCount}</span>
               </div>
@@ -373,9 +391,9 @@ export function PromptCard({
                   onClick={handleCopy}
                 >
                   {isCopied ? (
-                    <CheckCircle className="h-3 w-3 mr-2" />
+                    <CheckCircle className={cn("h-3 w-3", isRTL ? "ml-2" : "mr-2")} />
                   ) : (
-                    <Copy className="h-3 w-3 mr-2" />
+                    <Copy className={cn("h-3 w-3", isRTL ? "ml-2" : "mr-2")} />
                   )}
                   {isCopied ? "Copied!" : "Copy"}
                 </Button>

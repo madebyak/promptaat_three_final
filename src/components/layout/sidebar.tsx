@@ -490,7 +490,8 @@ export function Sidebar({ locale, className, items = [] }: SidebarProps) {
                               className={cn(
                                 'w-full text-sm text-light-grey hover:text-accent-purple dark:text-light-grey-low dark:hover:text-accent-purple px-4 py-2',
                                 isRTL ? 'text-right pr-8' : 'text-left pl-8',
-                                'flex items-center'
+                                'flex items-center',
+                                isRTL ? 'flex-row-reverse' : 'flex-row'
                               )}
                               onClick={(e) => handleSubcategoryClick(category.id, sub.id, e)}
                             >

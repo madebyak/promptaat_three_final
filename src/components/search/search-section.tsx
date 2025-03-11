@@ -91,13 +91,13 @@ export function SearchSection({ locale = 'en', className = '' }: SearchSectionPr
 
   return (
     <div className={cn("w-full", className)}>
-      {/* Single row layout with flexbox for better responsiveness */}
+      {/* Responsive layout that stacks on mobile */}
       <div className={cn(
-        "flex items-center gap-3",
-        isRTL ? "flex-row-reverse" : "flex-row"
+        "flex flex-col md:flex-row items-stretch md:items-center gap-3",
+        isRTL ? "md:flex-row-reverse" : "md:flex-row"
       )}>
         {/* Search bar - takes remaining space */}
-        <div className="flex-1">
+        <div className="flex-1 mb-3 md:mb-0">
           <SearchBar 
             placeholder={isRTL ? "ابحث عن الإرشادات..." : "Search prompts..."}
             onChange={handleSearch}
@@ -105,25 +105,31 @@ export function SearchSection({ locale = 'en', className = '' }: SearchSectionPr
           />
         </div>
         
-        {/* Filter by tool - fixed width */}
-        <div className="flex-none w-[170px]">
-          <ToolsFilter
-            locale={locale}
-            isRTL={isRTL}
-            onValueChange={handleToolFilter}
-            value={toolFilters}
-            className="w-full whitespace-nowrap"
-          />
-        </div>
-        
-        {/* Sort dropdown - fixed width */}
-        <div className="flex-none w-[170px]">
-          <SortDropdown 
-            isRTL={isRTL} 
-            onValueChange={handleSort}
-            value={sortOption}
-            className="w-full"
-          />
+        {/* Filter and sort container - stacks horizontally on mobile */}
+        <div className={cn(
+          "flex items-center gap-3",
+          isRTL ? "flex-row-reverse" : "flex-row"
+        )}>
+          {/* Filter by tool - responsive width */}
+          <div className="flex-1 md:flex-none md:w-[170px]">
+            <ToolsFilter
+              locale={locale}
+              isRTL={isRTL}
+              onValueChange={handleToolFilter}
+              value={toolFilters}
+              className="w-full whitespace-nowrap"
+            />
+          </div>
+          
+          {/* Sort dropdown - responsive width */}
+          <div className="flex-1 md:flex-none md:w-[170px]">
+            <SortDropdown 
+              isRTL={isRTL} 
+              onValueChange={handleSort}
+              value={sortOption}
+              className="w-full"
+            />
+          </div>
         </div>
       </div>
     </div>

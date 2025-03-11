@@ -14,6 +14,7 @@ const promptUpdateSchema = z.object({
   promptTextEn: z.string().min(10).optional(),
   promptTextAr: z.string().min(10).optional(),
   isPro: z.boolean().optional(),
+  copyCount: z.number().int().nonnegative().optional(),
   categoryId: z.string().optional(),
   subcategoryId: z.string().optional(),
   keywords: z.array(z.string()).optional(),

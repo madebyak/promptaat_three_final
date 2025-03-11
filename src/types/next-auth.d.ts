@@ -12,3 +12,15 @@ declare module "next-auth" {
     } & DefaultSession["user"]
   }
 }
+
+declare module "next-auth/jwt" {
+  interface JWT {
+    id: string
+    emailVerified?: boolean
+    firstName?: string
+    lastName?: string
+    country?: string
+    needsProfileCompletion?: boolean
+    provider?: string
+  }
+}
