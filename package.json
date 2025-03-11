@@ -50,6 +50,7 @@
     "@types/js-yaml": "^4.0.9",
     "@vercel/speed-insights": "^1.2.0",
     "cmdk": "^1.0.4",
+    "critters": "^0.0.23",
     "date-fns": "^4.1.0",
     "express": "^4.21.2",
     "handlebars": "^4.7.8",

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/components/ui/use-toast"
-import { Crown, Bookmark, BookmarkCheck, Share2, Copy, Turtle, BarChart2 } from "lucide-react"
+import { Crown, Bookmark, BookmarkCheck, Share2, Copy, Turtle, BarChart2, CheckCircle } from "lucide-react"
 import Image from "next/image"
 import { Category, Tool } from "@/types/prompts"
 import { cn } from "@/lib/utils"
@@ -26,6 +26,7 @@ interface PromptCardProps {
   locale?: string
   isBookmarked?: boolean
   onBookmarkChange?: (id: string, isBookmarked: boolean) => void
+  loading?: "eager" | "lazy"
 }
 
 export function PromptCard({
@@ -33,19 +34,21 @@ export function PromptCard({
   title,
   preview,
   isPro,
-  copyCount,
+  copyCount: initialCopyCount,
   categories,
   tools: initialTools,
   isRTL = false,
   locale = 'en',
   isBookmarked = false,
-  onBookmarkChange
+  onBookmarkChange,
+  loading = "lazy"
 }: PromptCardProps) {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isCopied, setIsCopied] = useState(false)
   const [tools, setTools] = useState(initialTools)
   const [isBookmarking, setIsBookmarking] = useState(false)
   const [bookmarkStatus, setBookmarkStatus] = useState(isBookmarked)
+  const [copyCount, setCopyCount] = useState(initialCopyCount)
   const { toast } = useToast()
   const { data: session } = useSession()
   const router = useRouter()
@@ -67,12 +70,44 @@ export function PromptCard({
     }
   }, [initialTools])
 
-  const handleCopy = async (e: React.MouseEvent) => {
+  // Memoize the copy handler to prevent unnecessary re-renders
+  const handleCopy = useCallback(async (e: React.MouseEvent) => {
     e.stopPropagation()
     try {
+      // Copy to clipboard
       await navigator.clipboard.writeText(preview)
       setIsCopied(true)
       setTimeout(() => setIsCopied(false), 2000)
+      
+      // Update copy count in the database
+      try {
+        // Use a non-blocking approach to update the copy count
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3000); // 3s timeout
+        
+        const response = await fetch(`/api/prompts/${id}/copy`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          signal: controller.signal
+        })
+        
+        clearTimeout(timeoutId);
+        
+        if (response.ok) {
+          const data = await response.json()
+          // Update local state with new copy count
+          setCopyCount(data.copyCount)
+        }
+      } catch (apiError) {
+        // Ignore AbortError as it's expected in some cases
+        if (apiError instanceof Error && apiError.name !== 'AbortError') {
+          console.error('Error updating copy count:', apiError)
+        }
+        // Don't show error to user, just log it
+      }
+      
       toast({
         title: "Success",
         description: "Prompt copied to clipboard",
@@ -85,7 +120,7 @@ export function PromptCard({
         variant: "destructive",
       })
     }
-  }
+  }, [id, preview, toast])
 
   const handleShare = async (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -131,9 +166,12 @@ export function PromptCard({
         throw new Error('Invalid prompt ID')
       }
       
-      console.log('Toggling bookmark for prompt:', id)
+      // Set optimistic UI update immediately
+      const newStatus = !bookmarkStatus
+      setBookmarkStatus(newStatus)
       
-      const method = bookmarkStatus ? 'DELETE' : 'POST'
+      // Call the API
+      const method = newStatus ? 'POST' : 'DELETE'
       const response = await fetch(`/api/prompts/${id}/bookmark`, {
         method,
         headers: {
@@ -144,31 +182,33 @@ export function PromptCard({
       const responseData = await response.json()
       
       if (!response.ok) {
-        // Special case for 'already bookmarked' error - treat as success
+        // If the API call fails, revert the optimistic update
+        setBookmarkStatus(!newStatus)
+        
+        // Special case for 'already bookmarked' error - set status to bookmarked
         if (responseData.error === "Prompt already bookmarked") {
-          console.log('Prompt was already bookmarked, treating as success')
-          setBookmarkStatus(true) // Ensure UI shows as bookmarked
+          setBookmarkStatus(true)
           return // Exit early without throwing error
         }
         throw new Error(responseData.error || 'Failed to update bookmark')
       }
 
-      // Update local state
-      const newStatus = !bookmarkStatus
-      setBookmarkStatus(newStatus)
-      
-      // Call the onBookmarkChange callback if provided
+      // Call the onBookmarkChange callback if provided to notify parent component
       if (onBookmarkChange) {
         onBookmarkChange(id, newStatus)
       }
 
       toast({
-        title: bookmarkStatus ? "Removed from bookmarks" : "Added to bookmarks",
-        description: bookmarkStatus ? "Prompt removed from your bookmarks" : "Prompt added to your bookmarks",
+        title: !newStatus ? "Removed from bookmarks" : "Added to bookmarks",
+        description: !newStatus ? "Prompt removed from your bookmarks" : "Prompt added to your bookmarks",
       })
       
-      // Refresh the page to update other components that might display this prompt
-      router.refresh()
+      // Update global state by revalidating data instead of full refresh for better performance
+      // This will update any other components displaying this prompt
+      const event = new CustomEvent('bookmark-update', { 
+        detail: { promptId: id, isBookmarked: newStatus } 
+      })
+      window.dispatchEvent(event)
     } catch (err) {
       console.error('Bookmark error:', err);
       toast({
@@ -283,10 +323,11 @@ export function PromptCard({
                                 src={tool.iconUrl}
                                 alt={tool.name}
                                 fill
+                                loading={loading}
                                 className="object-contain"
                                 sizes="12px"
                                 onError={(e) => {
-                                  console.error('Image load error:', tool.iconUrl);
+                                  // Silently handle image errors without console logs
                                   const target = e.target as HTMLImageElement;
                                   target.style.display = 'none';
                                 }}
@@ -323,12 +364,19 @@ export function PromptCard({
                   />
                 )}
                 <Button
-                  variant="secondary"
+                  variant={isCopied ? "outline" : "secondary"}
                   size="sm"
-                  className="flex-shrink-0"
+                  className={cn(
+                    "flex-shrink-0 transition-all duration-200",
+                    isCopied ? "border-accent-green text-accent-green" : "bg-accent-green text-black hover:bg-accent-green/90"
+                  )}
                   onClick={handleCopy}
                 >
-                  <Copy className="h-3 w-3 mr-2" />
+                  {isCopied ? (
+                    <CheckCircle className="h-3 w-3 mr-2" />
+                  ) : (
+                    <Copy className="h-3 w-3 mr-2" />
+                  )}
                   {isCopied ? "Copied!" : "Copy"}
                 </Button>
               </div>

@@ -8,6 +8,23 @@ const config: Config = {
     './app/**/*.{ts,tsx}',
     './src/**/*.{ts,tsx}',
   ],
+  // JIT mode is enabled by default in Tailwind v3
+  // Safelist critical classes to ensure they're always included in the CSS bundle
+  safelist: [
+    // Banner component classes
+    'object-cover',
+    'object-center',
+    'transition-all',
+    'duration-500',
+    'ease-in-out-circ',
+    // Critical layout classes
+    'h-full',
+    'w-full',
+    'flex',
+    'flex-col',
+    'items-center',
+    'justify-center',
+  ],
   theme: {
     container: {
       center: true,
@@ -100,7 +117,28 @@ const config: Config = {
       },
     },
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [
+    require("tailwindcss-animate"),
+    // Add performance optimizations
+    function({ addUtilities }: { addUtilities: (utilities: Record<string, Record<string, string>>) => void }) {
+      // Add custom utilities for performance-critical animations
+      addUtilities({
+        '.ease-in-out-circ': {
+          'transition-timing-function': 'cubic-bezier(0.85, 0, 0.15, 1)',
+        },
+        '.will-change-opacity': {
+          'will-change': 'opacity',
+        },
+        '.will-change-transform': {
+          'will-change': 'transform',
+        },
+      });
+    },
+  ],
+  // Optimize for production
+  future: {
+    hoverOnlyWhenSupported: true,
+  },
 } satisfies Config
 
 export default config

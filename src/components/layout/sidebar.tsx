@@ -273,7 +273,7 @@ export function Sidebar({ locale, className, items = [] }: SidebarProps) {
       {/* Desktop Sidebar */}
       <aside
         className={cn(
-          'fixed top-16 z-30 flex h-[calc(100vh-4rem)] flex-col border-light-grey-light bg-white-pure transition-all duration-300 dark:border-dark-grey dark:bg-black-main',
+          'fixed top-16 z-30 flex h-[calc(100vh-4rem)] flex-col border-light-grey-light bg-white-pure transition-all duration-200 ease-in-out dark:border-dark-grey dark:bg-black-main',
           isRTL ? 'right-0 border-l rtl' : 'left-0 border-r ltr',
           isCollapsed ? (isRTL ? 'w-16 translate-x-0' : 'w-16 translate-x-0') : 'w-64 translate-x-0',
           'lg:block',
@@ -439,7 +439,7 @@ export function Sidebar({ locale, className, items = [] }: SidebarProps) {
                       onClick={() => handleCategoryClick(category.id)}
                     >
                       <div className={cn(
-                        'flex items-center gap-x-3 w-full',
+                        'flex items-center gap-x-3 w-full transition-opacity duration-200 ease-in-out',
                         isRTL ? 'flex-row-reverse' : 'flex-row'
                       )}>
                         <span className="text-light-grey flex-shrink-0 inline-flex items-center justify-center w-5 h-5">
@@ -449,7 +449,7 @@ export function Sidebar({ locale, className, items = [] }: SidebarProps) {
                         {category.subcategories && category.subcategories.length > 0 && (
                           <ChevronDown
                             className={cn(
-                              "h-4 w-4 flex-shrink-0 transition-transform",
+                              "h-4 w-4 flex-shrink-0 transition-transform duration-200 ease-in-out",
                               activeCategory === category.id && "rotate-180",
                               isRTL && activeCategory !== category.id && "rotate-180",
                               isRTL && activeCategory === category.id && "rotate-0"
@@ -479,15 +479,8 @@ export function Sidebar({ locale, className, items = [] }: SidebarProps) {
 
                   {/* Subcategories - only show when not collapsed */}
                   {!isCollapsed && activeCategory === category.id && (
-                    <>
-                      {console.log('[Sidebar Debug] Rendering subcategories for category:', {
-                        categoryId: category.id,
-                        categoryName: category.name,
-                        activeCategory,
-                        hasSubcategories: category.subcategories && category.subcategories.length > 0,
-                        subcategoriesCount: category.subcategories?.length || 0,
-                        subcategories: category.subcategories
-                      })}
+                    <div className="transition-all duration-200 ease-in-out">
+                      {/* Debug information for subcategories */}
                       {category.subcategories && category.subcategories.length > 0 ? (
                         <>
                           {category.subcategories.map((sub) => (
@@ -518,7 +511,7 @@ export function Sidebar({ locale, className, items = [] }: SidebarProps) {
                           {locale === 'ar' ? 'لا توجد فئات فرعية' : 'No subcategories available'}
                         </div>
                       )}
-                    </>
+                    </div>
                   )}
                 </div>
               ))}

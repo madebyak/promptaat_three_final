@@ -6,7 +6,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/components/ui/use-toast"
-import { Crown, Turtle, Copy, BarChart2, Calendar, Bookmark, BookmarkCheck, Share2 } from "lucide-react"
+import { Crown, Turtle, Copy, BarChart2, Calendar, Bookmark, BookmarkCheck, Share2, CheckCircle } from "lucide-react"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
 import { format } from "date-fns"
@@ -35,39 +35,86 @@ export function PromptModal({
       setLoading(true)
       setError(null)
       const url = `/api/prompts/${promptId}?locale=${locale}`
-      console.log('Fetching prompt details from:', url)
-      const response = await fetch(url)
-      console.log('Response status:', response.status)
+      
+      // Use a timeout to prevent hanging requests
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5s timeout
+      
+      const response = await fetch(url, {
+        signal: controller.signal,
+        // Add cache control headers to improve caching
+        headers: {
+          'Cache-Control': 'max-age=3600' // Cache for 1 hour
+        }
+      })
+      
+      clearTimeout(timeoutId);
       
       if (!response.ok) {
         const errorText = await response.text()
-        console.error('Error response:', errorText)
         let errorData
         try {
           errorData = JSON.parse(errorText)
-        } catch (e) {
-          console.error('Failed to parse error response as JSON:', e)
+        } catch {
+          // Silent catch
         }
         throw new Error(errorData?.error || `Failed to fetch prompt details: ${response.status}`)
       }
       
       const data = await response.json()
-      console.log('Prompt data received:', data)
       setPrompt(data)
     } catch (err) {
-      console.error('Error fetching prompt:', err)
-      setError('Failed to load prompt details')
+      if (err instanceof Error && err.name === 'AbortError') {
+        setError('Request timed out. Please try again.')
+      } else {
+        console.error('Error fetching prompt:', err)
+        setError('Failed to load prompt details')
+      }
     } finally {
       setLoading(false)
     }
   }, [promptId, locale])
 
-  const handleCopy = async () => {
+  const handleCopy = useCallback(async () => {
     if (!prompt) return
     try {
+      // Copy to clipboard
       await navigator.clipboard.writeText(prompt.promptText)
       setIsCopied(true)
       setTimeout(() => setIsCopied(false), 2000)
+      
+      // Update copy count in the database
+      try {
+        // Use a non-blocking approach to update the copy count
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3000); // 3s timeout
+        
+        const response = await fetch(`/api/prompts/${promptId}/copy`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          signal: controller.signal
+        })
+        
+        clearTimeout(timeoutId);
+        
+        if (response.ok) {
+          const data = await response.json()
+          // Update local state with new copy count
+          setPrompt(prev => prev ? {
+            ...prev,
+            copyCount: data.copyCount
+          } : null)
+        }
+      } catch (apiError) {
+        // Ignore AbortError as it's expected in some cases
+        if (apiError instanceof Error && apiError.name !== 'AbortError') {
+          console.error('Error updating copy count:', apiError)
+        }
+        // Don't show error to user, just log it
+      }
+      
       toast({
         title: "Success",
         description: "Prompt copied to clipboard",
@@ -80,7 +127,7 @@ export function PromptModal({
         variant: "destructive",
       })
     }
-  }
+  }, [prompt, promptId, toast])
 
   const handleShare = async () => {
     if (!prompt) return
@@ -168,9 +215,41 @@ export function PromptModal({
     }
   }, [prompt, promptId, session, router, toast, locale])
   
+  // Listen for bookmark updates from other components
+  useEffect(() => {
+    const handleBookmarkUpdate = (event: CustomEvent<{promptId: string, isBookmarked: boolean}>) => {
+      const { promptId: updatedPromptId, isBookmarked } = event.detail
+      
+      // Only update if this is the same prompt being displayed
+      if (prompt && updatedPromptId === promptId) {
+        setPrompt(prev => prev ? {
+          ...prev,
+          isBookmarked,
+          bookmarkCount: isBookmarked 
+            ? (prev.bookmarkCount || 0) + 1 
+            : Math.max(0, (prev.bookmarkCount || 0) - 1)
+        } : null)
+      }
+    }
+
+    // Add event listener
+    window.addEventListener('bookmark-update', handleBookmarkUpdate as EventListener)
+    
+    // Cleanup
+    return () => {
+      window.removeEventListener('bookmark-update', handleBookmarkUpdate as EventListener)
+    }
+  }, [promptId, prompt])
+
+  // Fetch prompt details when modal opens
   useEffect(() => {
     if (isOpen && promptId) {
-      fetchPromptDetails()
+      // Add a small delay to prevent immediate loading when modal is opened
+      // This improves perceived performance by allowing the modal animation to complete first
+      const timeoutId = setTimeout(() => {
+        fetchPromptDetails()
+      }, 100);
+      return () => clearTimeout(timeoutId);
     }
   }, [isOpen, promptId, fetchPromptDetails])
 
@@ -340,11 +419,19 @@ export function PromptModal({
                 {prompt.promptText}
               </AlertDescription>
               <Button
-                className="absolute top-0 right-0 mt-2 mr-2"
+                className={cn(
+                  "absolute top-0 right-0 mt-2 mr-2 transition-all duration-200",
+                  isCopied ? "border-accent-green text-accent-green" : "bg-accent-green text-black hover:bg-accent-green/90"
+                )}
+                variant={isCopied ? "outline" : "secondary"}
                 size="sm"
                 onClick={handleCopy}
               >
-                <Copy className="h-3 w-3 mr-2" />
+                {isCopied ? (
+                  <CheckCircle className="h-3 w-3 mr-2" />
+                ) : (
+                  <Copy className="h-3 w-3 mr-2" />
+                )}
                 {isCopied ? "Copied!" : "Copy"}
               </Button>
             </div>

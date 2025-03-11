@@ -1,7 +1,10 @@
 'use client'
 
+import { useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { SearchBar } from './search-bar'
 import { SortDropdown } from './sort-dropdown'
+import { ToolsFilter } from './tools-filter'
 import { cn } from '@/lib/utils'
 
 interface SearchSectionProps {
@@ -9,21 +12,120 @@ interface SearchSectionProps {
   className?: string
 }
 
-export function SearchSection({ locale = 'en', className }: SearchSectionProps) {
+export function SearchSection({ locale = 'en', className = '' }: SearchSectionProps) {
+  const router = useRouter()
+  const searchParams = useSearchParams()
   const isRTL = locale === 'ar'
+  
+  // Get initial values from URL
+  const [searchTerm, setSearchTerm] = useState<string>(searchParams.get('q') || '')
+  const [sortOption, setSortOption] = useState<string>(searchParams.get('sort') || '')
+  
+  // Handle multiple tool filters
+  const [toolFilters, setToolFilters] = useState<string[] | null>(() => {
+    const toolParam = searchParams.get('tools')
+    return toolParam ? toolParam.split(',') : null
+  })
+  
+  // Debounce search to prevent too many URL updates
+  useEffect(() => {
+    // Store current URL params to compare before updating
+    const currentParams = new URLSearchParams(searchParams.toString())
+    const currentQ = currentParams.get('q') || ''
+    const currentSort = currentParams.get('sort') || ''
+    const currentTools = currentParams.get('tools') || ''
+    
+    // Check if any values have actually changed
+    const hasSearchChanged = searchTerm !== currentQ
+    const hasSortChanged = sortOption !== currentSort
+    const hasToolsChanged = (
+      toolFilters && toolFilters.length > 0 ? 
+      toolFilters.sort().join(',') !== currentTools :
+      !!currentTools
+    )
+    
+    // Only update if something has changed
+    if (!hasSearchChanged && !hasSortChanged && !hasToolsChanged) {
+      return
+    }
+    
+    const handler = setTimeout(() => {
+      const params = new URLSearchParams()
+      
+      // Update search query param
+      if (searchTerm) {
+        params.set('q', searchTerm)
+      }
+      
+      // Update sort param
+      if (sortOption) {
+        params.set('sort', sortOption)
+      }
+      
+      // Update tool filters param
+      if (toolFilters && toolFilters.length > 0) {
+        params.set('tools', toolFilters.join(','))
+      }
+      
+      // Update URL with new params
+      const newUrl = `/${locale}${params.toString() ? `?${params.toString()}` : ''}`
+      router.push(newUrl, { scroll: false })
+    }, 500)
+
+    return () => {
+      clearTimeout(handler)
+    }
+  }, [searchTerm, sortOption, toolFilters, searchParams, router, locale])
+
+  const handleSearch = (value: string) => {
+    setSearchTerm(value)
+  }
+
+  const handleSort = (value: string) => {
+    setSortOption(value)
+  }
+  
+  const handleToolFilter = (value: string[] | null) => {
+    setToolFilters(value)
+  }
 
   return (
-    <div className={cn(
-      "flex items-center gap-4",
-      isRTL ? "flex-row-reverse" : "flex-row",
-      className
-    )}>
-      <div className="flex-1">
-        <SearchBar 
-          placeholder={isRTL ? "ابحث عن الإرشادات..." : "Search prompts..."}
-        />
+    <div className={cn("w-full", className)}>
+      {/* Single row layout with flexbox for better responsiveness */}
+      <div className={cn(
+        "flex items-center gap-3",
+        isRTL ? "flex-row-reverse" : "flex-row"
+      )}>
+        {/* Search bar - takes remaining space */}
+        <div className="flex-1">
+          <SearchBar 
+            placeholder={isRTL ? "ابحث عن الإرشادات..." : "Search prompts..."}
+            onChange={handleSearch}
+            value={searchTerm}
+          />
+        </div>
+        
+        {/* Filter by tool - fixed width */}
+        <div className="flex-none w-[170px]">
+          <ToolsFilter
+            locale={locale}
+            isRTL={isRTL}
+            onValueChange={handleToolFilter}
+            value={toolFilters}
+            className="w-full whitespace-nowrap"
+          />
+        </div>
+        
+        {/* Sort dropdown - fixed width */}
+        <div className="flex-none w-[170px]">
+          <SortDropdown 
+            isRTL={isRTL} 
+            onValueChange={handleSort}
+            value={sortOption}
+            className="w-full"
+          />
+        </div>
       </div>
-      <SortDropdown isRTL={isRTL} />
     </div>
   )
 }

@@ -17,6 +17,16 @@ const nextConfig = {
     // your project has ESLint errors.
     ignoreDuringBuilds: true,
   },
+  // Enable performance optimizations
+  swcMinify: true,
+  compiler: {
+    removeConsole: process.env.NODE_ENV === 'production',
+  },
+  // Enable image optimization
+  experimental: {
+    optimizeCss: true,
+    optimizeServerReact: true,
+  },
   // Configure image domains to allow external images
   images: {
     // Allow images from any domain
@@ -39,6 +49,9 @@ const nextConfig = {
       'placehold.co',
       'encrypted-tbn0.gstatic.com'
     ],
+    // Optimize images
+    formats: ['image/avif', 'image/webp'],
+    minimumCacheTTL: 60,
   },
   // Don't force trailing slashes to prevent redirect loops
   trailingSlash: false,

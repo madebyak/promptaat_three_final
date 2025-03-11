@@ -9,7 +9,14 @@ export async function fetchPrompts(
   // Add all params to search params
   Object.entries(params).forEach(([key, value]) => {
     if (value !== undefined) {
-      searchParams.append(key, value.toString());
+      // Handle array values (like tools)
+      if (Array.isArray(value)) {
+        if (value.length > 0) {
+          searchParams.append(key, value.join(','));
+        }
+      } else {
+        searchParams.append(key, value.toString());
+      }
     }
   });
   
@@ -24,3 +31,5 @@ export async function fetchPrompts(
 
   return response.json();
 }
+
+// The fetchRecentPrompts function has been removed as the "Continue where you left off" feature is no longer needed
