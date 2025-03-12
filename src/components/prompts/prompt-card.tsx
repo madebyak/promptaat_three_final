@@ -22,6 +22,7 @@ interface PromptCardProps {
   copyCount: number
   categories: Category[]
   tools: Tool[]
+  keywords: string[]
   isRTL?: boolean
   locale?: string
   isBookmarked?: boolean
@@ -37,6 +38,7 @@ export function PromptCard({
   copyCount: initialCopyCount,
   categories,
   tools: initialTools,
+  keywords,
   isRTL = false,
   locale = 'en',
   isBookmarked = false,

@@ -56,5 +56,10 @@ next-env.d.ts
 ehthumbs.db
 Thumbs.db
 
+# Project specific
+/data-entry/
+/data-entry-backup/
+/Debugging-features/
+
 # Local Netlify folder
 .netlify

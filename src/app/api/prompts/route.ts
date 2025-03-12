@@ -16,7 +16,7 @@ export async function GET(req: Request) {
     const tool = searchParams.get("tool")
     const sort = searchParams.get("sort") || "newest"
     const type = searchParams.get("type")
-    const search = searchParams.get("search")
+    const search = searchParams.get("search") || searchParams.get("q")
     
     console.log('Query params:', { page, limit, locale, category, subcategory, tool, sort, type, search })
     
@@ -43,12 +43,11 @@ export async function GET(req: Request) {
       ...(type === 'pro' && { isPro: true }),
       ...(type === 'free' && { isPro: false }),
       ...(search && {
-        OR: [
-          { titleEn: { contains: search, mode: Prisma.QueryMode.insensitive } },
-          { titleAr: { contains: search, mode: Prisma.QueryMode.insensitive } },
-          { promptTextEn: { contains: search, mode: Prisma.QueryMode.insensitive } },
-          { promptTextAr: { contains: search, mode: Prisma.QueryMode.insensitive } }
-        ]
+        keywords: {
+          some: {
+            keyword: { contains: search, mode: Prisma.QueryMode.insensitive }
+          }
+        }
       })
     }
 
@@ -101,6 +100,11 @@ export async function GET(req: Request) {
                   }
                 }
               }
+            },
+            keywords: {
+              select: {
+                keyword: true
+              }
             }
           },
           skip,
@@ -132,7 +136,8 @@ export async function GET(req: Request) {
           id: pt.tool.id,
           name: pt.tool.name,
           iconUrl: pt.tool.iconUrl
-        }))
+        })),
+        keywords: prompt.keywords.map(kw => kw.keyword)
       }))
 
       const hasMore = total > skip + prompts.length

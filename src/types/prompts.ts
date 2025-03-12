@@ -57,6 +57,7 @@ export interface Prompt {
   copyCount: number;
   categories: Category[];
   tools: Tool[];
+  keywords: string[];
 }
 
 export interface PromptCardProps {
@@ -67,6 +68,7 @@ export interface PromptCardProps {
   copyCount: number;
   categories: Category[];
   tools: Tool[];
+  keywords: string[];
   isRTL?: boolean;
   locale?: string;
   isBookmarked?: boolean;
