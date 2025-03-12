@@ -115,6 +115,7 @@ export default async function MyPromptsPage({
           tool: true,
         }
       },
+      keywords: true,
     },
     orderBy: {
       createdAt: "desc"
@@ -125,7 +126,7 @@ export default async function MyPromptsPage({
   interface CatalogWithCount {
     id: string;
     name: string;
-    description?: string;
+    description?: string | null;
     _count?: {
       prompts?: number;
     };
@@ -173,8 +174,8 @@ export default async function MyPromptsPage({
 
   debugLog('Formatting bookmarked prompts', { count: bookmarkedPrompts.length });
   // Format the bookmarked prompts for the PromptCard component
-  const formattedBookmarkedPrompts = bookmarkedPrompts.map(prompt => {
-    const categories: Category[] = prompt.categories.map(pc => ({
+  const formattedBookmarkedPrompts = bookmarkedPrompts.map((prompt) => {
+    const categories: Category[] = prompt.categories.map((pc) => ({
       id: pc.category.id,
       name: locale === 'ar' ? pc.category.nameAr : pc.category.nameEn,
       iconName: pc.category.iconName,
@@ -185,11 +186,14 @@ export default async function MyPromptsPage({
       } : undefined
     }));
 
-    const tools: Tool[] = prompt.tools.map(pt => ({
+    const tools: Tool[] = prompt.tools.map((pt) => ({
       id: pt.tool.id,
       name: pt.tool.name,
       iconUrl: pt.tool.iconUrl || undefined
     }));
+
+    // Map keywords to string array format
+    const keywords: string[] = prompt.keywords.map(kw => kw.keyword);
 
     return {
       id: prompt.id,
@@ -199,6 +203,7 @@ export default async function MyPromptsPage({
       copyCount: prompt.copyCount,
       categories,
       tools,
+      keywords,
       isBookmarked: true,
     };
   });
@@ -250,6 +255,7 @@ export default async function MyPromptsPage({
                   copyCount={prompt.copyCount}
                   categories={prompt.categories}
                   tools={prompt.tools}
+                  keywords={prompt.keywords || []}
                   isRTL={isRTL}
                   locale={locale}
                   isBookmarked={prompt.isBookmarked}

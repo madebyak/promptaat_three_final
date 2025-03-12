@@ -177,6 +177,7 @@ export default async function CatalogDetailPage({
                 tool: true,
               }
             },
+            keywords: true,
           }
         }
       },
@@ -202,6 +203,9 @@ export default async function CatalogDetailPage({
         iconUrl: pt.tool.iconUrl || undefined
       }))
 
+      // Map keywords to string array format
+      const keywords: string[] = prompt.keywords.map(kw => kw.keyword)
+
       return {
         id: prompt.id,
         title: defaultLocale === 'ar' ? prompt.titleAr : prompt.titleEn,
@@ -212,6 +216,7 @@ export default async function CatalogDetailPage({
         tools,
         isBookmarked: true, // Since it's in a catalog, we assume it's bookmarked
         catalogId: id, // Add the catalog ID for the remove button
+        keywords, // Add the keywords property
       }
     })
 
@@ -287,6 +292,7 @@ export default async function CatalogDetailPage({
                   copyCount={prompt.copyCount}
                   categories={prompt.categories}
                   tools={prompt.tools}
+                  keywords={prompt.keywords || []}
                   isRTL={isRTL}
                   locale={defaultLocale}
                   isBookmarked={prompt.isBookmarked}

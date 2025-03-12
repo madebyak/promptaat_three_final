@@ -28,7 +28,7 @@ import { useToast } from "@/components/ui/use-toast"
 interface Catalog {
   id: string
   name: string
-  description?: string
+  description?: string | null
   _count?: {
     prompts?: number
   }
