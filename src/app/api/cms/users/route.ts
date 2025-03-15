@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
       ];
     }
     
-    const [users, total] = await Promise.all([
+    const [users, total, activeUsers, inactiveUsers, subscribedUsers] = await Promise.all([
       prisma.user.findMany({
         where,
         select: {
@@ -46,6 +46,7 @@ export async function GET(request: NextRequest) {
           updatedAt: true,
           isActive: true,
           country: true,
+          occupation: true,
           _count: {
             select: {
               bookmarks: true,
@@ -53,20 +54,33 @@ export async function GET(request: NextRequest) {
               catalogs: true,
             },
           },
-          subscription: {
+          subscriptions: {
             where: {
-              status: "active",
-              endDate: {
-                gt: new Date(),
-              },
+              OR: [
+                {
+                  status: "active",
+                  currentPeriodEnd: {
+                    gt: new Date(),
+                  },
+                },
+                {
+                  status: "trialing",
+                  currentPeriodEnd: {
+                    gt: new Date(),
+                  },
+                }
+              ]
             },
             select: {
               id: true,
               status: true,
-              startDate: true,
-              endDate: true,
-              planId: true,
+              currentPeriodStart: true,
+              currentPeriodEnd: true,
+              plan: true,
+              interval: true,
+              stripePriceId: true,
             },
+            take: 1,
           },
         },
         orderBy: {
@@ -76,14 +90,56 @@ export async function GET(request: NextRequest) {
         take: limit,
       }),
       prisma.user.count({ where }),
+      prisma.user.count({ where: { ...where, isActive: true } }),
+      prisma.user.count({ where: { ...where, isActive: false } }),
+      prisma.user.count({
+        where: {
+          ...where,
+          subscriptions: {
+            some: {
+              OR: [
+                {
+                  status: "active",
+                  currentPeriodEnd: {
+                    gt: new Date(),
+                  },
+                },
+                {
+                  status: "trialing",
+                  currentPeriodEnd: {
+                    gt: new Date(),
+                  },
+                }
+              ]
+            },
+          },
+        },
+      }),
     ]);
+    
+    // Transform the users data to match the expected format
+    const transformedUsers = users.map(user => ({
+      ...user,
+      subscription: user.subscriptions && user.subscriptions.length > 0 
+        ? {
+            id: user.subscriptions[0].id,
+            status: user.subscriptions[0].status,
+            startDate: user.subscriptions[0].currentPeriodStart,
+            endDate: user.subscriptions[0].currentPeriodEnd,
+            planId: user.subscriptions[0].stripePriceId || "",
+            plan: user.subscriptions[0].plan,
+            interval: user.subscriptions[0].interval,
+          }
+        : null,
+      subscriptions: undefined, // Remove the subscriptions array from the response
+    }));
     
     const totalPages = Math.ceil(total / limit);
     const hasNextPage = page < totalPages;
     const hasPrevPage = page > 1;
     
     return NextResponse.json({
-      users,
+      users: transformedUsers,
       pagination: {
         page,
         limit,
@@ -92,6 +148,12 @@ export async function GET(request: NextRequest) {
         hasNextPage,
         hasPrevPage,
       },
+      stats: {
+        total,
+        active: activeUsers,
+        inactive: inactiveUsers,
+        subscribed: subscribedUsers,
+      }
     });
   } catch (error) {
     console.error("Get users error:", error);

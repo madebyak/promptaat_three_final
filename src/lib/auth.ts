@@ -88,62 +88,67 @@ export const authOptions: NextAuthOptions = {
     })
   ],
   callbacks: {
-    async signIn({ user, account, profile }) {
-      // For Google sign-in, we need to check if this is a new user
-      if (account?.provider === "google" && profile) {
-        const existingUser = await prisma.user.findUnique({
-          where: { email: user.email! }
+    async signIn({ user, account }) {
+      // Allow OAuth without email verification
+      if (account?.provider === "google") {
+        return true;
+      }
+
+      // For credentials provider, check if email is verified
+      if (account?.provider === "credentials") {
+        const dbUser = await prisma.user.findUnique({
+          where: { email: user.email as string },
         });
 
-        if (existingUser) {
-          // Update Google ID if not set
-          if (!existingUser.googleId) {
-            await prisma.user.update({
-              where: { id: existingUser.id },
-              data: { 
-                googleId: user.id,
-                lastLoginAt: new Date(),
-                emailVerified: true
-              }
-            });
-          } else {
-            // Just update login time
-            await prisma.user.update({
-              where: { id: existingUser.id },
-              data: { lastLoginAt: new Date() }
-            });
-          }
-        } else {
-          // Create new user for Google sign-in
-          // Note: Country will be requested in a follow-up modal
-          await prisma.user.create({
-            data: {
-              email: user.email!,
-              firstName: (profile as any).given_name || "",
-              lastName: (profile as any).family_name || "",
-              googleId: user.id,
-              emailVerified: true,
-              country: "Unknown", // Will be updated later
-              lastLoginAt: new Date(),
-              profileImageUrl: user.image || "/profile_avatars/default_profile.jpg"
-            }
-          });
+        if (!dbUser) {
+          return false;
         }
+
+        // Check if user's email is verified
+        if (!dbUser.emailVerified) {
+          return `/auth/verify-email?email=${encodeURIComponent(
+            dbUser.email
+          )}`;
+        }
+
+        // Update last login timestamp
+        await prisma.user.update({
+          where: { id: dbUser.id },
+          data: { lastLoginAt: new Date() },
+        });
+
+        return true;
       }
-      
+
+      // Default allow sign in
       return true;
     },
     async session({ token, session }) {
       if (token) {
-        session.user.id = token.id as string;
-        session.user.name = token.name as string;
-        session.user.email = token.email as string;
-        session.user.image = token.picture as string | undefined;
-        session.user.emailVerified = token.emailVerified as boolean;
-        session.user.firstName = token.firstName as string;
-        session.user.lastName = token.lastName as string;
-        session.user.country = token.country as string;
-        session.user.needsProfileCompletion = token.needsProfileCompletion as boolean;
+        // Use type assertion to satisfy TypeScript
+        const user = session.user as {
+          id: string;
+          name?: string | null;
+          email?: string | null;
+          image?: string | null;
+          isAdmin: boolean;
+          role: string;
+          emailVerified: boolean;
+          firstName: string;
+          lastName: string;
+          country: string;
+          needsProfileCompletion: boolean;
+        };
+        
+        user.id = token.id as string;
+        user.role = token.role as string;
+        user.isAdmin = token.isAdmin as boolean;
+        user.image = token.picture as string | undefined;
+        user.emailVerified = token.emailVerified as boolean;
+        user.firstName = token.firstName as string;
+        user.lastName = token.lastName as string;
+        user.country = token.country as string;
+        user.needsProfileCompletion = token.needsProfileCompletion as boolean;
       }
 
       return session;

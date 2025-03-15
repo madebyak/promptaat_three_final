@@ -1,61 +1,61 @@
 ### Promptaat.com – Smart Category Structure
 
-**1. Writing**
-- Blog & Articles
+### 1. Emails
+- Professional Emails
+- Personal Emails
+- Marketing Emails
+- Support Emails
+- Etiquette & Tone
+
+### 2. Writing & Translation
+- Blogs & Articles
 - Copywriting
-- Email Templates
+- Creative Writing
+- Technical Writing
+- Academic Writing
 - Translation
 - Summarization
-- Scripts
-- Storytelling
-- Creative Writing
 
-### 2. Business
+### 3. Business & Strategy
 - Pitch Decks
 - Business Plans
 - Feasibility
 - Market Analysis
-- Strategy
-- Financial Reports
+- Strategic Planning
 - Business Models
 
-### 3. Design
+### 4. Marketing & Ads
+- Ad Campaigns
+- SEO & SEM
+- Influencer
+- Brand Messaging
+- Lead Generation
+- Promo Content
+
+### 5. Social Media
+- Content Creation
+- Captions & Tags
+- Engagement
+- Viral Ideas
+- Scheduling
+- Visual Content
+
+### 6. Design & Creative
 - Graphic Design
 - UI/UX
 - Branding
 - Web & App
 - Digital Art
 - Logo Design
+- Packaging
 - Motion Graphics
-
-### 4. Marketing
-- Content Creation
-- Ad Campaigns
-- Social Media
-- SEO & SEM
-- Email Marketing
-- Influencer
-
-### 5. Communication
-- Work Emails
-- Personal Emails
-- Etiquette
-- Negotiation
-- Tone & Style
-
-### 6. Social Media
-- Captions
-- Engagement
-- Viral Content
-- Scheduling
-- Visual Content
 
 ### 7. Productivity
 - Task Management
-- Meeting Notes
-- Automation
 - Time Management
+- Meeting Notes
 - Goal Setting
+- Automation
 
 ### 8. Development
 - Code & Debug
@@ -63,6 +63,7 @@
 - API Integration
 - Documentation
 - Troubleshooting
+- DevOps
 
 ### 9. Education
 - Lesson Plans
@@ -80,32 +81,45 @@
 
 ### 11. Customer Support
 - Response Templates
-- FAQ Generation
-- Feedback Analysis
+- FAQ Creation
+- Feedback Handling
 - Sentiment Analysis
+- Complaints
 
 ### 12. Legal
 - Contracts
 - Compliance
-- Legal Documents
+- Legal Docs
 - Regulations
+- IP Management
 
-### 13. Entertainment
-- Stories & Scripts
-- Game Design
+### 13. Career
+- Resume & CV
+- LinkedIn Profiles
+- Interviews
+- Career Advice
+- Personal Branding
+
+### 14. Entertainment
+- Movie & TV Scripts
+- Game Narratives
 - Characters
 - Media Concepts
+- Storytelling
 
-### 14. Career
-- Resume & CV
-- LinkedIn
-- Career Advice
-- Personal Brand
-- Interviews
+### 15. Architecture & Interiors
+- Architectural Ideas
+- Interior Concepts
+- Space Planning
+- Landscape Design
+- Lighting Design
+- Materials & Finishes
+- Furniture & Decor
+- 3D Visuals
 
-### 15. Real Estate
+### 16. Real Estate
 - Property Listings
 - Market Insights
-- Design Concepts
-- Construction
 - Project Summaries
+- Construction Plans
+- Renovation Ideas

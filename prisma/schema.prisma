@@ -28,9 +28,10 @@ model User {
   resetPasswordToken       String?          @map("reset_password_token")
   verificationToken        String?          @map("verification_token")
   verificationTokenExpires DateTime?        @map("verification_token_expires")
+  role                     String           @default("USER")
   catalogs                 Catalog[]
   otpVerification          OtpVerification?
-  subscription             Subscription?
+  subscriptions            Subscription[]
   bookmarks                UserBookmark[]
   history                  UserHistory[]
 
@@ -172,16 +173,50 @@ model CatalogPrompt {
   @@map("catalog_prompts")
 }
 
+model SubscriptionPlan {
+  id          String              @id @default(uuid())
+  name        String
+  description String
+  features    String
+  createdAt   DateTime            @default(now()) @map("created_at")
+  updatedAt   DateTime            @updatedAt @map("updated_at")
+  prices      SubscriptionPrice[]
+
+  @@map("subscription_plans")
+}
+
+model SubscriptionPrice {
+  id            String           @id @default(uuid())
+  planId        String           @map("plan_id")
+  interval      String
+  amount        Int
+  currency      String
+  createdAt     DateTime         @default(now()) @map("created_at")
+  updatedAt     DateTime         @updatedAt @map("updated_at")
+  intervalCount Int              @default(1) @map("interval_count")
+  plan          SubscriptionPlan @relation(fields: [planId], references: [id])
+  subscriptions Subscription[]
+
+  @@map("subscription_prices")
+}
+
 model Subscription {
-  id        String   @id @default(uuid())
-  userId    String   @unique @map("user_id")
-  status    String
-  startDate DateTime @map("start_date")
-  endDate   DateTime @map("end_date")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-  planId    String   @map("plan_id")
-  user      User     @relation(fields: [userId], references: [id])
+  id                 String             @id @default(uuid())
+  userId             String             @map("user_id")
+  status             String
+  createdAt          DateTime           @default(now()) @map("created_at")
+  updatedAt          DateTime           @updatedAt @map("updated_at")
+  cancelAtPeriodEnd  Boolean            @default(false) @map("cancel_at_period_end")
+  currentPeriodEnd   DateTime           @map("current_period_end")
+  currentPeriodStart DateTime           @map("current_period_start")
+  priceId            String?            @map("price_id")
+  stripeSubscriptionId String?          @map("stripe_subscription_id")
+  stripeCustomerId   String?            @map("stripe_customer_id")
+  stripePriceId      String?            @map("stripe_price_id")
+  plan               String?            @default("pro")
+  interval           String?            @default("monthly")
+  price              SubscriptionPrice? @relation(fields: [priceId], references: [id])
+  user               User               @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("subscriptions")
 }

@@ -1,9 +1,9 @@
-const { PrismaClient } = require('@prisma/client');
-const fs = require('fs');
-const yaml = require('js-yaml');
-const path = require('path');
+import { PrismaClient as PromptsPrismaClient } from '@prisma/client';
+import fs from 'fs';
+import yaml from 'js-yaml';
+import path from 'path';
 
-const prisma = new PrismaClient();
+const promptsPrisma = new PromptsPrismaClient();
 
 interface PromptData {
   // English Content
@@ -54,7 +54,7 @@ async function seedPromptsOnly() {
 
       try {
         // 1. Look up category ID
-        const category = await prisma.category.findFirstOrThrow({
+        const category = await promptsPrisma.category.findFirstOrThrow({
           where: {
             nameEn: promptData.categories.category,
             parentId: null, // Main categories have no parent
@@ -63,7 +63,7 @@ async function seedPromptsOnly() {
         });
 
         // 2. Look up subcategory ID
-        const subcategory = await prisma.category.findFirstOrThrow({
+        const subcategory = await promptsPrisma.category.findFirstOrThrow({
           where: {
             nameEn: promptData.categories.subcategory,
             parentId: category.id, // Subcategories have the main category as parent
@@ -74,7 +74,7 @@ async function seedPromptsOnly() {
         // 3. Look up tool IDs
         const tools = await Promise.all(
           promptData.tools.map(async (toolName) => {
-            const tool = await prisma.tool.findFirstOrThrow({
+            const tool = await promptsPrisma.tool.findFirstOrThrow({
               where: {
                 name: toolName,
                 deletedAt: null
@@ -85,7 +85,7 @@ async function seedPromptsOnly() {
         );
 
         // 4. Create the prompt with its relations
-        const prompt = await prisma.prompt.create({
+        const prompt = await promptsPrisma.prompt.create({
           data: {
             titleEn: promptData.titleEn,
             titleAr: promptData.titleAr,
@@ -146,12 +146,12 @@ async function seedPromptsOnly() {
     console.error('Error seeding prompts:', error);
     throw error;
   } finally {
-    await prisma.$disconnect();
+    await promptsPrisma.$disconnect();
   }
 }
 
 // Run if this script is executed directly
-if (require.main === module) {
+if (import.meta.url === `file://${process.argv[1]}`) {
   seedPromptsOnly()
     .catch((e) => {
       console.error(e);
@@ -159,4 +159,4 @@ if (require.main === module) {
     });
 }
 
-module.exports = { seedPromptsOnly };
+export { seedPromptsOnly };

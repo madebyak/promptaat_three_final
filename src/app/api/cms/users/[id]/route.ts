@@ -31,15 +31,16 @@ export async function GET(
       where: { id: userId },
       select: {
         id: true,
+        email: true,
         firstName: true,
         lastName: true,
-        email: true,
-        profileImageUrl: true,
-        createdAt: true,
-        updatedAt: true,
-        isActive: true,
         country: true,
         occupation: true,
+        isActive: true,
+        emailVerified: true,
+        createdAt: true,
+        updatedAt: true,
+        profileImageUrl: true,
         _count: {
           select: {
             bookmarks: true,
@@ -47,32 +48,50 @@ export async function GET(
             catalogs: true,
           },
         },
-        subscription: {
+        subscriptions: {
           where: {
-            status: "active",
-            endDate: {
-              gt: new Date(),
-            },
+            OR: [
+              { status: "active" },
+              { status: "trialing" },
+              { currentPeriodEnd: { gt: new Date() } }
+            ]
           },
+          orderBy: {
+            createdAt: "desc"
+          },
+          take: 1,
           select: {
             id: true,
             status: true,
-            startDate: true,
-            endDate: true,
-            planId: true,
-          },
-        },
-      },
+            createdAt: true,
+            currentPeriodStart: true,
+            currentPeriodEnd: true,
+            priceId: true,
+            stripeSubscriptionId: true,
+            stripePriceId: true,
+            interval: true,
+            plan: true
+          }
+        }
+      }
     });
     
     if (!user) {
-      return NextResponse.json(
-        { error: "User not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
+
+    // Format the response to include subscription data in a more accessible format
+    const formattedUser = {
+      ...user,
+      subscription: user.subscriptions && user.subscriptions.length > 0 ? {
+        ...user.subscriptions[0],
+        startDate: user.subscriptions[0].currentPeriodStart,
+        endDate: user.subscriptions[0].currentPeriodEnd
+      } : null,
+      subscriptions: undefined // Remove the subscriptions array from the response
+    };
     
-    return NextResponse.json({ user });
+    return NextResponse.json({ user: formattedUser });
   } catch (error) {
     console.error("Get user error:", error);
     

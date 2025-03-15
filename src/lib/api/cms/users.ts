@@ -2,38 +2,46 @@
  * API functions for user operations
  */
 
-import { User } from "@prisma/client";
+import { 
+  type User as PrismaUser,
+  type Subscription as PrismaSubscription
+} from "@prisma/client";
 
 // Types for user data
 export interface UserData {
-  id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  profileImageUrl?: string;
-  createdAt: string;
-  updatedAt: string;
-  isActive: boolean;
-  country: string;
-  occupation?: string;
+  id: PrismaUser['id'];
+  email: PrismaUser['email'];
+  firstName: PrismaUser['firstName'];
+  lastName: PrismaUser['lastName'];
+  isActive: PrismaUser['isActive'];
+  country: PrismaUser['country'];
+  occupation: PrismaUser['occupation'] | null;
+  createdAt: PrismaUser['createdAt'];
+  updatedAt: PrismaUser['updatedAt'];
+  emailVerified?: PrismaUser['emailVerified'];
+  profileImageUrl?: PrismaUser['profileImageUrl'] | null;
   _count?: {
     bookmarks: number;
     history: number;
     catalogs: number;
   };
-  subscription?: {
-    id: string;
-    status: string;
-    startDate: string;
-    endDate: string;
-    planId: string;
-  } | null;
+  subscription?: SubscriptionData | null;
+}
+
+// Type for subscription data
+export interface SubscriptionData extends Pick<PrismaSubscription, 
+  'id' | 'status' | 'priceId' | 'stripeSubscriptionId' | 'stripePriceId' | 'plan' | 'interval'
+> {
+  startDate: string; // mapped from currentPeriodStart
+  endDate: string;   // mapped from currentPeriodEnd
 }
 
 export interface PaginationParams {
   page?: number;
   pageSize?: number;
   search?: string;
+  statusFilter?: "all" | "active" | "inactive";
+  subscriptionFilter?: "all" | "subscribed" | "none";
 }
 
 export interface PaginatedResponse<T> {
@@ -45,6 +53,12 @@ export interface PaginatedResponse<T> {
     totalPages: number;
     hasNextPage: boolean;
     hasPrevPage: boolean;
+  };
+  stats?: {
+    total: number;
+    active: number;
+    inactive: number;
+    subscribed: number;
   };
 }
 
@@ -64,6 +78,12 @@ export async function fetchUsers(params?: PaginationParams): Promise<PaginatedRe
     if (params.search) {
       url.searchParams.append("search", params.search);
     }
+    if (params.statusFilter && params.statusFilter !== "all") {
+      url.searchParams.append("status", params.statusFilter);
+    }
+    if (params.subscriptionFilter && params.subscriptionFilter !== "all") {
+      url.searchParams.append("subscription", params.subscriptionFilter);
+    }
   }
   
   const response = await fetch(url.toString());
@@ -82,6 +102,12 @@ export async function fetchUsers(params?: PaginationParams): Promise<PaginatedRe
       totalPages: 1,
       hasNextPage: false,
       hasPrevPage: false,
+    },
+    stats: responseData.stats || {
+      total: 0,
+      active: 0,
+      inactive: 0,
+      subscribed: 0
     }
   };
 }

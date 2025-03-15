@@ -91,7 +91,10 @@ export async function POST(request: NextRequest) {
         const rowData = parseCSVRow(dataRows[i]);
         
         // Create object from CSV row
-        const promptData: Record<string, any> = {};
+        const promptData: Record<string, string | number | boolean | null> & {
+          keywordsArray?: string[];
+        } = {};
+        
         headers.forEach((header, index) => {
           if (index < rowData.length) {
             promptData[header] = rowData[index];
@@ -99,41 +102,39 @@ export async function POST(request: NextRequest) {
         });
         
         // Process boolean fields
-        if (promptData.isPro !== undefined) {
-          promptData.isPro = promptData.isPro.toString().toUpperCase() === "TRUE";
+        if (promptData.isPro === "true" || promptData.isPro === true) {
+          promptData.isPro = true;
         } else {
           promptData.isPro = false;
         }
         
-        // Process keywords
+        // Process keywords if they're a string
         if (promptData.keywords) {
-          promptData.keywords = promptData.keywords
-            .split(",")
-            .map((k: string) => k.trim())
-            .filter(Boolean);
+          // Convert to string first to ensure we can use string methods
+          const keywordsStr = String(promptData.keywords);
+          // Only process if it's a non-empty string after removing whitespace
+          if (keywordsStr && keywordsStr.length > 0 && keywordsStr.replace(/\s/g, '') !== '') {
+            promptData.keywordsArray = keywordsStr.split(',').map(k => k.replace(/^\s+|\s+$/g, ''));
+          } else {
+            promptData.keywordsArray = [];
+          }
         } else {
-          promptData.keywords = [];
+          promptData.keywordsArray = [];
         }
         
         // Skip rows with empty ID (for new prompts) or validate ID exists (for updates)
-        const isUpdate = promptData.id && promptData.id.trim() !== "";
+        const isUpdate = !!promptData.id;
         
         if (isUpdate) {
           // Check if prompt exists
           const existingPrompt = await prisma.prompt.findUnique({
-            where: { id: promptData.id },
+            where: { id: String(promptData.id) },
           });
           
           if (!existingPrompt) {
-            results.errors.push({
-              row: rowIndex,
-              message: `Prompt with ID ${promptData.id} not found`
-            });
+            console.log(`Prompt with ID ${promptData.id} not found, skipping update`);
             continue;
           }
-        } else {
-          // Remove id field for new prompts
-          delete promptData.id;
         }
         
         // Validate prompt data
@@ -142,13 +143,13 @@ export async function POST(request: NextRequest) {
         if (!validationResult.success) {
           const errors = validationResult.error.format();
           const errorMessages = Object.entries(errors)
-            .filter(([key, value]) => key !== "_errors" && value._errors.length > 0)
-            .map(([key, value]) => `${key}: ${value._errors.join(", ")}`)
+            .filter(([key, value]) => key !== "_errors" && typeof value === 'object' && '_errors' in value)
+            .map(([key, value]) => `${key}: ${(value as { _errors: string[] })._errors.join(", ")}`)
             .join("; ");
           
           results.errors.push({
             row: rowIndex,
-            message: errorMessages
+            message: errorMessages || "Validation failed"
           });
           continue;
         }
@@ -157,17 +158,17 @@ export async function POST(request: NextRequest) {
         if (isUpdate) {
           // Update existing prompt
           await prisma.prompt.update({
-            where: { id: promptData.id },
+            where: { id: String(promptData.id) },
             data: {
-              titleEn: promptData.titleEn,
-              titleAr: promptData.titleAr,
-              descriptionEn: promptData.descriptionEn || null,
-              descriptionAr: promptData.descriptionAr || null,
-              instructionEn: promptData.instructionEn || null,
-              instructionAr: promptData.instructionAr || null,
-              promptTextEn: promptData.promptTextEn,
-              promptTextAr: promptData.promptTextAr,
-              isPro: promptData.isPro,
+              titleEn: String(promptData.titleEn),
+              titleAr: String(promptData.titleAr),
+              descriptionEn: promptData.descriptionEn ? String(promptData.descriptionEn) : null,
+              descriptionAr: promptData.descriptionAr ? String(promptData.descriptionAr) : null,
+              instructionEn: promptData.instructionEn ? String(promptData.instructionEn) : null,
+              instructionAr: promptData.instructionAr ? String(promptData.instructionAr) : null,
+              promptTextEn: String(promptData.promptTextEn),
+              promptTextAr: String(promptData.promptTextAr),
+              isPro: Boolean(promptData.isPro),
               // Don't update categories, keywords, tools here - would need separate handling
             },
           });
@@ -175,15 +176,15 @@ export async function POST(request: NextRequest) {
           // Create new prompt
           const newPrompt = await prisma.prompt.create({
             data: {
-              titleEn: promptData.titleEn,
-              titleAr: promptData.titleAr,
-              descriptionEn: promptData.descriptionEn || null,
-              descriptionAr: promptData.descriptionAr || null,
-              instructionEn: promptData.instructionEn || null,
-              instructionAr: promptData.instructionAr || null,
-              promptTextEn: promptData.promptTextEn,
-              promptTextAr: promptData.promptTextAr,
-              isPro: promptData.isPro,
+              titleEn: String(promptData.titleEn),
+              titleAr: String(promptData.titleAr),
+              descriptionEn: promptData.descriptionEn ? String(promptData.descriptionEn) : null,
+              descriptionAr: promptData.descriptionAr ? String(promptData.descriptionAr) : null,
+              instructionEn: promptData.instructionEn ? String(promptData.instructionEn) : null,
+              instructionAr: promptData.instructionAr ? String(promptData.instructionAr) : null,
+              promptTextEn: String(promptData.promptTextEn),
+              promptTextAr: String(promptData.promptTextAr),
+              isPro: Boolean(promptData.isPro),
               copyCount: 0,
               initialCopyCount: 0,
             },
@@ -191,19 +192,25 @@ export async function POST(request: NextRequest) {
           
           // Handle category and subcategory if provided
           if (promptData.categoryId) {
+            // Ensure subcategoryId is a valid string (required by Prisma schema)
+            // If not provided, use the categoryId as the subcategoryId (common pattern)
+            const subcategoryId = promptData.subcategoryId 
+              ? String(promptData.subcategoryId) 
+              : String(promptData.categoryId); // Use categoryId as fallback
+            
             await prisma.promptCategory.create({
               data: {
                 promptId: newPrompt.id,
-                categoryId: promptData.categoryId,
-                subcategoryId: promptData.subcategoryId || null,
+                categoryId: String(promptData.categoryId),
+                subcategoryId: subcategoryId,
               },
             });
           }
           
           // Handle keywords if provided
-          if (promptData.keywords && promptData.keywords.length > 0) {
+          if (promptData.keywordsArray && promptData.keywordsArray.length > 0) {
             await Promise.all(
-              promptData.keywords.map((keyword: string) =>
+              promptData.keywordsArray.map((keyword: string) =>
                 prisma.promptKeyword.create({
                   data: {
                     promptId: newPrompt.id,

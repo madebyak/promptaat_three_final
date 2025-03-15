@@ -18,7 +18,7 @@
   },
   "Catalogs": {
     "createCatalog": "إنشاء كتالوج",
-    "createCatalogDescription": "إنشاء كتالوج جديد لتنظيم البرومات المحفوظة.",
+    "createCatalogDescription": "قم بإنشاء كتالوج جديد لتنظيم البرومات المحفوظة لديك.",
     "catalogName": "اسم الكتالوج",
     "catalogNamePlaceholder": "أدخل اسم الكتالوج",
     "description": "الوصف (اختياري)",
@@ -26,7 +26,7 @@
     "cancel": "إلغاء",
     "create": "إنشاء",
     "creating": "جاري الإنشاء...",
-    "addToCatalog": "إضافة إلى الكتالوج",
+    "addToCatalog": "إضافة إلى كتالوج",
     "addToCatalogDescription": "أضف هذا البروم إلى واحد أو أكثر من الكتالوجات الخاصة بك.",
     "searchCatalogs": "البحث في الكتالوجات...",
     "noCatalogs": "ليس لديك أي كتالوجات حتى الآن.",
@@ -42,5 +42,21 @@
     "removedFromCatalog": "تمت الإزالة من الكتالوج",
     "addToCatalogFailed": "فشلت الإضافة إلى الكتالوج",
     "removeFromCatalogFailed": "فشلت الإزالة من الكتالوج"
+  },
+  "Checkout": {
+    "successTitle": "تمت عملية الدفع بنجاح!",
+    "successDescription": "شكراً لاشتراكك في بروماتات برو. لديك الآن إمكانية الوصول إلى جميع الميزات والبرومات المميزة.",
+    "cancelTitle": "تم إلغاء عملية الدفع",
+    "cancelDescription": "تم إلغاء عملية الدفع الخاصة بك. إذا كان لديك أي أسئلة أو تحتاج إلى مساعدة، يرجى الاتصال بفريق الدعم لدينا.",
+    "goToDashboard": "الذهاب إلى لوحة التحكم",
+    "explorePrompts": "استكشاف البرومات",
+    "backToPricing": "العودة إلى التسعير",
+    "manageSubscription": "إدارة الاشتراك",
+    "mySubscription": "اشتراكي",
+    "goToHomepage": "الذهاب إلى الصفحة الرئيسية",
+    "paymentSuccess": "تمت عملية الدفع بنجاح!",
+    "subscriptionActivated": "تم تفعيل اشتراكك. لديك الآن إمكانية الوصول إلى جميع الميزات والبرومات المميزة.",
+    "viewSubscription": "عرض الاشتراك",
+    "refreshingSession": "جاري التحديث..."
   }
 }

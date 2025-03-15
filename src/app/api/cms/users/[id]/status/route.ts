@@ -80,23 +80,44 @@ export async function PATCH(
             catalogs: true,
           },
         },
-        subscription: {
+        subscriptions: {
           where: {
-            status: "active",
-            endDate: {
-              gt: new Date(),
-            },
+            OR: [
+              { status: "active" },
+              { status: "trialing" },
+              { currentPeriodEnd: { gt: new Date() } }
+            ]
           },
+          orderBy: {
+            createdAt: "desc"
+          },
+          take: 1,
           select: {
             id: true,
             status: true,
-            startDate: true,
-            endDate: true,
-            planId: true,
-          },
+            createdAt: true,
+            currentPeriodStart: true,
+            currentPeriodEnd: true,
+            priceId: true,
+            stripeSubscriptionId: true,
+            stripePriceId: true,
+            interval: true,
+            plan: true
+          }
         },
       },
     });
+
+    // Format the response to include subscription data in a more accessible format
+    const formattedUser = {
+      ...updatedUser,
+      subscription: updatedUser.subscriptions && updatedUser.subscriptions.length > 0 ? {
+        ...updatedUser.subscriptions[0],
+        startDate: updatedUser.subscriptions[0].currentPeriodStart,
+        endDate: updatedUser.subscriptions[0].currentPeriodEnd
+      } : null,
+      subscriptions: undefined // Remove the subscriptions array from the response
+    };
 
     // Log the action in audit log
     await prisma.auditLog.create({
@@ -113,7 +134,7 @@ export async function PATCH(
       },
     });
 
-    return NextResponse.json({ user: updatedUser });
+    return NextResponse.json({ user: formattedUser });
   } catch (error) {
     console.error("Update user status error:", error);
     

@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { MobileMenu } from './mobile-menu'
 import { LanguageSwitcher } from './language-switcher'
 import { UserMenu } from './user-menu'
-import { Sun, Moon } from 'lucide-react'
+import { Sun, Moon, Crown } from 'lucide-react'
 import { Logo } from '@/components/ui/logo'
 
 interface NavbarProps {
@@ -15,6 +15,7 @@ interface NavbarProps {
     name?: string | null
     email?: string | null
     image?: string | null
+    isSubscribed?: boolean
   }
 }
 
@@ -36,6 +37,10 @@ export function Navbar({ locale = 'en', user }: NavbarProps) {
           {/* Right section: Navigation + Actions */}
           <div className="flex flex-1 items-center justify-end gap-4">
             <div className="hidden md:flex items-center gap-4">
+              {/* Pricing Link */}
+              <Link href={`/${locale}/pricing`} className="text-sm font-medium hover:text-primary transition-colors">
+                {locale === 'ar' ? 'الأسعار' : 'Pricing'}
+              </Link>
               <LanguageSwitcher locale={locale} />
               <Button
                 variant="ghost"
@@ -50,6 +55,15 @@ export function Navbar({ locale = 'en', user }: NavbarProps) {
                 )}
                 <span className="sr-only">Toggle theme</span>
               </Button>
+              
+              {/* Pro Badge - Only show if user is subscribed */}
+              {user?.isSubscribed && (
+                <div className="bg-gradient-to-r from-purple-500 to-green-500 text-white text-xs font-bold px-2 py-0.5 rounded-full flex items-center">
+                  <Crown className="h-3 w-3 mr-1" />
+                  PRO
+                </div>
+              )}
+              
               <UserMenu user={user} locale={locale} />
             </div>
             <MobileMenu user={user} locale={locale} />

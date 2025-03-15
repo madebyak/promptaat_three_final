@@ -69,3 +69,15 @@ export function formatRelativeTime(dateString: string | Date) {
   // Default to standard date format
   return formatDate(date);
 }
+
+/**
+ * Generates an absolute URL for the application
+ * @param path - The path to append to the base URL
+ * @returns The absolute URL
+ */
+export function absoluteUrl(path: string) {
+  // Use NEXT_PUBLIC_APP_URL from environment if available, otherwise fallback to localhost
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 
+                 (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
+  return `${baseUrl}${path}`;
+}

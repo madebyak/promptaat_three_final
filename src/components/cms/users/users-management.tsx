@@ -42,7 +42,7 @@ import {
   DialogTitle 
 } from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
+import { Badge, type BadgeProps } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { 
   Search, 
@@ -60,9 +60,8 @@ import {
   BookmarkIcon,
   Download
 } from "lucide-react";
-import { fetchUsers, updateUserStatus, resetUserPassword, UserData, PaginationParams } from "@/lib/api/cms/users";
+import { fetchUsers, updateUserStatus, resetUserPassword, UserData } from "@/lib/api/cms/users";
 import { useToast } from "@/components/ui/use-toast";
-import { formatDistanceToNow } from "date-fns";
 
 // Custom debounce hook
 function useDebounce<T>(value: T, delay: number): T {
@@ -117,13 +116,30 @@ export default function UsersManagement() {
     isError, 
     refetch 
   } = useQuery({
-    queryKey: ["cms-users", debouncedSearchQuery, currentPage, pageSize],
+    queryKey: ["cms-users", debouncedSearchQuery, currentPage, pageSize, statusFilter, subscriptionFilter],
     queryFn: () => fetchUsers({ 
       search: debouncedSearchQuery, 
       page: currentPage, 
-      pageSize 
+      pageSize,
+      statusFilter,
+      subscriptionFilter
     }),
   });
+
+  // Stats for user counts
+  const [stats, setStats] = useState({
+    total: 0,
+    active: 0,
+    inactive: 0,
+    subscribed: 0
+  });
+
+  // Update stats when data changes
+  useEffect(() => {
+    if (paginatedResponse?.stats) {
+      setStats(paginatedResponse.stats);
+    }
+  }, [paginatedResponse]);
 
   // Handle page change
   const handlePageChange = (newPage: number) => {
@@ -145,10 +161,10 @@ export default function UsersManagement() {
         description: `User has been ${!currentStatus ? "activated" : "deactivated"} successfully.`,
       });
       refetch();
-    } catch (err) {
+    } catch {
       toast({
         title: "Error",
-        description: err instanceof Error ? err.message : "Failed to update user status",
+        description: "Failed to update user status",
         variant: "destructive",
       });
     }
@@ -167,24 +183,52 @@ export default function UsersManagement() {
         title: "Password reset",
         description: "User password has been reset successfully.",
       });
-    } catch (err) {
+    } catch {
       toast({
         title: "Error",
-        description: err instanceof Error ? err.message : "Failed to reset user password",
+        description: "Failed to reset user password",
         variant: "destructive",
       });
     }
   };
 
-  // Format date to relative time
-  const formatDate = (dateString: string) => {
-    try {
-      return formatDistanceToNow(new Date(dateString), { addSuffix: true });
-    } catch {  // Empty catch block without unused variable
-      return "Invalid date";
+  // Helper functions
+  const formatDate = (dateString: string | Date) => {
+    const date = dateString instanceof Date ? dateString : new Date(dateString);
+    return new Intl.DateTimeFormat("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    }).format(date);
+  };
+
+  // Get badge color based on user status
+  const getUserStatusBadgeVariant = (isActive: boolean): BadgeProps["variant"] => {
+    return isActive ? "outline" : "destructive";
+  };
+
+  // Get badge color based on subscription status
+  const getSubscriptionBadgeVariant = (status: string | undefined): BadgeProps["variant"] => {
+    if (!status) return "outline";
+    
+    switch (status.toLowerCase()) {
+      case "active":
+      case "trialing":
+        return "outline";
+      case "canceled":
+      case "incomplete":
+      case "incomplete_expired":
+        return "secondary";
+      default:
+        return "outline";
     }
   };
-  
+
+  // Format user's name
+  const formatName = (user: UserData) => {
+    return `${user.firstName} ${user.lastName}`;
+  };
+
   // Handle viewing user details
   const handleViewUserDetails = (user: UserData) => {
     setUserDetailsDialog({
@@ -192,273 +236,15 @@ export default function UsersManagement() {
       user
     });
   };
-  
-  // Format date to full date
-  const formatFullDate = (dateString: string) => {
-    try {
-      return new Date(dateString).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      });
-    } catch {  // Empty catch block without unused variable
-      return "Invalid date";
-    }
+
+  // Close user details dialog
+  const closeUserDetailsDialog = () => {
+    setUserDetailsDialog({
+      isOpen: false,
+      user: null
+    });
   };
 
-  // Country code to country name mapping
-  const getCountryName = (countryCode: string | null | undefined): string => {
-    if (!countryCode) return "—";
-    
-    const countryMap: Record<string, string> = {
-      'af': 'Afghanistan',
-      'al': 'Albania',
-      'dz': 'Algeria',
-      'as': 'American Samoa',
-      'ad': 'Andorra',
-      'ao': 'Angola',
-      'ai': 'Anguilla',
-      'aq': 'Antarctica',
-      'ag': 'Antigua and Barbuda',
-      'ar': 'Argentina',
-      'am': 'Armenia',
-      'aw': 'Aruba',
-      'au': 'Australia',
-      'at': 'Austria',
-      'az': 'Azerbaijan',
-      'bs': 'Bahamas',
-      'bh': 'Bahrain',
-      'bd': 'Bangladesh',
-      'bb': 'Barbados',
-      'by': 'Belarus',
-      'be': 'Belgium',
-      'bz': 'Belize',
-      'bj': 'Benin',
-      'bm': 'Bermuda',
-      'bt': 'Bhutan',
-      'bo': 'Bolivia',
-      'ba': 'Bosnia and Herzegovina',
-      'bw': 'Botswana',
-      'bv': 'Bouvet Island',
-      'br': 'Brazil',
-      'io': 'British Indian Ocean Territory',
-      'bn': 'Brunei Darussalam',
-      'bg': 'Bulgaria',
-      'bf': 'Burkina Faso',
-      'bi': 'Burundi',
-      'kh': 'Cambodia',
-      'cm': 'Cameroon',
-      'ca': 'Canada',
-      'cv': 'Cape Verde',
-      'ky': 'Cayman Islands',
-      'cf': 'Central African Republic',
-      'td': 'Chad',
-      'cl': 'Chile',
-      'cn': 'China',
-      'cx': 'Christmas Island',
-      'cc': 'Cocos (Keeling) Islands',
-      'co': 'Colombia',
-      'km': 'Comoros',
-      'cg': 'Congo',
-      'cd': 'Congo, the Democratic Republic of the',
-      'ck': 'Cook Islands',
-      'cr': 'Costa Rica',
-      'ci': 'Cote D\'Ivoire',
-      'hr': 'Croatia',
-      'cu': 'Cuba',
-      'cy': 'Cyprus',
-      'cz': 'Czech Republic',
-      'dk': 'Denmark',
-      'dj': 'Djibouti',
-      'dm': 'Dominica',
-      'do': 'Dominican Republic',
-      'ec': 'Ecuador',
-      'eg': 'Egypt',
-      'sv': 'El Salvador',
-      'gq': 'Equatorial Guinea',
-      'er': 'Eritrea',
-      'ee': 'Estonia',
-      'et': 'Ethiopia',
-      'fk': 'Falkland Islands (Malvinas)',
-      'fo': 'Faroe Islands',
-      'fj': 'Fiji',
-      'fi': 'Finland',
-      'fr': 'France',
-      'gf': 'French Guiana',
-      'pf': 'French Polynesia',
-      'tf': 'French Southern Territories',
-      'ga': 'Gabon',
-      'gm': 'Gambia',
-      'ge': 'Georgia',
-      'de': 'Germany',
-      'gh': 'Ghana',
-      'gi': 'Gibraltar',
-      'gr': 'Greece',
-      'gl': 'Greenland',
-      'gd': 'Grenada',
-      'gp': 'Guadeloupe',
-      'gu': 'Guam',
-      'gt': 'Guatemala',
-      'gn': 'Guinea',
-      'gw': 'Guinea-Bissau',
-      'gy': 'Guyana',
-      'ht': 'Haiti',
-      'hm': 'Heard Island and Mcdonald Islands',
-      'va': 'Holy See (Vatican City State)',
-      'hn': 'Honduras',
-      'hk': 'Hong Kong',
-      'hu': 'Hungary',
-      'is': 'Iceland',
-      'in': 'India',
-      'id': 'Indonesia',
-      'ir': 'Iran, Islamic Republic of',
-      'iq': 'Iraq',
-      'ie': 'Ireland',
-      'il': 'Israel',
-      'it': 'Italy',
-      'jm': 'Jamaica',
-      'jp': 'Japan',
-      'jo': 'Jordan',
-      'kz': 'Kazakhstan',
-      'ke': 'Kenya',
-      'ki': 'Kiribati',
-      'kp': 'Korea, Democratic People\'s Republic of',
-      'kr': 'Korea, Republic of',
-      'kw': 'Kuwait',
-      'kg': 'Kyrgyzstan',
-      'la': 'Lao People\'s Democratic Republic',
-      'lv': 'Latvia',
-      'lb': 'Lebanon',
-      'ls': 'Lesotho',
-      'lr': 'Liberia',
-      'ly': 'Libyan Arab Jamahiriya',
-      'li': 'Liechtenstein',
-      'lt': 'Lithuania',
-      'lu': 'Luxembourg',
-      'mo': 'Macao',
-      'mk': 'Macedonia, the Former Yugoslav Republic of',
-      'mg': 'Madagascar',
-      'mw': 'Malawi',
-      'my': 'Malaysia',
-      'mv': 'Maldives',
-      'ml': 'Mali',
-      'mt': 'Malta',
-      'mh': 'Marshall Islands',
-      'mq': 'Martinique',
-      'mr': 'Mauritania',
-      'mu': 'Mauritius',
-      'yt': 'Mayotte',
-      'mx': 'Mexico',
-      'fm': 'Micronesia, Federated States of',
-      'md': 'Moldova, Republic of',
-      'mc': 'Monaco',
-      'mn': 'Mongolia',
-      'ms': 'Montserrat',
-      'ma': 'Morocco',
-      'mz': 'Mozambique',
-      'mm': 'Myanmar',
-      'na': 'Namibia',
-      'nr': 'Nauru',
-      'np': 'Nepal',
-      'nl': 'Netherlands',
-      'an': 'Netherlands Antilles',
-      'nc': 'New Caledonia',
-      'nz': 'New Zealand',
-      'ni': 'Nicaragua',
-      'ne': 'Niger',
-      'ng': 'Nigeria',
-      'nu': 'Niue',
-      'nf': 'Norfolk Island',
-      'mp': 'Northern Mariana Islands',
-      'no': 'Norway',
-      'om': 'Oman',
-      'pk': 'Pakistan',
-      'pw': 'Palau',
-      'ps': 'Palestinian Territory, Occupied',
-      'pa': 'Panama',
-      'pg': 'Papua New Guinea',
-      'py': 'Paraguay',
-      'pe': 'Peru',
-      'ph': 'Philippines',
-      'pn': 'Pitcairn',
-      'pl': 'Poland',
-      'pt': 'Portugal',
-      'pr': 'Puerto Rico',
-      'qa': 'Qatar',
-      're': 'Reunion',
-      'ro': 'Romania',
-      'ru': 'Russian Federation',
-      'rw': 'Rwanda',
-      'sh': 'Saint Helena',
-      'kn': 'Saint Kitts and Nevis',
-      'lc': 'Saint Lucia',
-      'pm': 'Saint Pierre and Miquelon',
-      'vc': 'Saint Vincent and the Grenadines',
-      'ws': 'Samoa',
-      'sm': 'San Marino',
-      'st': 'Sao Tome and Principe',
-      'sa': 'Saudi Arabia',
-      'sn': 'Senegal',
-      'cs': 'Serbia and Montenegro',
-      'sc': 'Seychelles',
-      'sl': 'Sierra Leone',
-      'sg': 'Singapore',
-      'sk': 'Slovakia',
-      'si': 'Slovenia',
-      'sb': 'Solomon Islands',
-      'so': 'Somalia',
-      'za': 'South Africa',
-      'gs': 'South Georgia and the South Sandwich Islands',
-      'es': 'Spain',
-      'lk': 'Sri Lanka',
-      'sd': 'Sudan',
-      'sr': 'Suriname',
-      'sj': 'Svalbard and Jan Mayen',
-      'sz': 'Swaziland',
-      'se': 'Sweden',
-      'ch': 'Switzerland',
-      'sy': 'Syrian Arab Republic',
-      'tw': 'Taiwan, Province of China',
-      'tj': 'Tajikistan',
-      'tz': 'Tanzania, United Republic of',
-      'th': 'Thailand',
-      'tl': 'Timor-Leste',
-      'tg': 'Togo',
-      'tk': 'Tokelau',
-      'to': 'Tonga',
-      'tt': 'Trinidad and Tobago',
-      'tn': 'Tunisia',
-      'tr': 'Turkey',
-      'tm': 'Turkmenistan',
-      'tc': 'Turks and Caicos Islands',
-      'tv': 'Tuvalu',
-      'ug': 'Uganda',
-      'ua': 'Ukraine',
-      'ae': 'United Arab Emirates',
-      'gb': 'United Kingdom',
-      'us': 'United States',
-      'um': 'United States Minor Outlying Islands',
-      'uy': 'Uruguay',
-      'uz': 'Uzbekistan',
-      'vu': 'Vanuatu',
-      've': 'Venezuela',
-      'vn': 'Vietnam',
-      'vg': 'Virgin Islands, British',
-      'vi': 'Virgin Islands, U.S.',
-      'wf': 'Wallis and Futuna',
-      'eh': 'Western Sahara',
-      'ye': 'Yemen',
-      'zm': 'Zambia',
-      'zw': 'Zimbabwe'
-    };
-    
-    // Convert to lowercase for case-insensitive matching
-    const code = countryCode.toLowerCase().trim();
-    return countryMap[code] || code.toUpperCase(); // Return the country name or the code in uppercase if not found
-  };
-  
   // Handle exporting users to CSV
   const handleExportUsers = async () => {
     try {
@@ -518,10 +304,10 @@ export default function UsersManagement() {
         title: "Export successful",
         description: `${exportResponse.data.length} users exported to CSV`,
       });
-    } catch (err) {
+    } catch {
       toast({
         title: "Export failed",
-        description: err instanceof Error ? err.message : "Failed to export users",
+        description: "Failed to export users",
         variant: "destructive",
       });
     }
@@ -580,82 +366,58 @@ export default function UsersManagement() {
       setSelectedUsers([]);
       setBulkActionOpen(false);
       refetch();
-    } catch (err) {
+    } catch {
       toast({
         title: "Error",
-        description: err instanceof Error ? err.message : "Failed to update user status",
+        description: "Failed to update user status",
         variant: "destructive",
       });
     }
   };
 
-  // Calculate user metrics for the dashboard
-  const calculateMetrics = () => {
-    if (!paginatedResponse || !paginatedResponse.data) {
-      return {
-        totalUsers: 0,
-        activeUsers: 0,
-        inactiveUsers: 0,
-        subscribedUsers: 0
-      };
-    }
-
-    const totalUsers = paginatedResponse.pagination.total;
-    const activeUsers = paginatedResponse.data.filter(user => user.isActive).length;
-    const inactiveUsers = paginatedResponse.data.filter(user => !user.isActive).length;
-    const subscribedUsers = paginatedResponse.data.filter(user => user.subscription).length;
-
-    return {
-      totalUsers,
-      activeUsers,
-      inactiveUsers,
-      subscribedUsers
-    };
-  };
-
-  const metrics = calculateMetrics();
-
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {isError && (
-        <Alert variant="destructive">
+        <Alert variant="destructive" className="mb-4">
           <AlertDescription>
-            {"An error occurred while fetching users"}
+            An error occurred while fetching users
           </AlertDescription>
         </Alert>
       )}
       
-      {/* User Metrics Dashboard */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardContent className="pt-6">
             <div className="text-center">
-              <div className="text-2xl font-bold">{metrics.totalUsers}</div>
-              <p className="text-xs text-muted-foreground">Total Users</p>
+              <div className="text-4xl font-bold">{stats.total}</div>
+              <div className="text-sm text-muted-foreground">Total Users</div>
             </div>
           </CardContent>
         </Card>
+        
         <Card>
           <CardContent className="pt-6">
             <div className="text-center">
-              <div className="text-2xl font-bold text-green-600">{metrics.activeUsers}</div>
-              <p className="text-xs text-muted-foreground">Active Users</p>
+              <div className="text-4xl font-bold text-green-500">{stats.active}</div>
+              <div className="text-sm text-muted-foreground">Active Users</div>
             </div>
           </CardContent>
         </Card>
+        
         <Card>
           <CardContent className="pt-6">
             <div className="text-center">
-              <div className="text-2xl font-bold text-red-600">{metrics.inactiveUsers}</div>
-              <p className="text-xs text-muted-foreground">Inactive Users</p>
+              <div className="text-4xl font-bold text-red-500">{stats.inactive}</div>
+              <div className="text-sm text-muted-foreground">Inactive Users</div>
             </div>
           </CardContent>
         </Card>
+        
         <Card>
           <CardContent className="pt-6">
             <div className="text-center">
-              <div className="text-2xl font-bold text-blue-600">{metrics.subscribedUsers}</div>
-              <p className="text-xs text-muted-foreground">Subscribed Users</p>
+              <div className="text-4xl font-bold text-blue-500">{stats.subscribed}</div>
+              <div className="text-sm text-muted-foreground">Subscribed Users</div>
             </div>
           </CardContent>
         </Card>
@@ -823,30 +585,33 @@ export default function UsersManagement() {
                           </div>
                         </TableCell>
                         <TableCell className="font-medium">
-                          {user.firstName} {user.lastName}
+                          {formatName(user)}
                         </TableCell>
                         <TableCell>{user.email}</TableCell>
-                        <TableCell>{getCountryName(user.country)}</TableCell>
+                        <TableCell>{user.country || "—"}</TableCell>
                         <TableCell>
-                          {user.isActive ? (
-                            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                              Active
-                            </Badge>
-                          ) : (
-                            <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
-                              Inactive
-                            </Badge>
-                          )}
+                          <Badge 
+                            variant={getUserStatusBadgeVariant(user.isActive)} 
+                            className="w-fit"
+                          >
+                            {user.isActive ? "Active" : "Inactive"}
+                          </Badge>
                         </TableCell>
                         <TableCell>
                           {user.subscription ? (
-                            <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                              {user.subscription.status}
-                            </Badge>
+                            <div className="flex flex-col">
+                              <Badge 
+                                variant={getSubscriptionBadgeVariant(user.subscription.status)} 
+                                className="w-fit mb-1"
+                              >
+                                {user.subscription.status}
+                              </Badge>
+                              <span className="text-xs text-muted-foreground">
+                                {formatDate(user.subscription.startDate)} - {formatDate(user.subscription.endDate)}
+                              </span>
+                            </div>
                           ) : (
-                            <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200">
-                              None
-                            </Badge>
+                            <Badge variant="outline">No subscription</Badge>
                           )}
                         </TableCell>
                         <TableCell>{formatDate(user.createdAt)}</TableCell>
@@ -898,16 +663,21 @@ export default function UsersManagement() {
                       <TableRow>
                         <TableCell colSpan={7} className="text-center py-6">
                           <p className="text-muted-foreground">No users match the selected filters</p>
-                          <Button 
-                            variant="link" 
-                            className="mt-2" 
-                            onClick={() => {
-                              setStatusFilter("all");
-                              setSubscriptionFilter("all");
-                            }}
-                          >
-                            Clear filters
-                          </Button>
+                          <div className="flex items-center">
+                            <span className="text-xs text-muted-foreground mr-2">Don&apos;t see the user?</span>
+                            <Button 
+                              variant="link" 
+                              className="h-auto p-0 text-xs" 
+                              onClick={() => {
+                                setCurrentPage(1);
+                                setSearchQuery("");
+                                setStatusFilter("all");
+                                setSubscriptionFilter("all");
+                              }}
+                            >
+                              Reset filters
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     )}
@@ -997,152 +767,115 @@ export default function UsersManagement() {
       </Dialog>
 
       {/* User Details Dialog */}
-      <Dialog open={userDetailsDialog.isOpen} onOpenChange={(open) => {
-        if (!open) {
-          setUserDetailsDialog({ isOpen: false, user: null });
-        }
-      }}>
-        <DialogContent className="sm:max-w-[600px]">
-          <DialogHeader>
-            <DialogTitle>User Details</DialogTitle>
-            <DialogDescription>
-              Detailed information about the user.
-            </DialogDescription>
-          </DialogHeader>
-          
+      <Dialog open={userDetailsDialog.isOpen} onOpenChange={(open) => !open && closeUserDetailsDialog()}>
+        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
           {userDetailsDialog.user && (
-            <div className="space-y-6">
-              {/* User basic info */}
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-lg">Basic Information</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="flex items-center">
-                    <div className="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-700">
-                      {userDetailsDialog.user.firstName.charAt(0)}{userDetailsDialog.user.lastName.charAt(0)}
-                    </div>
-                    <div className="ml-4">
-                      <p className="font-medium">{userDetailsDialog.user.firstName} {userDetailsDialog.user.lastName}</p>
-                      <div className="flex items-center text-sm text-gray-500">
-                        <Mail className="mr-1 h-3 w-3" />
-                        {userDetailsDialog.user.email}
-                      </div>
-                    </div>
+            <>
+              <DialogHeader>
+                <DialogTitle>User Details</DialogTitle>
+                <DialogDescription>
+                  Detailed information about {formatName(userDetailsDialog.user)}
+                </DialogDescription>
+              </DialogHeader>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4">
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="text-sm font-medium flex items-center gap-2">
+                      <Mail className="h-4 w-4" /> Email
+                    </h3>
+                    <p className="text-sm">{userDetailsDialog.user.email}</p>
                   </div>
                   
-                  <div className="grid grid-cols-2 gap-4 pt-2">
-                    <div>
-                      <p className="text-sm font-medium text-gray-500">Status</p>
-                      <Badge variant="outline" className={userDetailsDialog.user.isActive ? 
-                        "bg-green-50 text-green-700 border-green-200" : 
-                        "bg-red-50 text-red-700 border-red-200"}>
-                        {userDetailsDialog.user.isActive ? "Active" : "Inactive"}
+                  <div>
+                    <h3 className="text-sm font-medium flex items-center gap-2">
+                      <Calendar className="h-4 w-4" /> Joined
+                    </h3>
+                    <p className="text-sm">{formatDate(userDetailsDialog.user.createdAt)}</p>
+                  </div>
+                  
+                  <div>
+                    <h3 className="text-sm font-medium flex items-center gap-2">
+                      <MapPin className="h-4 w-4" /> Country
+                    </h3>
+                    <p className="text-sm">{userDetailsDialog.user.country || "Not specified"}</p>
+                  </div>
+                  
+                  <div>
+                    <h3 className="text-sm font-medium flex items-center gap-2">
+                      <Briefcase className="h-4 w-4" /> Occupation
+                    </h3>
+                    <p className="text-sm">{userDetailsDialog.user.occupation || "Not specified"}</p>
+                  </div>
+                </div>
+                
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="text-sm font-medium flex items-center gap-2">
+                      <BookmarkIcon className="h-4 w-4" /> Bookmarks
+                    </h3>
+                    <p className="text-sm">{userDetailsDialog.user._count?.bookmarks || 0}</p>
+                  </div>
+                  
+                  <div>
+                    <h3 className="text-sm font-medium">History Items</h3>
+                    <p className="text-sm">{userDetailsDialog.user._count?.history || 0}</p>
+                  </div>
+                  
+                  <div>
+                    <h3 className="text-sm font-medium">Custom Catalogs</h3>
+                    <p className="text-sm">{userDetailsDialog.user._count?.catalogs || 0}</p>
+                  </div>
+                  
+                  <div>
+                    <h3 className="text-sm font-medium">Account Status</h3>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Badge 
+                        variant={getUserStatusBadgeVariant(userDetailsDialog.user?.isActive)} 
+                        className="mr-2"
+                      >
+                        {userDetailsDialog.user?.isActive ? "Active" : "Inactive"}
                       </Badge>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-500">Country</p>
-                      <div className="flex items-center">
-                        <MapPin className="mr-1 h-3 w-3 text-gray-400" />
-                        <span>{getCountryName(userDetailsDialog.user.country)}</span>
-                      </div>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-500">Registered</p>
-                      <div className="flex items-center">
-                        <Calendar className="mr-1 h-3 w-3 text-gray-400" />
-                        <span>{formatFullDate(userDetailsDialog.user.createdAt)}</span>
-                      </div>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-500">Occupation</p>
-                      <div className="flex items-center">
-                        <Briefcase className="mr-1 h-3 w-3 text-gray-400" />
-                        <span>{userDetailsDialog.user.occupation || "—"}</span>
-                      </div>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => toggleUserStatus(userDetailsDialog.user?.id || "", !userDetailsDialog.user?.isActive)}
+                      >
+                        {userDetailsDialog.user?.isActive ? "Deactivate" : "Activate"}
+                      </Button>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
               
-              {/* Subscription info */}
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-lg">Subscription</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {userDetailsDialog.user.subscription ? (
-                    <div className="space-y-3">
-                      <div className="flex justify-between">
-                        <p className="text-sm font-medium text-gray-500">Status</p>
-                        <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+              <div>
+                <h3 className="text-sm font-medium">Subscription Status</h3>
+                <div className="flex flex-col space-y-2 mt-1">
+                  {userDetailsDialog.user?.subscription ? (
+                    <>
+                      <div className="flex items-center">
+                        <Badge 
+                          variant={getSubscriptionBadgeVariant(userDetailsDialog.user.subscription.status)} 
+                          className="mr-2"
+                        >
                           {userDetailsDialog.user.subscription.status}
                         </Badge>
                       </div>
-                      <div className="flex justify-between">
-                        <p className="text-sm font-medium text-gray-500">Start Date</p>
-                        <span>{formatFullDate(userDetailsDialog.user.subscription.startDate)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <p className="text-sm font-medium text-gray-500">End Date</p>
-                        <span>{formatFullDate(userDetailsDialog.user.subscription.endDate)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <p className="text-sm font-medium text-gray-500">Plan ID</p>
-                        <span>{userDetailsDialog.user.subscription.planId}</span>
-                      </div>
-                    </div>
+                      <span className="text-xs text-muted-foreground">
+                        {formatDate(userDetailsDialog.user.subscription.startDate)} - {formatDate(userDetailsDialog.user.subscription.endDate)}
+                      </span>
+                    </>
                   ) : (
-                    <div className="text-center py-4">
-                      <p className="text-gray-500">No active subscription</p>
-                    </div>
+                    <span className="text-sm text-muted-foreground">No active subscription</span>
                   )}
-                </CardContent>
-              </Card>
+                </div>
+              </div>
               
-              {/* User activity */}
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-lg">Activity</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-3 gap-4 text-center">
-                    <div className="p-3 bg-gray-50 rounded-md">
-                      <div className="flex items-center justify-center mb-1 text-blue-600">
-                        <BookmarkIcon className="h-4 w-4" />
-                      </div>
-                      <p className="text-2xl font-semibold">{userDetailsDialog.user._count?.bookmarks || 0}</p>
-                      <p className="text-xs text-gray-500">Bookmarks</p>
-                    </div>
-                    <div className="p-3 bg-gray-50 rounded-md">
-                      <div className="flex items-center justify-center mb-1 text-purple-600">
-                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                      </div>
-                      <p className="text-2xl font-semibold">{userDetailsDialog.user._count?.history || 0}</p>
-                      <p className="text-xs text-gray-500">History</p>
-                    </div>
-                    <div className="p-3 bg-gray-50 rounded-md">
-                      <div className="flex items-center justify-center mb-1 text-green-600">
-                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                        </svg>
-                      </div>
-                      <p className="text-2xl font-semibold">{userDetailsDialog.user._count?.catalogs || 0}</p>
-                      <p className="text-xs text-gray-500">Catalogs</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={closeUserDetailsDialog}>Close</Button>
+              </DialogFooter>
+            </>
           )}
-          
-          <DialogFooter>
-            <Button onClick={() => setUserDetailsDialog({ isOpen: false, user: null })}>
-              Close
-            </Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
 

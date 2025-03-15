@@ -43,6 +43,11 @@ export function MobileMenu({ locale, user }: MobileMenuProps) {
             </Link>
           </Button>
           <Button variant="ghost" asChild className="justify-start">
+            <Link href={`/${locale}/pricing`} className="text-sm text-dark hover:text-accent-purple dark:text-white-pure dark:hover:text-accent-purple">
+              {locale === 'ar' ? 'الأسعار' : 'Pricing'}
+            </Link>
+          </Button>
+          <Button variant="ghost" asChild className="justify-start">
             <Link href={`/${locale}/about`} className="text-sm text-dark hover:text-accent-purple dark:text-white-pure dark:hover:text-accent-purple">
               About
             </Link>

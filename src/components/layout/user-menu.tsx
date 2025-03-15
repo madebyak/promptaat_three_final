@@ -10,12 +10,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { User, Settings, FileText, LogOut } from 'lucide-react'
+import { User, Settings, FileText, LogOut, Crown } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { signOut } from 'next-auth/react'
 import { useState } from 'react'
-import { routes } from '@/lib/routes'
 import { DefaultAvatar } from '@/components/ui/default-avatar'
 
 interface UserMenuProps {
@@ -23,6 +22,7 @@ interface UserMenuProps {
     name?: string | null
     email?: string | null
     image?: string | null
+    isSubscribed?: boolean
   }
   locale: string
 }
@@ -72,7 +72,15 @@ export function UserMenu({ user, locale }: UserMenuProps) {
       <DropdownMenuContent className="w-56" align="end" forceMount>
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">{user.name}</p>
+            <div className="flex items-center">
+              <p className="text-sm font-medium leading-none">{user.name}</p>
+              {user.isSubscribed && (
+                <div className="ml-2 bg-gradient-to-r from-purple-500 to-green-500 text-white text-xs font-bold px-2 py-0.5 rounded-full flex items-center">
+                  <Crown className="h-3 w-3 mr-1" />
+                  PRO
+                </div>
+              )}
+            </div>
             <p className="text-xs leading-none text-light-grey">{user.email}</p>
           </div>
         </DropdownMenuLabel>

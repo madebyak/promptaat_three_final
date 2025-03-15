@@ -1,12 +1,12 @@
 'use client';
 
-import React from 'react'
+import React, { useEffect } from 'react'
 import { ThemeProvider } from '@/components/providers/theme-provider'
 import { Navbar } from '@/components/layout/navbar'
 import { AppSidebar } from '@/components/layout/app-sidebar'
 import { cn } from '@/lib/utils'
 import QueryProvider from '@/providers/query-provider'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { useSession, SessionProvider } from 'next-auth/react'
 import { VerificationBanner } from '@/components/auth/verification-banner'
 import { UserAccountLayout } from '@/components/layout/user-account-layout'
@@ -25,9 +25,11 @@ export function ClientLocaleLayout({
   
   // Improved auth route detection - check for exact path pattern
   const isAuthRoute = pathname?.startsWith(`/${locale}/auth/`);
+  const isPricingRoute = pathname === `/${locale}/pricing`;
   const isUserAccountRoute = pathname?.includes(`/${locale}/profile`) || 
                            pathname?.includes(`/${locale}/my-prompts`) || 
-                           pathname?.includes(`/${locale}/settings`);
+                           pathname?.includes(`/${locale}/settings`) ||
+                           pathname?.includes(`/${locale}/subscription`);
   const defaultDirection = locale === 'ar' ? 'rtl' : 'ltr';
   const isRTL = locale === 'ar';
   
@@ -37,7 +39,7 @@ export function ClientLocaleLayout({
         <ThemeProvider defaultDirection={defaultDirection}>
           <QueryProvider>
             <div className="relative min-h-screen bg-white-pure dark:bg-black-main">
-              {!isAuthRoute && (
+              {!isAuthRoute && !isPricingRoute && (
                 <MainLayout
                   locale={locale}
                   isRTL={isRTL}
@@ -46,7 +48,7 @@ export function ClientLocaleLayout({
                   {children}
                 </MainLayout>
               )}
-              {isAuthRoute && children}
+              {(isAuthRoute || isPricingRoute) && children}
             </div>
           </QueryProvider>
         </ThemeProvider>
@@ -68,27 +70,19 @@ export function MainLayout({
   isUserAccountRoute: boolean
 }) {
   const { data: session, status } = useSession();
-  // Check if the user is logged in but hasn't verified their email
+  const pathname = usePathname();
+  const router = useRouter();
   const needsVerification = session?.user?.emailVerified === false;
   
-  // Add a check for protected routes with a delay to ensure session is fully loaded
-  React.useEffect(() => {
-    // Only redirect if explicitly unauthenticated (not loading) and on a protected route
+  // Debug logging
+  console.log('Current pathname:', pathname);
+  console.log('Is pricing route:', pathname === `/${locale}/pricing`);
+  
+  useEffect(() => {
     if (isUserAccountRoute && status === 'unauthenticated') {
-      // Add debug logging
-      console.log('MainLayout: Session status is unauthenticated, redirecting to login');
-      
-      // Use setTimeout to give the session a chance to load
-      const timer = setTimeout(() => {
-        // Double-check status before redirecting
-        if (status === 'unauthenticated') {
-          window.location.href = `/${locale}/auth/login`;
-        }
-      }, 800);
-      
-      return () => clearTimeout(timer);
+      router.push(`/${locale}/auth/login`);
     }
-  }, [isUserAccountRoute, status, locale]);
+  }, [isUserAccountRoute, status, locale, router]);
   
   return (
     <>
@@ -101,6 +95,10 @@ export function MainLayout({
         <UserAccountLayout locale={locale} isRTL={isRTL}>
           {children}
         </UserAccountLayout>
+      ) : pathname === `/${locale}/pricing` ? (
+        <main className="flex-1 min-h-[calc(100vh-64px)]">
+          {children}
+        </main>
       ) : (
         <div className={cn(
           "flex min-h-[calc(100vh-64px)]",

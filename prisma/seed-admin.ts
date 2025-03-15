@@ -1,7 +1,7 @@
-const { PrismaClient } = require('@prisma/client');
-const { hashPassword } = require('../src/lib/crypto');
+import { PrismaClient as AdminPrismaClient } from '@prisma/client';
+import { hashPassword } from '../src/lib/crypto';
 
-const prisma = new PrismaClient();
+const adminPrisma = new AdminPrismaClient();
 
 // Admin users to seed
 const adminUsers = [
@@ -29,7 +29,7 @@ async function main() {
     const passwordHash = await hashPassword(admin.password)
     
     // Check if admin already exists
-    const existingAdmin = await prisma.adminUser.findUnique({
+    const existingAdmin = await adminPrisma.adminUser.findUnique({
       where: { email: admin.email }
     })
     
@@ -39,7 +39,7 @@ async function main() {
     }
     
     // Create the admin user
-    const createdAdmin = await prisma.adminUser.create({
+    const createdAdmin = await adminPrisma.adminUser.create({
       data: {
         email: admin.email,
         passwordHash: passwordHash,
@@ -62,7 +62,7 @@ main()
     process.exit(1)
   })
   .finally(async () => {
-    await prisma.$disconnect()
+    await adminPrisma.$disconnect()
   })
 
-module.exports = main;
+export default main;

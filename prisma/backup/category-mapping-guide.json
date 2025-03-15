@@ -1,0 +1,277 @@
+{
+  "categoryMapping": {
+    "Content Creation": "Writing",
+    "Business & Marketing": "Business",
+    "Programming & Development": "Development",
+    "Visual Arts": "Design",
+    "Education & Learning": "Education",
+    "Data & Analytics": "Business",
+    "Personal Development": "Career",
+    "Research & Analysis": "Education",
+    "Legal & Compliance": "Legal",
+    "Entertainment & Media": "Entertainment"
+  },
+  "subcategoryMapping": {
+    "Blog Writing": [
+      "Writing",
+      "Blog & Articles"
+    ],
+    "Social Media Posts": [
+      "Social Media",
+      "Captions"
+    ],
+    "Email Writing": [
+      "Communication",
+      "Work Emails"
+    ],
+    "Product Descriptions": [
+      "Marketing",
+      "Content Creation"
+    ],
+    "Academic Writing": [
+      "Education",
+      "Learning Content"
+    ],
+    "Technical Writing": [
+      "Development",
+      "Documentation"
+    ],
+    "Creative Writing": [
+      "Writing",
+      "Creative Writing"
+    ],
+    "Script Writing": [
+      "Writing",
+      "Scripts"
+    ],
+    "Marketing Strategy": [
+      "Marketing",
+      "Content Creation"
+    ],
+    "Sales Copy": [
+      "Marketing",
+      "Content Creation"
+    ],
+    "Brand Development": [
+      "Design",
+      "Branding"
+    ],
+    "Market Research": [
+      "Business",
+      "Market Analysis"
+    ],
+    "Business Plans": [
+      "Business",
+      "Business Plans"
+    ],
+    "Customer Service": [
+      "Customer Support",
+      "Response Templates"
+    ],
+    "Advertising": [
+      "Marketing",
+      "Ad Campaigns"
+    ],
+    "Code Generation": [
+      "Development",
+      "Code & Debug"
+    ],
+    "Code Review": [
+      "Development",
+      "Code & Debug"
+    ],
+    "Bug Fixing": [
+      "Development",
+      "Troubleshooting"
+    ],
+    "Documentation": [
+      "Development",
+      "Documentation"
+    ],
+    "Architecture Design": [
+      "Development",
+      "API Integration"
+    ],
+    "Testing": [
+      "Development",
+      "Troubleshooting"
+    ],
+    "DevOps": [
+      "Development",
+      "Troubleshooting"
+    ],
+    "Image Generation": [
+      "Design",
+      "Digital Art"
+    ],
+    "Art Direction": [
+      "Design",
+      "Digital Art"
+    ],
+    "Character Design": [
+      "Entertainment",
+      "Characters"
+    ],
+    "Environment Design": [
+      "Design",
+      "Digital Art"
+    ],
+    "Logo Design": [
+      "Design",
+      "Logo Design"
+    ],
+    "UI/UX Design": [
+      "Design",
+      "UI/UX"
+    ],
+    "Animation": [
+      "Design",
+      "Motion Graphics"
+    ],
+    "Lesson Planning": [
+      "Education",
+      "Lesson Plans"
+    ],
+    "Study Guides": [
+      "Education",
+      "Learning Content"
+    ],
+    "Quiz Generation": [
+      "Education",
+      "Quizzes & Exams"
+    ],
+    "Research Assistance": [
+      "Education",
+      "Learning Content"
+    ],
+    "Language Learning": [
+      "Education",
+      "Skill Building"
+    ],
+    "Tutoring": [
+      "Education",
+      "Explanations"
+    ],
+    "Data Analysis": [
+      "Business",
+      "Market Analysis"
+    ],
+    "Data Visualization": [
+      "Business",
+      "Market Analysis"
+    ],
+    "Statistical Analysis": [
+      "Business",
+      "Market Analysis"
+    ],
+    "Machine Learning": [
+      "Development",
+      "Algorithms"
+    ],
+    "Business Intelligence": [
+      "Business",
+      "Strategy"
+    ],
+    "Reporting": [
+      "Business",
+      "Financial Reports"
+    ],
+    "Goal Setting": [
+      "Productivity",
+      "Goal Setting"
+    ],
+    "Career Development": [
+      "Career",
+      "Career Advice"
+    ],
+    "Life Coaching": [
+      "Career",
+      "Personal Brand"
+    ],
+    "Productivity": [
+      "Productivity",
+      "Time Management"
+    ],
+    "Mental Health": [
+      "Career",
+      "Personal Brand"
+    ],
+    "Time Management": [
+      "Productivity",
+      "Time Management"
+    ],
+    "Academic Research": [
+      "Education",
+      "Learning Content"
+    ],
+    "Market Analysis": [
+      "Business",
+      "Market Analysis"
+    ],
+    "Competitive Analysis": [
+      "Business",
+      "Market Analysis"
+    ],
+    "Literature Review": [
+      "Education",
+      "Learning Content"
+    ],
+    "Trend Analysis": [
+      "Business",
+      "Market Analysis"
+    ],
+    "Scientific Writing": [
+      "Education",
+      "Learning Content"
+    ],
+    "Legal Writing": [
+      "Legal",
+      "Legal Documents"
+    ],
+    "Contract Review": [
+      "Legal",
+      "Contracts"
+    ],
+    "Policy Generation": [
+      "Legal",
+      "Compliance"
+    ],
+    "Compliance Checks": [
+      "Legal",
+      "Compliance"
+    ],
+    "Terms & Conditions": [
+      "Legal",
+      "Legal Documents"
+    ],
+    "Privacy Policies": [
+      "Legal",
+      "Legal Documents"
+    ],
+    "Storytelling": [
+      "Entertainment",
+      "Stories & Scripts"
+    ],
+    "Game Design": [
+      "Entertainment",
+      "Game Design"
+    ],
+    "Video Scripts": [
+      "Entertainment",
+      "Stories & Scripts"
+    ],
+    "Podcast Scripts": [
+      "Entertainment",
+      "Stories & Scripts"
+    ],
+    "Music Generation": [
+      "Entertainment",
+      "Media Concepts"
+    ],
+    "Entertainment Writing": [
+      "Entertainment",
+      "Stories & Scripts"
+    ]
+  },
+  "instructions": "\n    # Category Migration Guide\n    \n    This guide will help you reassign prompts to the new category structure.\n    \n    ## Steps to Reassign Categories:\n    \n    1. For each prompt in the backup file, find its old category and subcategory\n    2. Use the mapping tables below to find the corresponding new category and subcategory\n    3. Update the prompt's category associations in the database\n    \n    ## Category Mapping\n    \n    Old Category Name -> New Category Name\n    \n    - \"Content Creation\" -> \"Writing\"\n- \"Business & Marketing\" -> \"Business\"\n- \"Programming & Development\" -> \"Development\"\n- \"Visual Arts\" -> \"Design\"\n- \"Education & Learning\" -> \"Education\"\n- \"Data & Analytics\" -> \"Business\"\n- \"Personal Development\" -> \"Career\"\n- \"Research & Analysis\" -> \"Education\"\n- \"Legal & Compliance\" -> \"Legal\"\n- \"Entertainment & Media\" -> \"Entertainment\"\n    \n    ## Subcategory Mapping\n    \n    Old Subcategory Name -> [New Category Name, New Subcategory Name]\n    \n    - \"Blog Writing\" -> [\"Writing\", \"Blog & Articles\"]\n- \"Social Media Posts\" -> [\"Social Media\", \"Captions\"]\n- \"Email Writing\" -> [\"Communication\", \"Work Emails\"]\n- \"Product Descriptions\" -> [\"Marketing\", \"Content Creation\"]\n- \"Academic Writing\" -> [\"Education\", \"Learning Content\"]\n- \"Technical Writing\" -> [\"Development\", \"Documentation\"]\n- \"Creative Writing\" -> [\"Writing\", \"Creative Writing\"]\n- \"Script Writing\" -> [\"Writing\", \"Scripts\"]\n- \"Marketing Strategy\" -> [\"Marketing\", \"Content Creation\"]\n- \"Sales Copy\" -> [\"Marketing\", \"Content Creation\"]\n- \"Brand Development\" -> [\"Design\", \"Branding\"]\n- \"Market Research\" -> [\"Business\", \"Market Analysis\"]\n- \"Business Plans\" -> [\"Business\", \"Business Plans\"]\n- \"Customer Service\" -> [\"Customer Support\", \"Response Templates\"]\n- \"Advertising\" -> [\"Marketing\", \"Ad Campaigns\"]\n- \"Code Generation\" -> [\"Development\", \"Code & Debug\"]\n- \"Code Review\" -> [\"Development\", \"Code & Debug\"]\n- \"Bug Fixing\" -> [\"Development\", \"Troubleshooting\"]\n- \"Documentation\" -> [\"Development\", \"Documentation\"]\n- \"Architecture Design\" -> [\"Development\", \"API Integration\"]\n- \"Testing\" -> [\"Development\", \"Troubleshooting\"]\n- \"DevOps\" -> [\"Development\", \"Troubleshooting\"]\n- \"Image Generation\" -> [\"Design\", \"Digital Art\"]\n- \"Art Direction\" -> [\"Design\", \"Digital Art\"]\n- \"Character Design\" -> [\"Entertainment\", \"Characters\"]\n- \"Environment Design\" -> [\"Design\", \"Digital Art\"]\n- \"Logo Design\" -> [\"Design\", \"Logo Design\"]\n- \"UI/UX Design\" -> [\"Design\", \"UI/UX\"]\n- \"Animation\" -> [\"Design\", \"Motion Graphics\"]\n- \"Lesson Planning\" -> [\"Education\", \"Lesson Plans\"]\n- \"Study Guides\" -> [\"Education\", \"Learning Content\"]\n- \"Quiz Generation\" -> [\"Education\", \"Quizzes & Exams\"]\n- \"Research Assistance\" -> [\"Education\", \"Learning Content\"]\n- \"Language Learning\" -> [\"Education\", \"Skill Building\"]\n- \"Tutoring\" -> [\"Education\", \"Explanations\"]\n- \"Data Analysis\" -> [\"Business\", \"Market Analysis\"]\n- \"Data Visualization\" -> [\"Business\", \"Market Analysis\"]\n- \"Statistical Analysis\" -> [\"Business\", \"Market Analysis\"]\n- \"Machine Learning\" -> [\"Development\", \"Algorithms\"]\n- \"Business Intelligence\" -> [\"Business\", \"Strategy\"]\n- \"Reporting\" -> [\"Business\", \"Financial Reports\"]\n- \"Goal Setting\" -> [\"Productivity\", \"Goal Setting\"]\n- \"Career Development\" -> [\"Career\", \"Career Advice\"]\n- \"Life Coaching\" -> [\"Career\", \"Personal Brand\"]\n- \"Productivity\" -> [\"Productivity\", \"Time Management\"]\n- \"Mental Health\" -> [\"Career\", \"Personal Brand\"]\n- \"Time Management\" -> [\"Productivity\", \"Time Management\"]\n- \"Academic Research\" -> [\"Education\", \"Learning Content\"]\n- \"Market Analysis\" -> [\"Business\", \"Market Analysis\"]\n- \"Competitive Analysis\" -> [\"Business\", \"Market Analysis\"]\n- \"Literature Review\" -> [\"Education\", \"Learning Content\"]\n- \"Trend Analysis\" -> [\"Business\", \"Market Analysis\"]\n- \"Scientific Writing\" -> [\"Education\", \"Learning Content\"]\n- \"Legal Writing\" -> [\"Legal\", \"Legal Documents\"]\n- \"Contract Review\" -> [\"Legal\", \"Contracts\"]\n- \"Policy Generation\" -> [\"Legal\", \"Compliance\"]\n- \"Compliance Checks\" -> [\"Legal\", \"Compliance\"]\n- \"Terms & Conditions\" -> [\"Legal\", \"Legal Documents\"]\n- \"Privacy Policies\" -> [\"Legal\", \"Legal Documents\"]\n- \"Storytelling\" -> [\"Entertainment\", \"Stories & Scripts\"]\n- \"Game Design\" -> [\"Entertainment\", \"Game Design\"]\n- \"Video Scripts\" -> [\"Entertainment\", \"Stories & Scripts\"]\n- \"Podcast Scripts\" -> [\"Entertainment\", \"Stories & Scripts\"]\n- \"Music Generation\" -> [\"Entertainment\", \"Media Concepts\"]\n- \"Entertainment Writing\" -> [\"Entertainment\", \"Stories & Scripts\"]\n    \n    ## For Prompts Without Mappings\n    \n    If a prompt's old category or subcategory doesn't have a mapping, use your best judgment to assign it to the most appropriate new category and subcategory.\n    "
+}

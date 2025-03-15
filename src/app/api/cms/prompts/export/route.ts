@@ -77,7 +77,7 @@ export async function GET(request: NextRequest) {
       const keywords = prompt.keywords.map(k => k.keyword).join(",");
       
       // Process tools
-      const tools = prompt.tools.map(t => t.tool.nameEn).join(",");
+      const tools = prompt.tools.map(t => t.tool.name).join(",");
       
       // Get category and subcategory info
       const category = prompt.categories[0]?.category;

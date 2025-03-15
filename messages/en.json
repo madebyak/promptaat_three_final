@@ -42,5 +42,21 @@
     "removedFromCatalog": "Removed from catalog",
     "addToCatalogFailed": "Failed to add to catalog",
     "removeFromCatalogFailed": "Failed to remove from catalog"
+  },
+  "Checkout": {
+    "successTitle": "Payment Successful!",
+    "successDescription": "Thank you for subscribing to Promptaat Pro. You now have access to all premium features and prompts.",
+    "cancelTitle": "Payment Cancelled",
+    "cancelDescription": "Your payment was cancelled. If you have any questions or need assistance, please contact our support team.",
+    "goToDashboard": "Go to Dashboard",
+    "explorePrompts": "Explore Prompts",
+    "backToPricing": "Back to Pricing",
+    "manageSubscription": "Manage Subscription",
+    "mySubscription": "My Subscription",
+    "goToHomepage": "Go to Homepage",
+    "paymentSuccess": "Payment Successful!",
+    "subscriptionActivated": "Your subscription has been activated. You now have access to all premium features and prompts.",
+    "viewSubscription": "View Subscription",
+    "refreshingSession": "Refreshing..."
   }
 }

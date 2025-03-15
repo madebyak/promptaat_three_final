@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma/client"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth/options"
 import { Prisma } from "@prisma/client"
+import { handleProContentRequest } from "@/lib/auth/subscription-guard"
 
 export async function POST(
   request: NextRequest,
@@ -35,11 +36,11 @@ export async function POST(
       )
     }
 
-    // Check if prompt exists
+    // Check if prompt exists and if it's premium
     try {
       const prompt = await prisma.prompt.findUnique({
         where: { id },
-        select: { id: true }
+        select: { id: true, isPro: true }
       })
 
       if (!prompt) {
@@ -49,6 +50,44 @@ export async function POST(
           { status: 404 }
         )
       }
+      
+      // Use subscription guard to protect premium prompt bookmarking
+      return await handleProContentRequest(
+        request,
+        prompt.isPro,
+        async () => {
+          // Check if already bookmarked
+          const existingBookmark = await prisma.userBookmark.findUnique({
+            where: {
+              userId_promptId: {
+                userId: session.user.id,
+                promptId: id
+              }
+            }
+          })
+
+          if (existingBookmark) {
+            return NextResponse.json(
+              { error: "Prompt already bookmarked" },
+              { status: 400 }
+            )
+          }
+
+          // Create bookmark
+          await prisma.userBookmark.create({
+            data: {
+              userId: session.user.id,
+              promptId: id
+            }
+          })
+
+          return NextResponse.json({ message: "Prompt bookmarked successfully" })
+        },
+        {
+          errorMessage: "You need a Pro subscription to bookmark this premium prompt"
+        }
+      );
+      
     } catch (error) {
       console.error('Error checking prompt existence:', error)
       return NextResponse.json(
@@ -56,33 +95,6 @@ export async function POST(
         { status: 500 }
       )
     }
-
-    // Check if already bookmarked
-    const existingBookmark = await prisma.userBookmark.findUnique({
-      where: {
-        userId_promptId: {
-          userId: session.user.id,
-          promptId: id
-        }
-      }
-    })
-
-    if (existingBookmark) {
-      return NextResponse.json(
-        { error: "Prompt already bookmarked" },
-        { status: 400 }
-      )
-    }
-
-    // Create bookmark
-    await prisma.userBookmark.create({
-      data: {
-        userId: session.user.id,
-        promptId: id
-      }
-    })
-
-    return NextResponse.json({ message: "Prompt bookmarked successfully" })
   } catch (error) {
     console.error("Bookmark prompt error:", error)
     return NextResponse.json(

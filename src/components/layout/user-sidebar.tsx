@@ -3,7 +3,7 @@
 import * as React from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { User, FileText, Settings, LogOut } from 'lucide-react'
+import { User, FileText, Settings, LogOut, CreditCard } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarHeader } from '@/components/ui/sidebar'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -68,6 +68,12 @@ export function UserSidebar({ locale, user, className }: UserSidebarProps) {
       label: locale === 'ar' ? 'بروماتي' : 'My Prompts',
       href: `/${locale}/my-prompts`,
       active: pathname === `/${locale}/my-prompts`
+    },
+    {
+      icon: CreditCard,
+      label: locale === 'ar' ? 'اشتراكي' : 'My Subscription',
+      href: `/${locale}/subscription`,
+      active: pathname === `/${locale}/subscription`
     },
     {
       icon: Settings,
