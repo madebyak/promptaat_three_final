@@ -44,7 +44,17 @@ export async function POST(req: NextRequest) {
     }
 
     // Parse request body
-    const body = await req.json();
+    let body;
+    try {
+      body = await req.json();
+    } catch (error) {
+      console.error("Failed to parse request body:", error);
+      return NextResponse.json(
+        { error: "Bad Request", message: "Invalid request body", code: "invalid_request" },
+        { status: 400, headers }
+      );
+    }
+    
     const { priceId } = body;
 
     if (!priceId) {
@@ -56,26 +66,35 @@ export async function POST(req: NextRequest) {
     }
 
     // Get the user from the database
-    const user = await prisma.user.findUnique({
-      where: {
-        id: session.user.id,
-      },
-      select: {
-        id: true,
-        email: true,
-        subscriptions: {
-          select: {
-            stripeCustomerId: true,
-          },
-          where: {
-            stripeCustomerId: {
-              not: null
-            }
-          },
-          take: 1
-        }
-      },
-    });
+    let user;
+    try {
+      user = await prisma.user.findUnique({
+        where: {
+          id: session.user.id,
+        },
+        select: {
+          id: true,
+          email: true,
+          subscriptions: {
+            select: {
+              stripeCustomerId: true,
+            },
+            where: {
+              stripeCustomerId: {
+                not: null
+              }
+            },
+            take: 1
+          }
+        },
+      });
+    } catch (error) {
+      console.error(`Database error when fetching user: ${error}`);
+      return NextResponse.json(
+        { error: "Server Error", message: "Failed to fetch user data", code: "db_error" },
+        { status: 500, headers }
+      );
+    }
 
     if (!user) {
       console.error(`User not found: ${session.user.id}`);
@@ -91,29 +110,37 @@ export async function POST(req: NextRequest) {
     if (!customerId) {
       console.log(`Creating new Stripe customer for user: ${user.id}`);
       
-      // Create a new customer in Stripe
-      const customer = await stripe.customers.create({
-        email: user.email,
-        metadata: {
-          userId: user.id,
-        },
-      });
+      try {
+        // Create a new customer in Stripe
+        const customer = await stripe.customers.create({
+          email: user.email,
+          metadata: {
+            userId: user.id,
+          },
+        });
 
-      customerId = customer.id;
+        customerId = customer.id;
 
-      // Create a subscription record with the Stripe customer ID
-      await prisma.subscription.create({
-        data: {
-          userId: user.id,
-          status: "incomplete",
-          currentPeriodStart: new Date(),
-          currentPeriodEnd: new Date(),
-          stripeCustomerId: customerId,
-          stripePriceId: priceId,
-          plan: "pro",
-          interval: "monthly", // Default, will be updated by webhook
-        },
-      });
+        // Create a subscription record with the Stripe customer ID
+        await prisma.subscription.create({
+          data: {
+            userId: user.id,
+            status: "incomplete",
+            currentPeriodStart: new Date(),
+            currentPeriodEnd: new Date(),
+            stripeCustomerId: customerId,
+            stripePriceId: priceId,
+            plan: "pro",
+            interval: "monthly", // Default, will be updated by webhook
+          },
+        });
+      } catch (error) {
+        console.error("Error creating Stripe customer or subscription record:", error);
+        return NextResponse.json(
+          { error: "Stripe Error", message: "Failed to create customer", code: "stripe_error" },
+          { status: 500, headers }
+        );
+      }
     }
 
     // Create the checkout session URLs
@@ -128,26 +155,48 @@ export async function POST(req: NextRequest) {
     });
 
     // Create the checkout session
-    const checkoutSession = await stripe.checkout.sessions.create({
-      customer: customerId,
-      line_items: [
-        {
-          price: priceId,
-          quantity: 1,
-        },
-      ],
-      mode: "subscription",
-      success_url: successUrl,
-      cancel_url: cancelUrl,
-      metadata: {
-        userId: user.id,
-      },
-      subscription_data: {
+    let checkoutSession;
+    try {
+      checkoutSession = await stripe.checkout.sessions.create({
+        customer: customerId,
+        line_items: [
+          {
+            price: priceId,
+            quantity: 1,
+          },
+        ],
+        mode: "subscription",
+        success_url: successUrl,
+        cancel_url: cancelUrl,
         metadata: {
           userId: user.id,
         },
-      },
-    });
+        subscription_data: {
+          metadata: {
+            userId: user.id,
+          },
+        },
+      });
+    } catch (error) {
+      console.error("Stripe checkout session creation error:", error);
+      // Define a proper type for Stripe errors
+      interface StripeError {
+        message?: string;
+        code?: string;
+        type?: string;
+        param?: string;
+      }
+      const stripeError = error as StripeError;
+      return NextResponse.json(
+        { 
+          error: "Stripe Error", 
+          message: stripeError.message || "Failed to create checkout session", 
+          code: stripeError.code || "stripe_error",
+          details: process.env.NODE_ENV === "development" ? stripeError : undefined
+        },
+        { status: 500, headers }
+      );
+    }
 
     if (!checkoutSession.url) {
       console.error("Failed to create checkout session URL");
