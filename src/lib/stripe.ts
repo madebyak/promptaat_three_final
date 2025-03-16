@@ -1,10 +1,21 @@
 import { Stripe } from "stripe";
 
 // Initialize Stripe with the secret key from environment variables
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
-  apiVersion: "2025-02-24.acacia", // Updated to match the version used by Stripe CLI
-  typescript: true,
-});
+// Only initialize Stripe on the server side
+const getStripe = () => {
+  // Make sure we're on the server side
+  if (typeof window !== 'undefined') {
+    throw new Error('Stripe can only be initialized on the server side');
+  }
+  
+  return new Stripe(process.env.STRIPE_SECRET_KEY || "", {
+    apiVersion: "2025-02-24.acacia", // Updated to match the version used by Stripe CLI
+    typescript: true,
+  });
+};
+
+// Export a function to get the Stripe instance
+export const stripe = getStripe();
 
 // Define the subscription price IDs
 // These should be created in the Stripe dashboard and referenced here
@@ -19,12 +30,9 @@ export const STRIPE_PRICE_IDS = {
 // Helper function to get the price ID based on plan and interval
 export function getPriceId(plan: string, interval: string): string {
   if (plan === "pro") {
-    if (interval === "monthly") return STRIPE_PRICE_IDS.pro.monthly;
-    if (interval === "quarterly") return STRIPE_PRICE_IDS.pro.quarterly;
-    if (interval === "annual") return STRIPE_PRICE_IDS.pro.annual;
+    return STRIPE_PRICE_IDS.pro[interval as keyof typeof STRIPE_PRICE_IDS.pro] || "";
   }
-  
-  throw new Error(`Invalid plan (${plan}) or interval (${interval})`);
+  return "";
 }
 
 // Create a Stripe checkout session

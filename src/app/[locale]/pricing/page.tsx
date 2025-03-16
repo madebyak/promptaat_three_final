@@ -8,7 +8,6 @@ import { cn } from "@/lib/utils";
 import { FeaturesList } from "@/app/[locale]/pricing/components/features-list";
 import { PricingFAQ } from "@/app/[locale]/pricing/components/pricing-faq";
 import { CheckoutButton } from "@/components/checkout/checkout-button";
-import { getPriceId } from "@/lib/stripe";
 
 // Pricing data
 const pricingData = {
@@ -120,6 +119,12 @@ const faqItems = [
     }
   }
 ];
+
+const PRICE_IDS = {
+  monthly: process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_PRO_MONTHLY || "",
+  quarterly: process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_PRO_QUARTERLY || "",
+  annual: process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_PRO_ANNUAL || "",
+};
 
 export default function PricingPage() {
   const params = useParams();
@@ -237,7 +242,7 @@ export default function PricingPage() {
           </div>
           
           <CheckoutButton 
-            priceId={getPriceId("pro", "monthly")}
+            priceId={PRICE_IDS.monthly}
             locale={locale}
             className="w-full py-5 text-base font-medium bg-gradient-to-r from-[#2b79ef] to-[#6d36f1] hover:opacity-90 shadow-md mt-auto"
           >
@@ -283,7 +288,7 @@ export default function PricingPage() {
           </div>
           
           <CheckoutButton 
-            priceId={getPriceId("pro", "quarterly")}
+            priceId={PRICE_IDS.quarterly}
             locale={locale}
             className="w-full py-5 text-base font-medium bg-gradient-to-r from-[#2b79ef] to-[#6d36f1] hover:opacity-90 shadow-md mt-auto"
           >
@@ -334,7 +339,7 @@ export default function PricingPage() {
           </div>
           
           <CheckoutButton 
-            priceId={getPriceId("pro", "annual")}
+            priceId={PRICE_IDS.annual}
             locale={locale}
             className="w-full py-5 text-base font-medium bg-gradient-to-r from-[#2b79ef] to-[#6d36f1] hover:opacity-90 shadow-md mt-auto"
           >
@@ -432,7 +437,7 @@ export default function PricingPage() {
             })}
           </p>
           <CheckoutButton 
-            priceId={getPriceId("pro", "annual")}
+            priceId={PRICE_IDS.annual}
             locale={locale}
             className="px-8 py-6 text-lg font-medium bg-gradient-to-r from-[#2b79ef] to-[#6d36f1] hover:opacity-90 shadow-md"
           >

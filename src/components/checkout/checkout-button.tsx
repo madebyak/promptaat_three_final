@@ -52,21 +52,22 @@ export function CheckoutButton({
         }),
       });
 
-      const data = await response.json();
-
       if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: "Unknown error" }));
         console.error("Checkout error:", {
           status: response.status,
           statusText: response.statusText,
-          error: data.error || "Unknown error",
+          error: errorData.error || "Unknown error",
           priceId,
         });
-        throw new Error(data.error || "Something went wrong");
+        throw new Error(errorData.error || "Something went wrong");
       }
+
+      const data = await response.json();
 
       // Redirect to Stripe Checkout
       if (data.url) {
-        router.push(data.url);
+        window.location.href = data.url;
       } else {
         console.error("No checkout URL returned from API");
         throw new Error("No checkout URL was provided");
