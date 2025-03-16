@@ -21,7 +21,17 @@ export async function POST(req: NextRequest) {
     console.log("[API] Subscription creation request received");
     
     // Get the authenticated user's session
-    const session = await getServerSession(authOptions);
+    let session;
+    try {
+      session = await getServerSession(authOptions);
+      console.log("[API] Session retrieved:", session ? "Success" : "No session");
+    } catch (sessionError) {
+      console.error("[API] Error getting session:", sessionError);
+      return NextResponse.json(
+        { error: "Authentication error", message: sessionError instanceof Error ? sessionError.message : "Unknown error" },
+        { status: 401 }
+      );
+    }
     
     if (!session?.user?.email) {
       console.log("[API] Authentication error: No user session found");
@@ -131,6 +141,12 @@ export async function POST(req: NextRequest) {
       });
     } catch (error) {
       console.error("[API] Database error when fetching user:", error);
+      console.error("[API] Error details:", error instanceof Error ? {
+        name: error.name,
+        message: error.message,
+        stack: error.stack
+      } : "Unknown error type");
+      
       return NextResponse.json(
         { error: "Database error when fetching user", message: error instanceof Error ? error.message : "Unknown error" },
         { status: 500 }
@@ -166,9 +182,17 @@ export async function POST(req: NextRequest) {
     console.log(`[API] Success URL: ${successUrl}`);
     console.log(`[API] Cancel URL: ${cancelUrl}`);
     
-    // Create a Stripe checkout session
+    // Call the stripe createCheckoutSession function with detailed error handling
     let checkoutSession;
     try {
+      console.log("[API] Calling createCheckoutSession with:", {
+        userId: user.id,
+        email: user.email,
+        priceId: priceId,
+        successUrl,
+        cancelUrl
+      });
+      
       checkoutSession = await createCheckoutSession({
         userId: user.id,
         email: user.email,
@@ -180,10 +204,22 @@ export async function POST(req: NextRequest) {
       console.log(`[API] Checkout session created: ${checkoutSession.id}`);
     } catch (error) {
       console.error("[API] Error creating Stripe checkout session:", error);
+      console.error("[API] Error details:", error instanceof Error ? {
+        name: error.name,
+        message: error.message,
+        stack: error.stack
+      } : "Unknown error type");
+      
+      // Check if it's a Stripe error with more details
+      if (error && typeof error === 'object' && 'type' in error) {
+        console.error("[API] Stripe error details:", error);
+      }
+      
       return NextResponse.json(
         { 
           error: "Failed to create Stripe checkout session", 
-          message: error instanceof Error ? error.message : "Unknown error" 
+          message: error instanceof Error ? error.message : "Unknown error",
+          code: "stripe-token" // Add the specific error code that's showing up in the UI
         },
         { status: 500 }
       );
@@ -194,6 +230,11 @@ export async function POST(req: NextRequest) {
     
   } catch (error) {
     console.error("[API] Unhandled error in subscription creation:", error);
+    console.error("[API] Error details:", error instanceof Error ? {
+      name: error.name,
+      message: error.message,
+      stack: error.stack
+    } : "Unknown error type");
     
     return NextResponse.json(
       { error: "Failed to create subscription", message: error instanceof Error ? error.message : "Unknown error" },
@@ -248,6 +289,11 @@ export async function GET() {
     
   } catch (error) {
     console.error("Error fetching subscription:", error);
+    console.error("[API] Error details:", error instanceof Error ? {
+      name: error.name,
+      message: error.message,
+      stack: error.stack
+    } : "Unknown error type");
     
     return NextResponse.json(
       { error: "Failed to fetch subscription details" },

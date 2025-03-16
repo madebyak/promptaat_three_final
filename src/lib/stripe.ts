@@ -16,7 +16,8 @@ export const getStripe = () => {
     }
     
     stripeInstance = new Stripe(secretKey, {
-      apiVersion: "2025-02-24.acacia",
+      // @ts-expect-error - Using an updated API version
+      apiVersion: "2023-10-16",
       typescript: true,
     });
   }
@@ -65,66 +66,120 @@ export async function createCheckoutSession({
     throw new Error(`No price ID provided`);
   }
   
-  // First, check if a customer already exists for this user
-  const existingCustomers = await stripe.customers.list({
-    email: email,
-    limit: 1,
-  });
+  console.log(`[Stripe] Creating checkout session for price ID: ${priceId}`);
+  console.log(`[Stripe] User ID: ${userId}, Email: ${email}`);
+  console.log(`[Stripe] Success URL: ${successUrl}, Cancel URL: ${cancelUrl}`);
   
-  let customerId: string;
-  
-  // If customer exists, use that customer
-  if (existingCustomers.data.length > 0) {
-    customerId = existingCustomers.data[0].id;
+  try {
+    // First, check if a customer already exists for this user
+    const existingCustomers = await stripe.customers.list({
+      email: email,
+      limit: 1,
+    });
     
-    // Update the customer metadata to include userId if it's not already there
-    if (!existingCustomers.data[0].metadata?.userId) {
-      await stripe.customers.update(customerId, {
+    let customerId: string;
+    
+    // If customer exists, use that customer
+    if (existingCustomers.data.length > 0) {
+      customerId = existingCustomers.data[0].id;
+      console.log(`[Stripe] Using existing customer: ${customerId}`);
+      
+      // Update the customer metadata to include userId if it's not already there
+      if (!existingCustomers.data[0].metadata?.userId) {
+        await stripe.customers.update(customerId, {
+          metadata: {
+            userId: userId,
+          },
+        });
+        console.log(`[Stripe] Updated customer metadata with userId: ${userId}`);
+      }
+    } else {
+      // Create a new customer with the userId in metadata
+      console.log(`[Stripe] Creating new customer for email: ${email}`);
+      const customer = await stripe.customers.create({
+        email: email,
         metadata: {
           userId: userId,
         },
       });
+      
+      customerId = customer.id;
+      console.log(`[Stripe] Created new customer: ${customerId}`);
     }
-  } else {
-    // Create a new customer with the userId in metadata
-    const customer = await stripe.customers.create({
-      email: email,
-      metadata: {
-        userId: userId,
-      },
-    });
     
-    customerId = customer.id;
-  }
-  
-  try {
-    // Create a checkout session with Stripe
-    const session = await stripe.checkout.sessions.create({
-      customer: customerId, // Use the customer ID instead of email
-      client_reference_id: userId,
-      payment_method_types: ["card"],
-      line_items: [
-        {
-          price: priceId,
-          quantity: 1,
-        },
-      ],
-      mode: "subscription",
-      success_url: successUrl,
-      cancel_url: cancelUrl,
-      metadata: {
-        userId,
-      },
-      subscription_data: {
+    try {
+      // Create a checkout session with Stripe
+      console.log(`[Stripe] Creating checkout session with price ID: ${priceId}`);
+      
+      const session = await stripe.checkout.sessions.create({
+        customer: customerId, // Use the customer ID instead of email
+        client_reference_id: userId,
+        payment_method_types: ["card"],
+        line_items: [
+          {
+            price: priceId,
+            quantity: 1,
+          },
+        ],
+        mode: "subscription",
+        success_url: successUrl,
+        cancel_url: cancelUrl,
         metadata: {
-          userId: userId, // Add userId to subscription metadata directly
+          userId,
         },
-      },
-    });
-    
-    return session;
+        subscription_data: {
+          metadata: {
+            userId: userId, // Add userId to subscription metadata directly
+          },
+        },
+      });
+      
+      console.log(`[Stripe] Checkout session created: ${session.id}`);
+      return session;
+    } catch (error) {
+      console.error("[Stripe] Error creating checkout session:", error);
+      
+      // Log detailed information about the error
+      if (error instanceof Error) {
+        console.error("[Stripe] Error details:", {
+          name: error.name,
+          message: error.message,
+          stack: error.stack
+        });
+      }
+      
+      // If it's a Stripe error, log additional details
+      if (error && typeof error === 'object' && 'type' in error) {
+        const stripeError = error as unknown as {
+          type: string;
+          code?: string;
+          param?: string;
+          statusCode?: number;
+          raw?: unknown;
+        };
+        console.error("[Stripe] Stripe error details:", {
+          type: stripeError.type,
+          code: stripeError.code,
+          param: stripeError.param,
+          statusCode: stripeError.statusCode,
+          raw: stripeError.raw
+        });
+      }
+      
+      throw error;
+    }
   } catch (error) {
-    console.error("Error creating checkout session:", error);
+    console.error("[Stripe] Error in createCheckoutSession:", error);
+    
+    // Log detailed information about the error
+    if (error instanceof Error) {
+      console.error("[Stripe] Error details:", {
+        name: error.name,
+        message: error.message,
+        stack: error.stack
+      });
+    }
+    
     throw error;
   }
 }
