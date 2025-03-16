@@ -18,18 +18,33 @@ const legacySubscriptionCreateSchema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
+    console.log("[API] Subscription creation request received");
+    
     // Get the authenticated user's session
     const session = await getServerSession(authOptions);
     
     if (!session?.user?.email) {
+      console.log("[API] Authentication error: No user session found");
       return NextResponse.json(
         { error: "You must be logged in to create a subscription" },
         { status: 401 }
       );
     }
     
+    console.log(`[API] Processing subscription request for user: ${session.user.email}`);
+    
     // Parse and validate the request body
-    const body = await req.json();
+    let body;
+    try {
+      body = await req.json();
+      console.log("[API] Request body:", JSON.stringify(body));
+    } catch (error) {
+      console.error("[API] Error parsing request body:", error);
+      return NextResponse.json(
+        { error: "Invalid JSON in request body" },
+        { status: 400 }
+      );
+    }
     
     // Try to validate with the new schema first
     const validatedData = subscriptionCreateSchema.safeParse(body);
@@ -37,9 +52,12 @@ export async function POST(req: NextRequest) {
     // If new schema validation fails, try the legacy schema
     let priceId: string;
     if (!validatedData.success) {
+      console.log("[API] New schema validation failed, trying legacy schema");
       const legacyValidation = legacySubscriptionCreateSchema.safeParse(body);
       
       if (!legacyValidation.success) {
+        console.error("[API] Both schema validations failed");
+        console.error("[API] Validation errors:", JSON.stringify(validatedData.error.format()));
         return NextResponse.json(
           { error: "Invalid request data", details: validatedData.error.format() },
           { status: 400 }
@@ -48,6 +66,7 @@ export async function POST(req: NextRequest) {
       
       // For legacy requests, get the price ID from the plan and interval
       const { plan, interval } = legacyValidation.data;
+      console.log(`[API] Legacy request with plan: ${plan}, interval: ${interval}`);
       
       // This would use the getPriceId function, but since we're moving away from it,
       // we'll handle it directly based on the environment variables
@@ -59,12 +78,14 @@ export async function POST(req: NextRequest) {
         } else if (interval === "annual") {
           priceId = process.env.STRIPE_PRICE_ID_PRO_ANNUAL || "";
         } else {
+          console.error(`[API] Invalid interval: ${interval}`);
           return NextResponse.json(
             { error: "Invalid interval" },
             { status: 400 }
           );
         }
       } else {
+        console.error(`[API] Invalid plan: ${plan}`);
         return NextResponse.json(
           { error: "Invalid plan" },
           { status: 400 }
@@ -73,10 +94,12 @@ export async function POST(req: NextRequest) {
     } else {
       // For new requests, use the priceId directly
       priceId = validatedData.data.priceId;
+      console.log(`[API] Using provided priceId: ${priceId}`);
     }
     
     // Validate that we have a valid priceId
     if (!priceId) {
+      console.error("[API] No valid priceId found");
       return NextResponse.json(
         { error: "Invalid price ID" },
         { status: 400 }
@@ -84,39 +107,52 @@ export async function POST(req: NextRequest) {
     }
     
     // Log the priceId for debugging
-    console.log("Creating subscription with priceId:", priceId);
+    console.log("[API] Creating subscription with priceId:", priceId);
     
     // Get the user from the database
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
-      include: {
-        subscriptions: {
-          where: {
-            OR: [
-              { status: "active" },
-              { status: "trialing" },
-              { currentPeriodEnd: { gt: new Date() } }
-            ]
-          },
-          orderBy: {
-            createdAt: "desc"
-          },
-          take: 1
+    let user;
+    try {
+      user = await prisma.user.findUnique({
+        where: { email: session.user.email },
+        include: {
+          subscriptions: {
+            where: {
+              OR: [
+                { status: "active" },
+                { status: "trialing" },
+                { currentPeriodEnd: { gt: new Date() } }
+              ]
+            },
+            orderBy: {
+              createdAt: "desc"
+            },
+            take: 1
+          }
         }
-      }
-    });
+      });
+    } catch (error) {
+      console.error("[API] Database error when fetching user:", error);
+      return NextResponse.json(
+        { error: "Database error when fetching user", message: error instanceof Error ? error.message : "Unknown error" },
+        { status: 500 }
+      );
+    }
     
     if (!user) {
+      console.error(`[API] User not found for email: ${session.user.email}`);
       return NextResponse.json(
         { error: "User not found" },
         { status: 404 }
       );
     }
     
+    console.log(`[API] User found: ${user.id}`);
+    
     // Check if user already has an active subscription
     const activeSubscription = user.subscriptions.length > 0 ? user.subscriptions[0] : null;
     
     if (activeSubscription && activeSubscription.status === "active") {
+      console.log(`[API] User already has an active subscription: ${activeSubscription.id}`);
       return NextResponse.json(
         { error: "User already has an active subscription" },
         { status: 400 }
@@ -128,20 +164,37 @@ export async function POST(req: NextRequest) {
     const successUrl = `${baseUrl}/subscription/success?session_id={CHECKOUT_SESSION_ID}`;
     const cancelUrl = `${baseUrl}/pricing`;
     
+    console.log(`[API] Success URL: ${successUrl}`);
+    console.log(`[API] Cancel URL: ${cancelUrl}`);
+    
     // Create a Stripe checkout session
-    const checkoutSession = await createCheckoutSession({
-      userId: user.id,
-      email: user.email,
-      priceId,
-      successUrl,
-      cancelUrl,
-    });
+    let checkoutSession;
+    try {
+      checkoutSession = await createCheckoutSession({
+        userId: user.id,
+        email: user.email,
+        priceId,
+        successUrl,
+        cancelUrl,
+      });
+      
+      console.log(`[API] Checkout session created: ${checkoutSession.id}`);
+    } catch (error) {
+      console.error("[API] Error creating Stripe checkout session:", error);
+      return NextResponse.json(
+        { 
+          error: "Failed to create Stripe checkout session", 
+          message: error instanceof Error ? error.message : "Unknown error" 
+        },
+        { status: 500 }
+      );
+    }
     
     // Return the checkout URL
     return NextResponse.json({ url: checkoutSession.url });
     
   } catch (error) {
-    console.error("Error creating subscription:", error);
+    console.error("[API] Unhandled error in subscription creation:", error);
     
     return NextResponse.json(
       { error: "Failed to create subscription", message: error instanceof Error ? error.message : "Unknown error" },
