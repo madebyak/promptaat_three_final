@@ -58,5 +58,75 @@
     "subscriptionActivated": "Your subscription has been activated. You now have access to all premium features and prompts.",
     "viewSubscription": "View Subscription",
     "refreshingSession": "Refreshing..."
+  },
+  "Subscription": {
+    "title": "Subscription",
+    "description": "Manage your subscription and billing information.",
+    "errorLoading": "An error occurred while loading your subscription information.",
+    "unableToLoad": "Unable to load subscription details. Please try again later.",
+    "refresh": "Refresh",
+    "chooseYourPlan": "Choose Your Plan",
+    "choosePlanDescription": "Select the subscription plan that works best for you.",
+    "subscribe": "Subscribe Now",
+    "popular": "POPULAR",
+    "bestValue": "BEST VALUE",
+    "tabs": {
+      "overview": "Overview",
+      "paymentMethod": "Payment Method",
+      "billingHistory": "Billing History"
+    },
+    "billingCycle": {
+      "title": "Billing Cycle",
+      "description": "Your billing cycle information",
+      "monthly": "Monthly billing",
+      "quarterly": "Quarterly billing",
+      "annual": "Annual billing"
+    },
+    "nextBillingDate": {
+      "title": "Next Billing Date",
+      "description": "Your next billing date"
+    },
+    "period": {
+      "month": "month",
+      "quarter": "3 months",
+      "year": "year"
+    },
+    "plans": {
+      "monthly": {
+        "title": "Monthly",
+        "description": "Flexible monthly billing"
+      },
+      "quarterly": {
+        "title": "Quarterly",
+        "description": "Save with quarterly billing"
+      },
+      "annual": {
+        "title": "Annual",
+        "description": "Best value annual plan"
+      }
+    },
+    "features": {
+      "allPremiumPrompts": "Access to all premium prompts",
+      "unlimitedAccess": "Unlimited access to all features",
+      "prioritySupport": "Priority customer support",
+      "saveEleven": "Save 11% compared to monthly",
+      "saveThirtyThree": "Save 33% compared to monthly"
+    },
+    "paymentMethod": {
+      "title": "Payment Method",
+      "description": "Manage your payment methods",
+      "expires": "Expires",
+      "update": "Update",
+      "noPaymentMethod": "No payment method",
+      "addToSubscribe": "Add a payment method to subscribe",
+      "addPaymentMethod": "Add Payment Method"
+    },
+    "billingHistory": {
+      "title": "Billing History",
+      "description": "View your billing history",
+      "paid": "Paid",
+      "noBillingHistory": "No billing history",
+      "subscribeToSee": "Subscribe to see your billing history"
+    }
   }
 }

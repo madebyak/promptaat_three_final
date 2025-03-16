@@ -7,16 +7,14 @@ import { useToast } from "@/components/ui/use-toast";
 import { Loader2 } from "lucide-react";
 
 interface CheckoutButtonProps extends ButtonProps {
-  plan: string;
-  interval: "monthly" | "quarterly" | "annual";
-  locale: string;
+  priceId: string;
+  locale?: string;
   children: React.ReactNode;
 }
 
 export function CheckoutButton({
-  plan,
-  interval,
-  locale,
+  priceId,
+  locale = "en",
   children,
   ...props
 }: CheckoutButtonProps) {
@@ -35,8 +33,7 @@ export function CheckoutButton({
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          plan,
-          interval,
+          priceId,
           locale,
         }),
       });
@@ -44,12 +41,21 @@ export function CheckoutButton({
       const data = await response.json();
 
       if (!response.ok) {
+        console.error("Checkout error:", {
+          status: response.status,
+          statusText: response.statusText,
+          error: data.error || "Unknown error",
+          priceId,
+        });
         throw new Error(data.error || "Something went wrong");
       }
 
       // Redirect to Stripe Checkout
       if (data.url) {
         router.push(data.url);
+      } else {
+        console.error("No checkout URL returned from API");
+        throw new Error("No checkout URL was provided");
       }
     } catch (error) {
       console.error("Error during checkout:", error);
@@ -57,7 +63,7 @@ export function CheckoutButton({
         title: locale === "ar" ? "حدث خطأ" : "Error",
         description: locale === "ar" 
           ? "حدث خطأ أثناء معالجة الدفع. يرجى المحاولة مرة أخرى." 
-          : "An error occurred during checkout. Please try again.",
+          : `An error occurred during checkout. Please try again. ${error instanceof Error ? error.message : ''}`,
         variant: "destructive",
       });
     } finally {

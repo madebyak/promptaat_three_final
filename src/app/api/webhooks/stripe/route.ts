@@ -38,6 +38,7 @@ export async function POST(req: NextRequest) {
       id: event.id,
       type: event.type,
       object: event.data.object.object,
+      timestamp: new Date().toISOString(),
     });
     
     await handleStripeWebhook({
@@ -48,6 +49,8 @@ export async function POST(req: NextRequest) {
           subscriptionId: subscription.id,
           metadata: subscription.metadata,
           customerId: subscription.customer,
+          status: subscription.status,
+          currentPeriodEnd: new Date(subscription.current_period_end * 1000).toISOString(),
         });
         
         const userId = subscription.metadata?.userId;
@@ -113,6 +116,9 @@ export async function POST(req: NextRequest) {
       handleSubscriptionUpdated: async (subscription) => {
         console.log("Processing subscription updated event", {
           subscriptionId: subscription.id,
+          status: subscription.status,
+          cancelAtPeriodEnd: subscription.cancel_at_period_end,
+          currentPeriodEnd: new Date(subscription.current_period_end * 1000).toISOString(),
         });
         
         // Find the subscription in the database by Stripe subscription ID
@@ -187,12 +193,21 @@ export async function POST(req: NextRequest) {
             interval: subscription.metadata?.interval || existingSubscription.interval || "monthly",
           },
         });
+        
+        console.log("Successfully updated subscription", {
+          subscriptionId: existingSubscription.id,
+          userId: existingSubscription.userId,
+          newStatus: subscription.status,
+          cancelAtPeriodEnd: subscription.cancel_at_period_end,
+        });
       },
       
       // Handle subscription cancelled event
       handleSubscriptionCancelled: async (subscription) => {
         console.log("Processing subscription cancelled event", {
           subscriptionId: subscription.id,
+          status: subscription.status,
+          cancelReason: subscription.cancellation_details?.reason || "unknown",
         });
         
         // Find the subscription in the database by Stripe subscription ID
@@ -214,6 +229,11 @@ export async function POST(req: NextRequest) {
             status: "canceled",
             cancelAtPeriodEnd: false,
           },
+        });
+        
+        console.log("Successfully marked subscription as canceled", {
+          subscriptionId: existingSubscription.id,
+          userId: existingSubscription.userId,
         });
       },
     });
@@ -260,9 +280,15 @@ export async function createOrUpdateSubscription(subscription: Stripe.Subscripti
           cancelAtPeriodEnd: subscription.cancel_at_period_end,
         },
       });
+      
+      console.log("Updated existing subscription", {
+        subscriptionId: existingSubscription.id,
+        userId,
+        status: subscription.status,
+      });
     } else {
       // Create new subscription
-      await prisma.subscription.create({
+      const newSubscription = await prisma.subscription.create({
         data: {
           userId,
           plan,
@@ -276,12 +302,13 @@ export async function createOrUpdateSubscription(subscription: Stripe.Subscripti
           cancelAtPeriodEnd: subscription.cancel_at_period_end,
         },
       });
+      
+      console.log("Created new subscription", {
+        subscriptionId: newSubscription.id,
+        userId,
+        status: subscription.status,
+      });
     }
-    
-    console.log("Successfully created/updated subscription", {
-      userId,
-      subscriptionId: subscription.id,
-    });
   } catch (error) {
     console.error("Error creating/updating subscription:", error);
     throw error;

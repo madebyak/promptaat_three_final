@@ -18,11 +18,11 @@ export async function POST(req: NextRequest) {
     
     // Get the request body
     const body = await req.json();
-    const { plan, interval, locale } = body;
+    const { priceId, locale = "en" } = body;
     
-    if (!plan || !interval) {
+    if (!priceId) {
       return NextResponse.json(
-        { error: "Plan and interval are required" },
+        { error: "Price ID is required" },
         { status: 400 }
       );
     }
@@ -35,8 +35,7 @@ export async function POST(req: NextRequest) {
     const checkoutSession = await createCheckoutSession({
       userId: session.user.id,
       email: session.user.email || "",
-      plan,
-      interval,
+      priceId,
       successUrl,
       cancelUrl,
     });

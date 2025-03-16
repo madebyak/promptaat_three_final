@@ -201,22 +201,22 @@ model SubscriptionPrice {
 }
 
 model Subscription {
-  id                 String             @id @default(uuid())
-  userId             String             @map("user_id")
-  status             String
-  createdAt          DateTime           @default(now()) @map("created_at")
-  updatedAt          DateTime           @updatedAt @map("updated_at")
-  cancelAtPeriodEnd  Boolean            @default(false) @map("cancel_at_period_end")
-  currentPeriodEnd   DateTime           @map("current_period_end")
-  currentPeriodStart DateTime           @map("current_period_start")
-  priceId            String?            @map("price_id")
-  stripeSubscriptionId String?          @map("stripe_subscription_id")
-  stripeCustomerId   String?            @map("stripe_customer_id")
-  stripePriceId      String?            @map("stripe_price_id")
-  plan               String?            @default("pro")
-  interval           String?            @default("monthly")
-  price              SubscriptionPrice? @relation(fields: [priceId], references: [id])
-  user               User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                   String             @id @default(uuid())
+  userId               String             @map("user_id")
+  status               String
+  createdAt            DateTime           @default(now()) @map("created_at")
+  updatedAt            DateTime           @updatedAt @map("updated_at")
+  cancelAtPeriodEnd    Boolean            @default(false) @map("cancel_at_period_end")
+  currentPeriodEnd     DateTime           @map("current_period_end")
+  currentPeriodStart   DateTime           @map("current_period_start")
+  priceId              String?            @map("price_id")
+  interval             String?            @default("monthly")
+  plan                 String?            @default("pro")
+  stripeCustomerId     String?            @map("stripe_customer_id")
+  stripePriceId        String?            @map("stripe_price_id")
+  stripeSubscriptionId String?            @map("stripe_subscription_id")
+  price                SubscriptionPrice? @relation(fields: [priceId], references: [id])
+  user                 User               @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("subscriptions")
 }

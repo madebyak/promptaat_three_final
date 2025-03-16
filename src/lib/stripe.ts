@@ -31,19 +31,20 @@ export function getPriceId(plan: string, interval: string): string {
 export async function createCheckoutSession({
   userId,
   email,
-  plan,
-  interval,
+  priceId,
   successUrl,
   cancelUrl,
 }: {
   userId: string;
   email: string;
-  plan: string;
-  interval: string;
+  priceId: string;
   successUrl: string;
   cancelUrl: string;
 }) {
-  const priceId = getPriceId(plan, interval);
+  // Validate that we have a valid price ID
+  if (!priceId) {
+    throw new Error(`No price ID provided`);
+  }
   
   // First, check if a customer already exists for this user
   const existingCustomers = await stripe.customers.list({
@@ -77,33 +78,36 @@ export async function createCheckoutSession({
     customerId = customer.id;
   }
   
-  // Create a checkout session with Stripe
-  const session = await stripe.checkout.sessions.create({
-    customer: customerId, // Use the customer ID instead of email
-    client_reference_id: userId,
-    payment_method_types: ["card"],
-    line_items: [
-      {
-        price: priceId,
-        quantity: 1,
-      },
-    ],
-    mode: "subscription",
-    success_url: successUrl,
-    cancel_url: cancelUrl,
-    metadata: {
-      userId,
-      plan,
-      interval,
-    },
-    subscription_data: {
+  try {
+    // Create a checkout session with Stripe
+    const session = await stripe.checkout.sessions.create({
+      customer: customerId, // Use the customer ID instead of email
+      client_reference_id: userId,
+      payment_method_types: ["card"],
+      line_items: [
+        {
+          price: priceId,
+          quantity: 1,
+        },
+      ],
+      mode: "subscription",
+      success_url: successUrl,
+      cancel_url: cancelUrl,
       metadata: {
-        userId: userId, // Add userId to subscription metadata directly
+        userId,
       },
-    },
-  });
-  
-  return session;
+      subscription_data: {
+        metadata: {
+          userId: userId, // Add userId to subscription metadata directly
+        },
+      },
+    });
+    
+    return session;
+  } catch (error) {
+    console.error("Error creating checkout session:", error);
+    throw error;
+  }
 }
 
 // Create a Stripe portal session for managing subscriptions
@@ -114,12 +118,17 @@ export async function createPortalSession({
   customerId: string;
   returnUrl: string;
 }) {
-  const session = await stripe.billingPortal.sessions.create({
-    customer: customerId,
-    return_url: returnUrl,
-  });
-  
-  return session;
+  try {
+    const session = await stripe.billingPortal.sessions.create({
+      customer: customerId,
+      return_url: returnUrl,
+    });
+    
+    return session;
+  } catch (error) {
+    console.error("Error creating portal session:", error);
+    throw error;
+  }
 }
 
 // Cancel a subscription but maintain access until the end of the current billing period
@@ -194,3 +203,33 @@ export async function handleStripeWebhook({
       break;
   }
 }
+
+// Check if a user has an active subscription
+export async function hasActiveSubscription(userId: string): Promise<boolean> {
+  try {
+    const subscription = await prisma.subscription.findFirst({
+      where: {
+        userId,
+        OR: [
+          { status: "active" },
+          { status: "trialing" },
+          {
+            status: "canceled",
+            cancelAtPeriodEnd: true,
+            currentPeriodEnd: {
+              gt: new Date(),
+            },
+          },
+        ],
+      },
+    });
+    
+    return !!subscription;
+  } catch (error) {
+    console.error("Error checking subscription status:", error);
+    return false;
+  }
+}
+
+// Import prisma client for subscription status checks
+import { prisma } from "@/lib/prisma/client";

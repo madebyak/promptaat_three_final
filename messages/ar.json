@@ -1,9 +1,9 @@
 {
   "MyPrompts": {
-    "title": "بروماتي",
-    "description": "إدارة البرومات الخاصة بك",
-    "noPrompts": "لم تقم بإنشاء أي برومات حتى الآن",
-    "createPrompt": "إنشاء بروم"
+    "title": "مطالباتي",
+    "description": "إدارة مطالباتك",
+    "noPrompts": "لم تقم بإنشاء أي مطالبات بعد",
+    "createPrompt": "إنشاء مطالبة"
   },
   "Profile": {
     "title": "الملف الشخصي",
@@ -18,7 +18,7 @@
   },
   "Catalogs": {
     "createCatalog": "إنشاء كتالوج",
-    "createCatalogDescription": "قم بإنشاء كتالوج جديد لتنظيم البرومات المحفوظة لديك.",
+    "createCatalogDescription": "إنشاء كتالوج جديد لتنظيم المطالبات المحفوظة.",
     "catalogName": "اسم الكتالوج",
     "catalogNamePlaceholder": "أدخل اسم الكتالوج",
     "description": "الوصف (اختياري)",
@@ -26,37 +26,107 @@
     "cancel": "إلغاء",
     "create": "إنشاء",
     "creating": "جاري الإنشاء...",
-    "addToCatalog": "إضافة إلى كتالوج",
-    "addToCatalogDescription": "أضف هذا البروم إلى واحد أو أكثر من الكتالوجات الخاصة بك.",
+    "addToCatalog": "إضافة إلى الكتالوج",
+    "addToCatalogDescription": "أضف هذه المطالبة إلى واحد أو أكثر من الكتالوجات الخاصة بك.",
     "searchCatalogs": "البحث في الكتالوجات...",
-    "noCatalogs": "ليس لديك أي كتالوجات حتى الآن.",
+    "noCatalogs": "ليس لديك أي كتالوجات بعد.",
     "noResults": "لم يتم العثور على كتالوجات.",
     "done": "تم",
     "error": "خطأ",
     "success": "نجاح",
     "nameRequired": "اسم الكتالوج مطلوب",
     "catalogCreated": "تم إنشاء الكتالوج بنجاح",
-    "createFailed": "فشل إنشاء الكتالوج",
-    "fetchFailed": "فشل جلب الكتالوجات",
+    "createFailed": "فشل في إنشاء الكتالوج",
+    "fetchFailed": "فشل في جلب الكتالوجات",
     "addedToCatalog": "تمت الإضافة إلى الكتالوج",
     "removedFromCatalog": "تمت الإزالة من الكتالوج",
-    "addToCatalogFailed": "فشلت الإضافة إلى الكتالوج",
-    "removeFromCatalogFailed": "فشلت الإزالة من الكتالوج"
+    "addToCatalogFailed": "فشل في الإضافة إلى الكتالوج",
+    "removeFromCatalogFailed": "فشل في الإزالة من الكتالوج"
   },
   "Checkout": {
     "successTitle": "تمت عملية الدفع بنجاح!",
-    "successDescription": "شكراً لاشتراكك في بروماتات برو. لديك الآن إمكانية الوصول إلى جميع الميزات والبرومات المميزة.",
-    "cancelTitle": "تم إلغاء عملية الدفع",
+    "successDescription": "شكرًا لاشتراكك في برومبتات برو. لديك الآن حق الوصول إلى جميع الميزات والمطالبات المتميزة.",
+    "cancelTitle": "تم إلغاء الدفع",
     "cancelDescription": "تم إلغاء عملية الدفع الخاصة بك. إذا كان لديك أي أسئلة أو تحتاج إلى مساعدة، يرجى الاتصال بفريق الدعم لدينا.",
     "goToDashboard": "الذهاب إلى لوحة التحكم",
-    "explorePrompts": "استكشاف البرومات",
+    "explorePrompts": "استكشاف المطالبات",
     "backToPricing": "العودة إلى التسعير",
     "manageSubscription": "إدارة الاشتراك",
     "mySubscription": "اشتراكي",
     "goToHomepage": "الذهاب إلى الصفحة الرئيسية",
     "paymentSuccess": "تمت عملية الدفع بنجاح!",
-    "subscriptionActivated": "تم تفعيل اشتراكك. لديك الآن إمكانية الوصول إلى جميع الميزات والبرومات المميزة.",
+    "subscriptionActivated": "تم تفعيل اشتراكك. لديك الآن حق الوصول إلى جميع الميزات والمطالبات المتميزة.",
     "viewSubscription": "عرض الاشتراك",
     "refreshingSession": "جاري التحديث..."
+  },
+  "Subscription": {
+    "title": "الاشتراك",
+    "description": "إدارة اشتراكك ومعلومات الفوترة الخاصة بك.",
+    "errorLoading": "حدث خطأ أثناء تحميل معلومات اشتراكك.",
+    "unableToLoad": "تعذر تحميل تفاصيل الاشتراك. يرجى المحاولة مرة أخرى لاحقًا.",
+    "refresh": "تحديث",
+    "chooseYourPlan": "اختر خطتك",
+    "choosePlanDescription": "حدد خطة الاشتراك التي تناسبك بشكل أفضل.",
+    "subscribe": "اشترك الآن",
+    "popular": "الأكثر شعبية",
+    "bestValue": "أفضل قيمة",
+    "tabs": {
+      "overview": "نظرة عامة",
+      "paymentMethod": "طريقة الدفع",
+      "billingHistory": "سجل الفوترة"
+    },
+    "billingCycle": {
+      "title": "دورة الفوترة",
+      "description": "معلومات دورة الفوترة الخاصة بك",
+      "monthly": "فوترة شهرية",
+      "quarterly": "فوترة ربع سنوية",
+      "annual": "فوترة سنوية"
+    },
+    "nextBillingDate": {
+      "title": "تاريخ الفوترة التالي",
+      "description": "تاريخ الفوترة التالي الخاص بك"
+    },
+    "period": {
+      "month": "شهر",
+      "quarter": "3 أشهر",
+      "year": "سنة"
+    },
+    "plans": {
+      "monthly": {
+        "title": "شهري",
+        "description": "فوترة شهرية مرنة"
+      },
+      "quarterly": {
+        "title": "ربع سنوي",
+        "description": "وفر مع الفوترة ربع السنوية"
+      },
+      "annual": {
+        "title": "سنوي",
+        "description": "خطة سنوية بأفضل قيمة"
+      }
+    },
+    "features": {
+      "allPremiumPrompts": "الوصول إلى جميع المطالبات المتميزة",
+      "unlimitedAccess": "وصول غير محدود إلى جميع الميزات",
+      "prioritySupport": "دعم العملاء ذو أولوية",
+      "saveEleven": "وفر 11% مقارنة بالاشتراك الشهري",
+      "saveThirtyThree": "وفر 33% مقارنة بالاشتراك الشهري"
+    },
+    "paymentMethod": {
+      "title": "طريقة الدفع",
+      "description": "إدارة طرق الدفع الخاصة بك",
+      "expires": "تنتهي الصلاحية",
+      "update": "تحديث",
+      "noPaymentMethod": "لا توجد طريقة دفع",
+      "addToSubscribe": "أضف طريقة دفع للاشتراك",
+      "addPaymentMethod": "إضافة طريقة دفع"
+    },
+    "billingHistory": {
+      "title": "سجل الفوترة",
+      "description": "عرض سجل الفوترة الخاص بك",
+      "paid": "مدفوع",
+      "noBillingHistory": "لا يوجد سجل فوترة",
+      "subscribeToSee": "اشترك لرؤية سجل الفوترة الخاص بك"
+    }
   }
 }
