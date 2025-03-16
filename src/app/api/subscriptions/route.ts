@@ -1,24 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { createCheckoutSession } from "@/lib/stripe";
-import { z } from "zod";
-
-// Schema for validating subscription creation requests
-const subscriptionCreateSchema = z.object({
-  priceId: z.string().min(1)
-});
-
-// Alternative schema for backward compatibility
-const legacySubscriptionCreateSchema = z.object({
-  plan: z.enum(["pro"]),
-  interval: z.enum(["monthly", "quarterly", "annual"]),
-});
+import { stripe } from "@/lib/stripe";
+import { absoluteUrl } from "@/lib/utils";
+import { prisma } from "@/lib/prisma/client";
 
 // CORS headers for cross-origin requests
 const corsHeaders = {
   "Access-Control-Allow-Origin": process.env.NEXT_PUBLIC_APP_URL || "*",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type, Authorization",
   "Access-Control-Allow-Credentials": "true",
 };
@@ -30,187 +20,151 @@ export async function OPTIONS() {
 
 export async function POST(req: NextRequest) {
   try {
-    // Validate environment variables first
-    if (!process.env.STRIPE_SECRET_KEY) {
-      console.error("[API] Missing STRIPE_SECRET_KEY environment variable");
-      return NextResponse.json(
-        {
-          error: "Server configuration error",
-          code: "missing_stripe_secret",
-          message: "The Stripe secret key is not configured",
-        },
-        { status: 500, headers: corsHeaders }
-      );
-    }
+    // Add CORS headers to all responses
+    const headers = { ...corsHeaders };
 
-    if (!process.env.NEXT_PUBLIC_APP_URL) {
-      console.error("[API] Missing NEXT_PUBLIC_APP_URL environment variable");
-      return NextResponse.json(
-        {
-          error: "Server configuration error",
-          code: "missing_app_url",
-          message: "The application URL is not configured",
-        },
-        { status: 500, headers: corsHeaders }
-      );
-    }
-
-    // SIMPLIFIED SESSION RETRIEVAL - Focus on getting a valid session
-    let session;
+    // Get the session
+    const session = await getServerSession(authOptions);
     
-    try {
-      // Get the authenticated user's session using App Router approach
-      session = await getServerSession(authOptions);
-      
-      console.log("[API] Session check result:", { 
-        hasSession: !!session, 
-        hasUser: session ? !!session.user : false,
-        userEmail: session?.user?.email ? `${session.user.email.substring(0, 3)}...` : null,
-        cookies: req.headers.get('cookie') ? 'Present' : 'Missing'
-      });
-    } catch (error) {
-      console.error("[API] Error retrieving session:", error);
-      return NextResponse.json(
-        {
-          error: "Authentication error",
-          code: "session_retrieval_error",
-          message: "Failed to retrieve user session",
-          debug: { errorMessage: error instanceof Error ? error.message : "Unknown error" }
-        },
-        { status: 401, headers: corsHeaders }
-      );
-    }
-
-    // If no session is found, return unauthorized
-    if (!session?.user) {
-      console.error("[API] No authenticated user found");
-      return NextResponse.json(
-        {
-          error: "Unauthorized",
-          code: "unauthorized",
-          message: "You must be logged in to create a subscription",
-        },
-        { status: 401, headers: corsHeaders }
-      );
-    }
-
-    // Parse the JSON body from the request
-    const body = await req.json();
-    console.log("[API] Request body:", body);
-
-    // Validate the request body against our schema
-    const subscriptionData = subscriptionCreateSchema.safeParse(body);
-    let priceId = "";
-
-    if (subscriptionData.success) {
-      priceId = subscriptionData.data.priceId;
-    } else {
-      // Try parsing with the legacy schema as a fallback
-      const legacyData = legacySubscriptionCreateSchema.safeParse(body);
-      if (legacyData.success) {
-        const { plan, interval } = legacyData.data;
-        // Convert legacy format to priceId
-        if (plan === "pro") {
-          switch (interval) {
-            case "monthly":
-              priceId = process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_PRO_MONTHLY || "";
-              break;
-            case "quarterly":
-              priceId = process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_PRO_QUARTERLY || "";
-              break;
-            case "annual":
-              priceId = process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_PRO_ANNUAL || "";
-              break;
-          }
-        }
-      } else {
-        console.error("[API] Invalid request data:", body);
-        return NextResponse.json(
-          {
-            error: "Invalid request",
-            code: "invalid_request",
-            message: "Missing or invalid price ID",
-          },
-          { status: 400, headers: corsHeaders }
-        );
-      }
-    }
-
-    if (!priceId) {
-      console.error("[API] Missing price ID");
-      return NextResponse.json(
-        {
-          error: "Invalid request",
-          code: "missing_price_id",
-          message: "Price ID is required",
-        },
-        { status: 400, headers: corsHeaders }
-      );
-    }
-
-    // Get user ID and email from the session
-    const userId = session.user.id;
-    const email = session.user.email;
-
-    if (!userId || !email) {
-      console.error("[API] Missing user ID or email in session", { userId, email });
-      return NextResponse.json(
-        {
-          error: "Invalid session",
-          code: "invalid_session",
-          message: "User ID and email are required",
-        },
-        { status: 400, headers: corsHeaders }
-      );
-    }
-
-    // Setup success and cancel URLs
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL;
-    const successUrl = `${appUrl}/payment/success?session_id={CHECKOUT_SESSION_ID}`;
-    const cancelUrl = `${appUrl}/payment/canceled`;
-
-    console.log("[API] Creating checkout session with:", {
-      userId,
-      email: email.substring(0, 3) + "...",
-      priceId: priceId.substring(0, 10) + "...",
-      successUrl,
-      cancelUrl,
+    // Debug session information
+    console.log("Session in API:", {
+      hasSession: !!session,
+      hasUser: session ? !!session.user : false,
+      userId: session?.user?.id,
+      userEmail: session?.user?.email,
     });
 
-    // Create a checkout session
-    const checkoutSession = await createCheckoutSession({
-      userId,
-      email,
+    // Check if user is authenticated
+    if (!session || !session.user || !session.user.id) {
+      console.error("Authentication failed: No valid session");
+      return NextResponse.json(
+        { error: "Unauthorized", message: "You must be logged in to create a subscription", code: "auth_required" },
+        { status: 401, headers }
+      );
+    }
+
+    // Parse request body
+    const body = await req.json();
+    const { priceId } = body;
+
+    if (!priceId) {
+      console.error("Missing priceId in request");
+      return NextResponse.json(
+        { error: "Bad Request", message: "Price ID is required", code: "missing_price_id" },
+        { status: 400, headers }
+      );
+    }
+
+    // Get the user from the database
+    const user = await prisma.user.findUnique({
+      where: {
+        id: session.user.id,
+      },
+      select: {
+        id: true,
+        email: true,
+        subscriptions: {
+          select: {
+            stripeCustomerId: true,
+          },
+          where: {
+            stripeCustomerId: {
+              not: null
+            }
+          },
+          take: 1
+        }
+      },
+    });
+
+    if (!user) {
+      console.error(`User not found: ${session.user.id}`);
+      return NextResponse.json(
+        { error: "Not Found", message: "User not found", code: "user_not_found" },
+        { status: 404, headers }
+      );
+    }
+
+    // Get or create the Stripe customer
+    let customerId = user.subscriptions[0]?.stripeCustomerId;
+
+    if (!customerId) {
+      console.log(`Creating new Stripe customer for user: ${user.id}`);
+      
+      // Create a new customer in Stripe
+      const customer = await stripe.customers.create({
+        email: user.email,
+        metadata: {
+          userId: user.id,
+        },
+      });
+
+      customerId = customer.id;
+
+      // Create a subscription record with the Stripe customer ID
+      await prisma.subscription.create({
+        data: {
+          userId: user.id,
+          status: "incomplete",
+          currentPeriodStart: new Date(),
+          currentPeriodEnd: new Date(),
+          stripeCustomerId: customerId,
+          stripePriceId: priceId,
+          plan: "pro",
+          interval: "monthly", // Default, will be updated by webhook
+        },
+      });
+    }
+
+    // Create the checkout session URLs
+    const successUrl = absoluteUrl(`/checkout/success?session_id={CHECKOUT_SESSION_ID}`);
+    const cancelUrl = absoluteUrl(`/checkout/cancel`);
+
+    console.log("Creating checkout session with:", {
+      customerId,
       priceId,
       successUrl,
       cancelUrl,
     });
 
-    // Return the checkout session URL
-    return NextResponse.json({ url: checkoutSession.url }, { headers: corsHeaders });
-  } catch (error) {
-    // Handle any unexpected errors
-    console.error("[API] Unhandled error in subscription creation:", error);
-    
-    // Enhanced error reporting
-    let errorMessage = "An unexpected error occurred";
-    let errorDetails = {};
-    
-    if (error instanceof Error) {
-      errorMessage = error.message;
-      errorDetails = {
-        name: error.name,
-        stack: error.stack?.substring(0, 500) // Limit stack trace length
-      };
+    // Create the checkout session
+    const checkoutSession = await stripe.checkout.sessions.create({
+      customer: customerId,
+      line_items: [
+        {
+          price: priceId,
+          quantity: 1,
+        },
+      ],
+      mode: "subscription",
+      success_url: successUrl,
+      cancel_url: cancelUrl,
+      metadata: {
+        userId: user.id,
+      },
+      subscription_data: {
+        metadata: {
+          userId: user.id,
+        },
+      },
+    });
+
+    if (!checkoutSession.url) {
+      console.error("Failed to create checkout session URL");
+      return NextResponse.json(
+        { error: "Checkout Error", message: "Failed to create checkout session", code: "checkout_error" },
+        { status: 500, headers }
+      );
     }
+
+    console.log(`Checkout session created: ${checkoutSession.id}`);
+    return NextResponse.json({ url: checkoutSession.url }, { headers });
+  } catch (error) {
+    console.error("Subscription API error:", error);
+    const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
     
     return NextResponse.json(
-      {
-        error: "Server error",
-        code: "server_error",
-        message: errorMessage,
-        details: errorDetails
-      },
+      { error: "Server Error", message: errorMessage, code: "server_error" },
       { status: 500, headers: corsHeaders }
     );
   }

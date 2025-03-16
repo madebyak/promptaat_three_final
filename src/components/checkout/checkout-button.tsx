@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button, ButtonProps } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
-import { useSession, signIn } from "next-auth/react";
+import { useSession, signIn, signOut } from "next-auth/react";
 import { cn } from "@/lib/utils";
 
 interface CheckoutButtonProps extends ButtonProps {
@@ -21,7 +21,7 @@ export function CheckoutButton({
 }: CheckoutButtonProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
-  const { data: session, status } = useSession();
+  const { data: session, status, update } = useSession();
   
   // Debug session status
   useEffect(() => {
@@ -41,6 +41,23 @@ export function CheckoutButton({
                              document.cookie.includes("__Secure-next-auth.session-token");
     console.log("Session cookie present:", hasSessionCookie);
   }, [session, status]);
+
+  // Function to refresh the session
+  const refreshSession = useCallback(async () => {
+    try {
+      await update();
+      console.log("Session refreshed");
+    } catch (error) {
+      console.error("Failed to refresh session:", error);
+    }
+  }, [update]);
+
+  // Attempt to refresh the session on mount
+  useEffect(() => {
+    if (status === "authenticated") {
+      refreshSession();
+    }
+  }, [status, refreshSession]);
 
   const handleSubscribe = async () => {
     console.log("Subscribe clicked, session status:", status);
@@ -115,11 +132,46 @@ export function CheckoutButton({
           errorCode
         });
         
-        // Provide more user-friendly error messages based on status code
+        // Handle authentication errors specifically
         if (response.status === 401) {
-          throw new Error(locale === "ar" 
-            ? "فشل المصادقة. يرجى تسجيل الخروج وتسجيل الدخول مرة أخرى." 
-            : "Authentication failed. Please log out and log in again.");
+          console.log("Authentication error detected, attempting to refresh session");
+          
+          // Try to refresh the session first
+          await refreshSession();
+          
+          if (status === "authenticated") {
+            setError(locale === "ar" 
+              ? "فشل المصادقة. جاري إعادة المحاولة..." 
+              : "Authentication failed. Retrying...");
+            
+            // Wait a moment and try again
+            setTimeout(() => {
+              setIsLoading(false);
+              setError("");
+            }, 2000);
+            return;
+          } else {
+            // If still not authenticated, suggest logging out and back in
+            setError(locale === "ar" 
+              ? "فشل المصادقة. يرجى تسجيل الخروج وتسجيل الدخول مرة أخرى." 
+              : "Authentication failed. Please log out and log in again.");
+            
+            // Add a logout button
+            setTimeout(() => {
+              const shouldLogout = window.confirm(
+                locale === "ar" 
+                  ? "هل تريد تسجيل الخروج الآن؟" 
+                  : "Would you like to log out now?"
+              );
+              
+              if (shouldLogout) {
+                signOut({ callbackUrl: `${window.location.origin}/${locale}/auth/login?callbackUrl=${encodeURIComponent(`/${locale}/pricing`)}` });
+              }
+            }, 1000);
+            
+            setIsLoading(false);
+            return;
+          }
         } else {
           throw new Error(`${errorMessage} (${errorCode})`);
         }
@@ -145,6 +197,10 @@ export function CheckoutButton({
       );
       setIsLoading(false);
     }
+  };
+
+  const handleLogout = () => {
+    signOut({ callbackUrl: `${window.location.origin}/${locale}/auth/login?callbackUrl=${encodeURIComponent(`/${locale}/pricing`)}` });
   };
 
   return (
@@ -175,6 +231,14 @@ export function CheckoutButton({
       {error && (
         <div className="mt-2 text-red-500 text-sm">
           {error}
+          {error.includes("log in again") && (
+            <button 
+              onClick={handleLogout}
+              className="ml-2 underline text-blue-500 hover:text-blue-700"
+            >
+              {locale === "ar" ? "تسجيل الخروج" : "Log out"}
+            </button>
+          )}
         </div>
       )}
     </>

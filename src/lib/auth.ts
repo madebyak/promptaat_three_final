@@ -1,11 +1,13 @@
-import { PrismaAdapter } from "@next-auth/prisma-adapter"
 import { NextAuthOptions } from "next-auth"
+import { PrismaAdapter } from "@next-auth/prisma-adapter"
 import CredentialsProvider from "next-auth/providers/credentials"
 import GoogleProvider from "next-auth/providers/google"
 import { prisma } from "./prisma/client"
 import { comparePasswords } from "./crypto"
 
+// Use secure cookies in production, regular cookies in development
 const useSecureCookies = process.env.NODE_ENV === 'production';
+const cookieDomain = process.env.COOKIE_DOMAIN || undefined;
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
@@ -18,10 +20,10 @@ export const authOptions: NextAuthOptions = {
       name: `${useSecureCookies ? "__Secure-" : ""}next-auth.session-token`,
       options: {
         httpOnly: true,
-        sameSite: "none",  // Always use 'none' for cross-origin requests
+        sameSite: "none",
         path: "/",
-        secure: true,      // Always use secure in production
-        domain: process.env.COOKIE_DOMAIN || undefined  // Use domain with leading dot
+        secure: true,
+        domain: cookieDomain
       }
     },
     callbackUrl: {
@@ -30,7 +32,7 @@ export const authOptions: NextAuthOptions = {
         sameSite: "none",
         path: "/",
         secure: true,
-        domain: process.env.COOKIE_DOMAIN || undefined
+        domain: cookieDomain
       }
     },
     csrfToken: {
@@ -46,8 +48,6 @@ export const authOptions: NextAuthOptions = {
   pages: {
     signIn: "/auth/login",
     error: "/auth/error",
-    verifyRequest: "/auth/verify",
-    newUser: "/auth/welcome"
   },
   providers: [
     CredentialsProvider({
@@ -61,117 +61,144 @@ export const authOptions: NextAuthOptions = {
           return null
         }
 
-        const user = await prisma.user.findUnique({
-          where: {
-            email: credentials.email
+        try {
+          const user = await prisma.user.findUnique({
+            where: {
+              email: credentials.email
+            }
+          })
+
+          if (!user || !user.passwordHash) {
+            return null
           }
-        })
 
-        if (!user || !user.passwordHash) {
+          const isPasswordValid = await comparePasswords(
+            credentials.password,
+            user.passwordHash
+          )
+
+          if (!isPasswordValid) {
+            return null
+          }
+
+          // Update last login time
+          await prisma.user.update({
+            where: { id: user.id },
+            data: { lastLoginAt: new Date() }
+          });
+
+          return {
+            id: user.id,
+            email: user.email,
+            name: `${user.firstName} ${user.lastName}`,
+            emailVerified: user.emailVerified,
+            image: user.profileImageUrl,
+          }
+        } catch (error) {
+          console.error("Auth error:", error)
           return null
-        }
-
-        const isPasswordValid = await comparePasswords(
-          credentials.password,
-          user.passwordHash
-        )
-
-        if (!isPasswordValid) {
-          return null
-        }
-
-        // Update last login time
-        await prisma.user.update({
-          where: { id: user.id },
-          data: { lastLoginAt: new Date() }
-        });
-
-        return {
-          id: user.id,
-          email: user.email,
-          name: `${user.firstName} ${user.lastName}`,
-          emailVerified: user.emailVerified,
-          image: user.profileImageUrl,
         }
       }
     }),
     GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-      authorization: {
-        params: {
-          prompt: "consent",
-          access_type: "offline",
-          response_type: "code"
-        }
-      },
+      clientId: process.env.GOOGLE_CLIENT_ID || "",
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
+      allowDangerousEmailAccountLinking: true,
       profile(profile) {
+        // Explicitly type the profile to include email_verified
         return {
           id: profile.sub,
           name: profile.name,
           email: profile.email,
           image: profile.picture,
+          emailVerified: Boolean(profile.email_verified),
           firstName: profile.given_name,
           lastName: profile.family_name,
-          emailVerified: true,
-          googleId: profile.sub,
+          country: profile.locale?.split("-")[1] || "US",
         }
       },
-    })
+    }),
   ],
   callbacks: {
-    async signIn({ user, account }) {
-      // Allow OAuth without email verification
-      if (account?.provider === "google") {
-        return true;
+    async signIn({ user, account, profile }) {
+      // Only allow sign in if email is verified for Google accounts
+      if (account?.provider === "google" && profile && 'email_verified' in profile) {
+        return Boolean(profile.email_verified);
       }
 
-      // For credentials provider, check if email is verified
+      // For credentials, we check in the authorize callback
       if (account?.provider === "credentials") {
-        const dbUser = await prisma.user.findUnique({
-          where: { email: user.email as string },
-        });
-
-        if (!dbUser) {
-          return false;
-        }
-
-        // Check if user's email is verified
-        if (!dbUser.emailVerified) {
-          return `/auth/verify-email?email=${encodeURIComponent(
-            dbUser.email
-          )}`;
-        }
-
-        // Update last login timestamp
-        await prisma.user.update({
-          where: { id: dbUser.id },
-          data: { lastLoginAt: new Date() },
-        });
-
         return true;
       }
 
       // Default allow sign in
       return true;
     },
-    async session({ token, session }) {
-      if (token) {
-        // Use type assertion to satisfy TypeScript
-        const user = session.user as {
+    async jwt({ token, user, account, trigger }) {
+      // Initial sign in
+      if (user) {
+        token.id = user.id;
+        token.provider = account?.provider;
+      }
+
+      // Return previous token if the user hasn't changed
+      if (trigger !== "update" && trigger !== "signIn") {
+        return token;
+      }
+
+      // Get the latest user data from the database
+      const dbUser = await prisma.user.findUnique({
+        where: { id: token.id as string },
+        select: {
+          id: true,
+          email: true,
+          firstName: true,
+          lastName: true,
+          profileImageUrl: true,
+          emailVerified: true,
+          role: true,
+          country: true,
+        },
+      });
+
+      if (!dbUser) {
+        return token;
+      }
+
+      // Check if profile needs completion
+      const needsProfileCompletion = !dbUser.firstName || !dbUser.lastName || !dbUser.country;
+
+      return {
+        ...token,
+        emailVerified: dbUser.emailVerified,
+        isAdmin: dbUser.role === "ADMIN",
+        role: dbUser.role,
+        picture: dbUser.profileImageUrl,
+        firstName: dbUser.firstName,
+        lastName: dbUser.lastName,
+        country: dbUser.country,
+        needsProfileCompletion
+      };
+    },
+    async session({ session, token }) {
+      if (token && session.user) {
+        // Define a proper type for the extended user
+        interface ExtendedUser {
           id: string;
           name?: string | null;
           email?: string | null;
           image?: string | null;
-          isAdmin: boolean;
-          role: string;
-          emailVerified: boolean;
-          firstName: string;
-          lastName: string;
-          country: string;
-          needsProfileCompletion: boolean;
-        };
+          role?: string;
+          isAdmin?: boolean;
+          emailVerified?: boolean;
+          firstName?: string;
+          lastName?: string;
+          country?: string;
+          needsProfileCompletion?: boolean;
+        }
         
+        // Use the defined type
+        const user = session.user as ExtendedUser;
         user.id = token.id as string;
         user.role = token.role as string;
         user.isAdmin = token.isAdmin as boolean;
@@ -182,47 +209,8 @@ export const authOptions: NextAuthOptions = {
         user.country = token.country as string;
         user.needsProfileCompletion = token.needsProfileCompletion as boolean;
       }
-
       return session;
-    },
-    async jwt({ token, user, account, trigger, session }) {
-      // Initial sign in
-      if (account) {
-        token.id = user.id;
-        token.provider = account.provider;
-      }
-
-      // Return previous token if the user hasn't changed
-      const dbUser = await prisma.user.findFirst({
-        where: {
-          email: token.email!,
-        },
-      });
-
-      if (!dbUser) {
-        return token;
-      }
-
-      // Handle profile update
-      if (trigger === "update" && session) {
-        return { ...token, ...session.user };
-      }
-
-      // Check if the user needs to complete their profile (for Google users)
-      const needsProfileCompletion = 
-        dbUser.googleId && dbUser.country === "Unknown";
-
-      return {
-        id: dbUser.id,
-        name: `${dbUser.firstName} ${dbUser.lastName}`,
-        email: dbUser.email,
-        picture: dbUser.profileImageUrl,
-        emailVerified: dbUser.emailVerified,
-        firstName: dbUser.firstName,
-        lastName: dbUser.lastName,
-        country: dbUser.country,
-        needsProfileCompletion
-      };
     }
-  }
+  },
+  debug: process.env.NODE_ENV === "development",
 }
