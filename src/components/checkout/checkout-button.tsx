@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Button, ButtonProps } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { useSession, signIn, signOut } from "next-auth/react";
@@ -19,9 +19,10 @@ export function CheckoutButton({
   className,
   ...props
 }: CheckoutButtonProps) {
-  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const { data: session, status, update } = useSession();
+  const [buttonState, setButtonState] = useState<"ready" | "checking" | "loading">("checking");
+  const sessionChecked = useRef(false);
   
   // Debug session status
   useEffect(() => {
@@ -40,6 +41,12 @@ export function CheckoutButton({
     const hasSessionCookie = document.cookie.includes("next-auth.session-token") || 
                              document.cookie.includes("__Secure-next-auth.session-token");
     console.log("Session cookie present:", hasSessionCookie);
+
+    // Stabilize the button state - only update once when session is ready
+    if (status !== "loading" && !sessionChecked.current) {
+      sessionChecked.current = true;
+      setButtonState("ready");
+    }
   }, [session, status]);
 
   // Function to refresh the session
@@ -52,14 +59,17 @@ export function CheckoutButton({
     }
   }, [update]);
 
-  // Attempt to refresh the session on mount
+  // Attempt to refresh the session on mount, but only once
   useEffect(() => {
-    if (status === "authenticated") {
+    if (status === "authenticated" && !sessionChecked.current) {
       refreshSession();
+      sessionChecked.current = true;
     }
   }, [status, refreshSession]);
 
   const handleSubscribe = async () => {
+    if (buttonState !== "ready") return;
+    
     console.log("Subscribe clicked, session status:", status);
     console.log("Price ID:", priceId);
     
@@ -77,7 +87,7 @@ export function CheckoutButton({
       return;
     }
 
-    setIsLoading(true);
+    setButtonState("loading");
     setError("");
 
     try {
@@ -85,7 +95,7 @@ export function CheckoutButton({
       if (!priceId) {
         console.error("Missing priceId:", { providedPriceId: priceId });
         setError(locale === "ar" ? "معرف السعر مفقود" : "Missing price ID");
-        setIsLoading(false);
+        setButtonState("ready");
         return;
       }
       
@@ -146,7 +156,7 @@ export function CheckoutButton({
             
             // Wait a moment and try again
             setTimeout(() => {
-              setIsLoading(false);
+              setButtonState("ready");
               setError("");
             }, 2000);
             return;
@@ -169,7 +179,7 @@ export function CheckoutButton({
               }
             }, 1000);
             
-            setIsLoading(false);
+            setButtonState("ready");
             return;
           }
         } else {
@@ -195,7 +205,7 @@ export function CheckoutButton({
             ? "حدث خطأ غير معروف" 
             : "An unknown error occurred"
       );
-      setIsLoading(false);
+      setButtonState("ready");
     }
   };
 
@@ -203,30 +213,32 @@ export function CheckoutButton({
     signOut({ callbackUrl: `${window.location.origin}/${locale}/auth/login?callbackUrl=${encodeURIComponent(`/${locale}/pricing`)}` });
   };
 
+  // Determine the button text based on the current state
+  const getButtonText = () => {
+    if (buttonState === "checking") {
+      return locale === "ar" ? "التحقق من الجلسة..." : "Checking session...";
+    } else if (buttonState === "loading") {
+      return locale === "ar" ? "جارٍ التحميل..." : "Loading...";
+    } else {
+      return children;
+    }
+  };
+
   return (
     <>
       <Button
         onClick={handleSubscribe}
-        disabled={isLoading || status === "loading"}
+        disabled={buttonState !== "ready"}
         className={cn(
           "relative bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700",
           className
         )}
         {...props}
       >
-        {isLoading ? (
-          <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            {locale === "ar" ? "جارٍ التحميل..." : "Loading..."}
-          </>
-        ) : status === "loading" ? (
-          <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            {locale === "ar" ? "التحقق من الجلسة..." : "Checking session..."}
-          </>
-        ) : (
-          children
+        {buttonState !== "ready" && (
+          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
         )}
+        {getButtonText()}
       </Button>
       {error && (
         <div className="mt-2 text-red-500 text-sm">
