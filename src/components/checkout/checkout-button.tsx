@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useToast } from "@/components/ui/use-toast";
 import { Loader2 } from "lucide-react";
 import { useSession } from "next-auth/react";
+import { cn } from "@/lib/utils";
 
 interface CheckoutButtonProps extends ButtonProps {
   priceId: string;
@@ -20,6 +21,7 @@ export function CheckoutButton({
   ...props
 }: CheckoutButtonProps) {
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
   const { toast } = useToast();
   const { data: session } = useSession();
@@ -53,17 +55,44 @@ export function CheckoutButton({
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: "Unknown error" }));
-        console.error("Checkout error:", {
-          status: response.status,
-          statusText: response.statusText,
-          error: errorData.error || "Unknown error",
-          priceId,
-        });
-        throw new Error(errorData.error || "Something went wrong");
+        // Enhanced error handling with full response text
+        let errorText = "";
+        try {
+          // Try to get the full response text for troubleshooting
+          errorText = await response.text();
+          console.error("Raw error response:", errorText);
+          
+          // Try to parse as JSON if possible
+          const errorData = JSON.parse(errorText);
+          console.error("Checkout error:", {
+            status: response.status,
+            statusText: response.statusText,
+            error: errorData.error || "Unknown error",
+            message: errorData.message || "No message provided",
+            priceId,
+          });
+          setError(errorData.error || "Something went wrong");
+        } catch (parseError) {
+          // If parsing fails, log the raw response
+          console.error("Error parsing response:", parseError);
+          console.error("Full response status:", response.status, response.statusText);
+          console.error("Raw response body:", errorText);
+          setError(`Error ${response.status}: ${response.statusText}`);
+        }
+        
+        setIsLoading(false);
+        return;
       }
 
-      const data = await response.json();
+      let data;
+      try {
+        data = await response.json();
+      } catch (parseError) {
+        console.error("Error parsing success response:", parseError);
+        setError("Error processing checkout response");
+        setIsLoading(false);
+        return;
+      }
 
       // Redirect to Stripe Checkout
       if (data.url) {
@@ -73,12 +102,11 @@ export function CheckoutButton({
         throw new Error("No checkout URL was provided");
       }
     } catch (error) {
-      console.error("Error during checkout:", error);
+      console.error("Checkout button error:", error);
+      setError(error instanceof Error ? error.message : "An unexpected error occurred");
       toast({
-        title: locale === "ar" ? "حدث خطأ" : "Error",
-        description: locale === "ar" 
-          ? "حدث خطأ أثناء معالجة الدفع. يرجى المحاولة مرة أخرى." 
-          : `An error occurred during checkout. Please try again. ${error instanceof Error ? error.message : ''}`,
+        title: "Error",
+        description: error instanceof Error ? error.message : "Something went wrong",
         variant: "destructive",
       });
     } finally {
@@ -87,15 +115,30 @@ export function CheckoutButton({
   };
 
   return (
-    <Button onClick={handleCheckout} disabled={isLoading} {...props}>
-      {isLoading ? (
-        <>
-          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          {locale === "ar" ? "جارٍ المعالجة..." : "Processing..."}
-        </>
-      ) : (
-        children
+    <>
+      <Button
+        onClick={handleCheckout}
+        disabled={isLoading || !session}
+        className={cn(
+          "relative bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700",
+          props.className
+        )}
+        {...props}
+      >
+        {isLoading ? (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            {locale === "ar" ? "جارٍ المعالجة..." : "Processing..."}
+          </>
+        ) : (
+          children
+        )}
+      </Button>
+      {error && (
+        <div className="mt-2 p-2 text-sm text-red-500 bg-red-50 border border-red-200 rounded-md">
+          Error: {error}
+        </div>
       )}
-    </Button>
+    </>
   );
 }
