@@ -1,5 +1,8 @@
 "use client";
 
+// Updated to use NEXT_PUBLIC environment variables for Stripe price IDs
+// This ensures proper client-side access to these variables
+
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
