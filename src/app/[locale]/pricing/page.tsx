@@ -219,8 +219,7 @@ export default function PricingPage() {
           </div>
           
           <CheckoutButton 
-            plan="pro" 
-            interval={billingCycle} 
+            priceId="price_1OoMzMFwQOsgnPVVXkZcuDCN" 
             locale={locale}
             className="w-full bg-gradient-to-r from-primary to-purple-600 hover:opacity-90 shadow-md"
           >
@@ -275,8 +274,7 @@ export default function PricingPage() {
             })}
           </p>
           <CheckoutButton 
-            plan="pro" 
-            interval={billingCycle} 
+            priceId="price_1OoN0MFwQOsgnPVVXRBDSzjV" 
             locale={locale}
             className="px-10 py-7 text-lg font-medium bg-gradient-to-r from-primary to-purple-600 hover:opacity-90 shadow-md"
           >

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
-import { createCheckoutSession } from "@/lib/stripe";
+import { createCheckoutSession, getPriceId } from "@/lib/stripe";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma/client";
 
@@ -73,6 +73,9 @@ export async function POST(req: NextRequest) {
       );
     }
     
+    // Get the price ID based on the plan and interval
+    const priceId = getPriceId(plan, interval);
+    
     // Generate success and cancel URLs
     const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
     const successUrl = `${baseUrl}/subscription/success?session_id={CHECKOUT_SESSION_ID}`;
@@ -82,8 +85,7 @@ export async function POST(req: NextRequest) {
     const checkoutSession = await createCheckoutSession({
       userId: user.id,
       email: user.email,
-      plan,
-      interval,
+      priceId,
       successUrl,
       cancelUrl,
     });
