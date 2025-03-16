@@ -3,7 +3,6 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { createCheckoutSession } from "@/lib/stripe";
 import { z } from "zod";
-import { prisma } from "@/lib/prisma/client";
 
 // Schema for validating subscription creation requests
 const subscriptionCreateSchema = z.object({
@@ -43,10 +42,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Get the authenticated user's session - ensure to pass proper headers from the request
+    // SIMPLIFIED SESSION RETRIEVAL - Focus on getting a valid session
     let session;
+    
     try {
-      // In App Router, getServerSession doesn't need request/response objects
+      // Get the authenticated user's session using App Router approach
       session = await getServerSession(authOptions);
       
       console.log("[API] Session check result:", { 
@@ -54,297 +54,147 @@ export async function POST(req: NextRequest) {
         hasUser: session ? !!session.user : false,
         userEmail: session?.user?.email ? `${session.user.email.substring(0, 3)}...` : null
       });
-      
-      // Debug auth headers
-      const authHeader = req.headers.get('authorization');
-      const cookieHeader = req.headers.get('cookie');
-      console.log("[API] Auth headers present:", { 
-        hasAuthHeader: !!authHeader,
-        hasCookies: !!cookieHeader,
-        cookieLength: cookieHeader ? cookieHeader.length : 0
-      });
-      
-      // If no session found via regular getServerSession, implement enhanced debugging
-      if (!session?.user) {
-        console.log("[API] No session found via getServerSession, implementing enhanced debugging");
-        
-        // Enhanced debugging for cookie-based session in production
-        const cookieValue = req.headers.get('cookie');
-        console.log("[API] Session debugging:", {
-          hasRequestObject: !!req,
-          hasHeaders: req ? !!req.headers : false,
-          hasCookies: !!cookieValue,
-          nextAuthURL: process.env.NEXTAUTH_URL || 'not set',
-          appURL: process.env.NEXT_PUBLIC_APP_URL || 'not set',
-          nextPublicAuthURL: process.env.NEXT_PUBLIC_NEXTAUTH_URL || 'not set'
-        });
-        
-        // Log the presence of specific cookies for debugging
-        if (cookieValue) {
-          const hasSessionToken = cookieValue.includes('next-auth.session-token');
-          const hasSecureSessionToken = cookieValue.includes('__Secure-next-auth.session-token');
-          console.log("[API] Auth cookies present:", { 
-            hasSessionToken,
-            hasSecureSessionToken,
-            isProduction: process.env.NODE_ENV === 'production'
-          });
-        }
-        
-        // If we get here in production with cookies but no session, we have a fundamental issue
-        if (cookieValue && process.env.NODE_ENV === 'production') {
-          console.error("[API] CRITICAL: Session extraction failed despite cookies being present");
-        }
-      }
-    } catch (sessionError) {
-      console.error("[API] Error getting session:", sessionError);
-      console.error("[API] Session error details:", sessionError instanceof Error ? {
-        name: sessionError.name,
-        message: sessionError.message,
-        stack: sessionError.stack
-      } : "Unknown error type");
-      
+    } catch (error) {
+      console.error("[API] Error retrieving session:", error);
       return NextResponse.json(
         {
           error: "Authentication error",
-          code: "session_error",
-          message: sessionError instanceof Error ? sessionError.message : "Unknown error",
+          code: "session_retrieval_error",
+          message: "Failed to retrieve user session",
         },
         { status: 401 }
       );
     }
 
-    if (!session?.user?.email) {
-      console.log("[API] Authentication error: No user session found");
+    // If no session is found, return unauthorized
+    if (!session?.user) {
+      console.error("[API] No authenticated user found");
       return NextResponse.json(
         {
-          error: "You must be logged in to create a subscription",
-          code: "unauthenticated"
+          error: "Unauthorized",
+          code: "unauthorized",
+          message: "You must be logged in to create a subscription",
         },
         { status: 401 }
       );
     }
 
-    console.log(`[API] Processing subscription request for user: ${session.user.email}`);
+    // Parse the JSON body from the request
+    const body = await req.json();
+    console.log("[API] Request body:", body);
 
-    // Parse and validate the request body
-    let body;
-    try {
-      body = await req.json();
-    } catch (error) {
-      console.error("[API] Error parsing request body:", error);
-      return NextResponse.json(
-        {
-          error: "Invalid JSON in request body",
-        },
-        { status: 400 }
-      );
-    }
+    // Validate the request body against our schema
+    const subscriptionData = subscriptionCreateSchema.safeParse(body);
+    let priceId = "";
 
-    // Try to validate with the new schema first
-    const validatedData = subscriptionCreateSchema.safeParse(body);
-
-    // If new schema validation fails, try the legacy schema
-    let priceId: string;
-    if (!validatedData.success) {
-      console.log("[API] Primary schema validation failed, trying legacy schema");
-
-      const legacyValidation = legacySubscriptionCreateSchema.safeParse(body);
-
-      if (!legacyValidation.success) {
-        console.error("[API] Both schema validations failed");
-        console.error("[API] Validation errors:", JSON.stringify(validatedData.error.format()));
-        return NextResponse.json(
-          {
-            error: "Invalid request data",
-            details: validatedData.error.format(),
-          },
-          { status: 400 }
-        );
-      }
-
-      // For legacy requests, get the price ID from the plan and interval
-      const { plan, interval } = legacyValidation.data;
-      console.log(`[API] Legacy request with plan: ${plan}, interval: ${interval}`);
-
-      // Use both NEXT_PUBLIC_ prefixed variables and non-prefixed ones for backward compatibility
-      if (plan === "pro") {
-        if (interval === "monthly") {
-          priceId = process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_PRO_MONTHLY || process.env.STRIPE_PRICE_ID_PRO_MONTHLY || "";
-        } else if (interval === "quarterly") {
-          priceId = process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_PRO_QUARTERLY || process.env.STRIPE_PRICE_ID_PRO_QUARTERLY || "";
-        } else if (interval === "annual") {
-          priceId = process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_PRO_ANNUAL || process.env.STRIPE_PRICE_ID_PRO_ANNUAL || "";
-        } else {
-          console.error(`[API] Invalid interval: ${interval}`);
-          return NextResponse.json(
-            {
-              error: "Invalid interval",
-            },
-            { status: 400 }
-          );
-        }
-      } else {
-        console.error(`[API] Invalid plan: ${plan}`);
-        return NextResponse.json(
-          {
-            error: "Invalid plan",
-          },
-          { status: 400 }
-        );
-      }
+    if (subscriptionData.success) {
+      priceId = subscriptionData.data.priceId;
     } else {
-      priceId = validatedData.data.priceId;
-      console.log(`[API] Using provided priceId: ${priceId}`);
-    }
-
-    // Validate that we have a valid priceId
-    if (!priceId) {
-      console.error("[API] No valid priceId found");
-      return NextResponse.json(
-        {
-          error: "Invalid price ID",
-        },
-        { status: 400 }
-      );
-    }
-
-    // Log the priceId for debugging
-    console.log("[API] Creating subscription with priceId:", priceId);
-
-    // Get the user from the database
-    let user;
-    try {
-      user = await prisma.user.findUnique({
-        where: {
-          email: session.user.email,
-        },
-        include: {
-          subscriptions: {
-            where: {
-              OR: [
-                { status: "active" },
-                { status: "trialing" }
-              ]
-            },
-            orderBy: {
-              createdAt: "desc"
-            }
+      // Try parsing with the legacy schema as a fallback
+      const legacyData = legacySubscriptionCreateSchema.safeParse(body);
+      if (legacyData.success) {
+        const { plan, interval } = legacyData.data;
+        // Convert legacy format to priceId
+        if (plan === "pro") {
+          switch (interval) {
+            case "monthly":
+              priceId = process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_PRO_MONTHLY || "";
+              break;
+            case "quarterly":
+              priceId = process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_PRO_QUARTERLY || "";
+              break;
+            case "annual":
+              priceId = process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_PRO_ANNUAL || "";
+              break;
           }
         }
-      });
-      console.log("[API] User lookup result:", { 
-        found: !!user, 
-        userId: user?.id,
-        subscriptionsCount: user?.subscriptions?.length || 0
-      });
-    } catch (error) {
-      console.error("[API] Error fetching user:", error);
-      console.error("[API] Error details:", error instanceof Error ? {
-        name: error.name,
-        message: error.message,
-        stack: error.stack
-      } : "Unknown error type");
-
-      return NextResponse.json(
-        {
-          error: "Database error when fetching user",
-          message: error instanceof Error ? error.message : "Unknown error",
-        },
-        { status: 500 }
-      );
+      } else {
+        console.error("[API] Invalid request data:", body);
+        return NextResponse.json(
+          {
+            error: "Invalid request",
+            code: "invalid_request",
+            message: "Missing or invalid price ID",
+          },
+          { status: 400 }
+        );
+      }
     }
 
-    if (!user) {
-      console.error(`[API] User not found for email: ${session.user.email}`);
+    if (!priceId) {
+      console.error("[API] Missing price ID");
       return NextResponse.json(
         {
-          error: "User not found",
-        },
-        { status: 404 }
-      );
-    }
-
-    console.log(`[API] User found: ${user.id}`);
-
-    // Check if user already has an active subscription
-    const activeSubscription = user.subscriptions.length > 0 ? user.subscriptions[0] : null;
-
-    if (activeSubscription && activeSubscription.status === "active") {
-      console.log(`[API] User already has an active subscription: ${activeSubscription.id}`);
-      return NextResponse.json(
-        {
-          error: "User already has an active subscription",
+          error: "Invalid request",
+          code: "missing_price_id",
+          message: "Price ID is required",
         },
         { status: 400 }
       );
     }
 
-    // Generate success and cancel URLs
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || "http://localhost:3000";
-    const successUrl = `${baseUrl}/subscription/success?session_id={CHECKOUT_SESSION_ID}`;
-    const cancelUrl = `${baseUrl}/pricing?canceled=true`;
+    // Get user ID and email from the session
+    const userId = session.user.id;
+    const email = session.user.email;
 
-    console.log(`[API] Success URL: ${successUrl}`);
-    console.log(`[API] Cancel URL: ${cancelUrl}`);
-
-    // Call the stripe createCheckoutSession function with detailed error handling
-    let checkoutSession;
-    try {
-      // Log environment variables for debugging (without exposing sensitive values)
-      console.log("[API] Using Stripe environment:", {
-        hasSecretKey: !!process.env.STRIPE_SECRET_KEY,
-        hasWebhookSecret: !!process.env.STRIPE_WEBHOOK_SECRET,
-        successUrl,
-        cancelUrl
-      });
-
-      checkoutSession = await createCheckoutSession({
-        userId: user.id,
-        email: user.email,
-        priceId,
-        successUrl,
-        cancelUrl,
-      });
-
-      console.log(`[API] Checkout session created: ${checkoutSession.id}`);
-    } catch (error) {
-      console.error("[API] Error creating Stripe checkout session:", error);
-      console.error("[API] Error details:", error instanceof Error ? {
-        name: error.name,
-        message: error.message,
-        stack: error.stack
-      } : "Unknown error type");
-
-      // Check if it's a Stripe error with more details
-      if (error && typeof error === 'object' && 'type' in error) {
-        console.error("[API] Stripe error details:", error);
-      }
-
+    if (!userId || !email) {
+      console.error("[API] Missing user ID or email in session", { userId, email });
       return NextResponse.json(
         {
-          error: "Failed to create Stripe checkout session",
-          message: error instanceof Error ? error.message : "Unknown error",
-          code: "stripe-token" // Add the specific error code that's showing up in the UI
+          error: "Invalid session",
+          code: "invalid_session",
+          message: "User ID and email are required",
         },
-        { status: 500 }
+        { status: 400 }
       );
     }
 
-    // Return the checkout URL
+    // Setup success and cancel URLs
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+    const successUrl = `${appUrl}/payment/success?session_id={CHECKOUT_SESSION_ID}`;
+    const cancelUrl = `${appUrl}/payment/canceled`;
+
+    console.log("[API] Creating checkout session with:", {
+      userId,
+      email: email.substring(0, 3) + "...",
+      priceId: priceId.substring(0, 10) + "...",
+      successUrl,
+      cancelUrl,
+    });
+
+    // Create a checkout session
+    const checkoutSession = await createCheckoutSession({
+      userId,
+      email,
+      priceId,
+      successUrl,
+      cancelUrl,
+    });
+
+    // Return the checkout session URL
     return NextResponse.json({ url: checkoutSession.url });
-
   } catch (error) {
+    // Handle any unexpected errors
     console.error("[API] Unhandled error in subscription creation:", error);
-    console.error("[API] Error details:", error instanceof Error ? {
-      name: error.name,
-      message: error.message,
-      stack: error.stack
-    } : "Unknown error type");
-
+    
+    // Enhanced error reporting
+    let errorMessage = "An unexpected error occurred";
+    let errorDetails = {};
+    
+    if (error instanceof Error) {
+      errorMessage = error.message;
+      errorDetails = {
+        name: error.name,
+        stack: error.stack?.substring(0, 500) // Limit stack trace length
+      };
+    }
+    
     return NextResponse.json(
       {
-        error: "Failed to create subscription",
-        message: error instanceof Error ? error.message : "Unknown error",
+        error: "Server error",
+        code: "server_error",
+        message: errorMessage,
+        details: errorDetails
       },
       { status: 500 }
     );
@@ -359,58 +209,15 @@ export async function GET() {
     if (!session?.user?.email) {
       return NextResponse.json(
         {
-          error: "You must be logged in to view subscription details",
+          error: "You must be logged in to view subscriptions",
         },
         { status: 401 }
       );
     }
 
-    // Get the user from the database with subscription details
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
-      include: {
-        subscriptions: {
-          where: {
-            OR: [
-              { status: "active" },
-              { status: "trialing" }
-            ]
-          },
-          orderBy: {
-            createdAt: "desc"
-          },
-          take: 1
-        }
-      }
-    });
-
-    if (!user) {
-      return NextResponse.json(
-        {
-          error: "User not found",
-        },
-        { status: 404 }
-      );
-    }
-
-    // Return the user's subscription details
-    return NextResponse.json({
-      subscription: user.subscriptions.length > 0 ? user.subscriptions[0] : null,
-    });
-
+    return NextResponse.json({ status: "Not implemented" }, { status: 501 });
   } catch (error) {
-    console.error("Error fetching subscription:", error);
-    console.error("[API] Error details:", error instanceof Error ? {
-      name: error.name,
-      message: error.message,
-      stack: error.stack
-    } : "Unknown error type");
-
-    return NextResponse.json(
-      {
-        error: "Failed to fetch subscription details",
-      },
-      { status: 500 }
-    );
+    console.error("Error in GET /api/subscriptions:", error);
+    return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }
