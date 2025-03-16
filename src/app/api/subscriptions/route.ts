@@ -46,6 +46,7 @@ export async function POST(req: NextRequest) {
     // Get the authenticated user's session - ensure to pass proper headers from the request
     let session;
     try {
+      // In App Router, getServerSession doesn't need request/response objects
       session = await getServerSession(authOptions);
       
       console.log("[API] Session check result:", { 
@@ -63,14 +64,35 @@ export async function POST(req: NextRequest) {
         cookieLength: cookieHeader ? cookieHeader.length : 0
       });
       
-      // If no session found via regular getServerSession, try to extract from cookies directly
+      // If no session found via regular getServerSession, implement enhanced debugging
       if (!session?.user) {
-        console.log("[API] No session found via getServerSession, checking alternatives");
+        console.log("[API] No session found via getServerSession, implementing enhanced debugging");
         
-        // Try to extract user from request directly if possible
-        // This is for debugging only - won't include user data but helps identify the issue
-        if (cookieHeader) {
-          console.log("[API] Cookie header exists but session not extracted properly");
+        // Enhanced debugging for cookie-based session in production
+        const cookieValue = req.headers.get('cookie');
+        console.log("[API] Session debugging:", {
+          hasRequestObject: !!req,
+          hasHeaders: req ? !!req.headers : false,
+          hasCookies: !!cookieValue,
+          nextAuthURL: process.env.NEXTAUTH_URL || 'not set',
+          appURL: process.env.NEXT_PUBLIC_APP_URL || 'not set',
+          nextPublicAuthURL: process.env.NEXT_PUBLIC_NEXTAUTH_URL || 'not set'
+        });
+        
+        // Log the presence of specific cookies for debugging
+        if (cookieValue) {
+          const hasSessionToken = cookieValue.includes('next-auth.session-token');
+          const hasSecureSessionToken = cookieValue.includes('__Secure-next-auth.session-token');
+          console.log("[API] Auth cookies present:", { 
+            hasSessionToken,
+            hasSecureSessionToken,
+            isProduction: process.env.NODE_ENV === 'production'
+          });
+        }
+        
+        // If we get here in production with cookies but no session, we have a fundamental issue
+        if (cookieValue && process.env.NODE_ENV === 'production') {
+          console.error("[API] CRITICAL: Session extraction failed despite cookies being present");
         }
       }
     } catch (sessionError) {
@@ -331,7 +353,7 @@ export async function POST(req: NextRequest) {
 
 export async function GET() {
   try {
-    // Get the authenticated user's session
+    // Get the authenticated user's session - fixed for App Router
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.email) {
