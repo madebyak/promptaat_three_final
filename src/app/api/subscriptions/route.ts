@@ -68,15 +68,14 @@ export async function POST(req: NextRequest) {
       const { plan, interval } = legacyValidation.data;
       console.log(`[API] Legacy request with plan: ${plan}, interval: ${interval}`);
       
-      // This would use the getPriceId function, but since we're moving away from it,
-      // we'll handle it directly based on the environment variables
+      // Use both NEXT_PUBLIC_ prefixed variables and non-prefixed ones for backward compatibility
       if (plan === "pro") {
         if (interval === "monthly") {
-          priceId = process.env.STRIPE_PRICE_ID_PRO_MONTHLY || "";
+          priceId = process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_PRO_MONTHLY || process.env.STRIPE_PRICE_ID_PRO_MONTHLY || "";
         } else if (interval === "quarterly") {
-          priceId = process.env.STRIPE_PRICE_ID_PRO_QUARTERLY || "";
+          priceId = process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_PRO_QUARTERLY || process.env.STRIPE_PRICE_ID_PRO_QUARTERLY || "";
         } else if (interval === "annual") {
-          priceId = process.env.STRIPE_PRICE_ID_PRO_ANNUAL || "";
+          priceId = process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_PRO_ANNUAL || process.env.STRIPE_PRICE_ID_PRO_ANNUAL || "";
         } else {
           console.error(`[API] Invalid interval: ${interval}`);
           return NextResponse.json(
@@ -160,7 +159,7 @@ export async function POST(req: NextRequest) {
     }
     
     // Generate success and cancel URLs
-    const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
+    const baseUrl = process.env.NEXT_PUBLIC_NEXTAUTH_URL || process.env.NEXTAUTH_URL || "http://localhost:3000";
     const successUrl = `${baseUrl}/subscription/success?session_id={CHECKOUT_SESSION_ID}`;
     const cancelUrl = `${baseUrl}/pricing`;
     

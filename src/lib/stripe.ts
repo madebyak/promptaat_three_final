@@ -31,9 +31,10 @@ export const stripe = getStripe();
 // These should be created in the Stripe dashboard and referenced here
 export const STRIPE_PRICE_IDS = {
   pro: {
-    monthly: process.env.STRIPE_PRICE_ID_PRO_MONTHLY || "",
-    quarterly: process.env.STRIPE_PRICE_ID_PRO_QUARTERLY || "",
-    annual: process.env.STRIPE_PRICE_ID_PRO_ANNUAL || "",
+    // Use the NEXT_PUBLIC_ prefixed variables to ensure consistency with client-side
+    monthly: process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_PRO_MONTHLY || process.env.STRIPE_PRICE_ID_PRO_MONTHLY || "",
+    quarterly: process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_PRO_QUARTERLY || process.env.STRIPE_PRICE_ID_PRO_QUARTERLY || "",
+    annual: process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_PRO_ANNUAL || process.env.STRIPE_PRICE_ID_PRO_ANNUAL || "",
   },
 };
 
