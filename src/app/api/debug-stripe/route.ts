@@ -1,16 +1,18 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { headers, cookies } from "next/headers";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { type ReadonlyRequestCookies } from "next/dist/server/web/spec-extension/adapters/request-cookies";
+import { type ReadonlyHeaders } from "next/dist/server/web/spec-extension/adapters/headers";
 
 /**
  * Debug endpoint to help diagnose Stripe integration issues
  * This will test various aspects of the authentication and session handling
  */
-export async function GET(req: NextRequest) {
+export async function GET() {
   // 1. Get all cookies directly
-  const allCookies = cookies();
-  const cookieList = allCookies.getAll().map(c => ({ 
+  const allCookies = cookies() as unknown as ReadonlyRequestCookies;
+  const cookieList = allCookies.getAll().map((c: { name: string; value: string }) => ({ 
     name: c.name,
     // Mask sensitive values
     value: c.name.includes('session') ? `${c.value.substring(0, 8)}...` : 'present'
@@ -21,13 +23,27 @@ export async function GET(req: NextRequest) {
   const hasSecureSessionCookie = allCookies.has('__Secure-next-auth.session-token');
   
   // 3. Get headers
-  const headersList = headers();
-  const headerItems = Object.fromEntries(
-    [...headersList.entries()].map(([key, value]) => [
-      key, 
-      key.includes('cookie') ? `${value.substring(0, 20)}...` : value
-    ])
-  );
+  const headersList = headers() as unknown as ReadonlyHeaders;
+  const headerEntries: [string, string][] = [];
+  
+  // Convert headers to an array manually
+  // Using a simple approach to avoid TypeScript errors with headers().entries()
+  const headerKeys = [
+    'host', 'user-agent', 'accept', 'accept-language', 'cookie',
+    'referer', 'sec-fetch-dest', 'sec-fetch-mode', 'sec-fetch-site'
+  ];
+  
+  for (const key of headerKeys) {
+    const value = headersList.get(key);
+    if (value) {
+      headerEntries.push([
+        key, 
+        key.includes('cookie') ? `${value.substring(0, 20)}...` : value
+      ]);
+    }
+  }
+  
+  const headerItems = Object.fromEntries(headerEntries);
   
   // 4. Try to get session
   let session;
@@ -49,29 +65,24 @@ export async function GET(req: NextRequest) {
     NODE_ENV: process.env.NODE_ENV,
   };
   
-  // Return comprehensive diagnostic data
   return NextResponse.json({
-    diagnostics: {
-      authentication: {
-        hasSession: !!session,
-        hasUser: session ? !!session.user : false,
-        userEmail: session?.user?.email ? `${session.user.email.substring(0, 3)}...` : null,
-        sessionError,
-        cookies: {
-          count: cookieList.length,
-          hasSessionCookie,
-          hasSecureSessionCookie,
-          list: cookieList
-        },
+    cookies: {
+      list: cookieList,
+      hasSessionCookie,
+      hasSecureSessionCookie,
+    },
+    headers: headerItems,
+    session: session ? {
+      user: {
+        id: session.user.id,
+        name: session.user.name,
+        email: session.user.email?.substring(0, 3) + '...',
+        image: session.user.image ? 'present' : 'missing',
       },
-      request: {
-        url: req.url,
-        method: req.method,
-        hasHeaders: !!headersList,
-        headers: headerItems,
-      },
-      environment: envVars,
-      timestamp: new Date().toISOString(),
-    }
+      expires: session.expires,
+    } : null,
+    sessionError,
+    environment: envVars,
+    timestamp: new Date().toISOString(),
   });
 }
