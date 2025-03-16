@@ -5,6 +5,7 @@ import { Button, ButtonProps } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/components/ui/use-toast";
 import { Loader2 } from "lucide-react";
+import { useSession } from "next-auth/react";
 
 interface CheckoutButtonProps extends ButtonProps {
   priceId: string;
@@ -21,20 +22,33 @@ export function CheckoutButton({
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
+  const { data: session } = useSession();
 
   const handleCheckout = async () => {
     try {
+      // If user is not logged in, redirect to login page
+      if (!session) {
+        router.push(`/${locale}/auth/login?redirect=/pricing`);
+        return;
+      }
+
       setIsLoading(true);
 
+      // Log checkout attempt for debugging
+      console.log("Starting checkout process:", {
+        priceId,
+        locale,
+        userId: session?.user?.id,
+      });
+
       // Call the checkout API route
-      const response = await fetch("/api/stripe/checkout", {
+      const response = await fetch("/api/subscriptions", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
           priceId,
-          locale,
         }),
       });
 
