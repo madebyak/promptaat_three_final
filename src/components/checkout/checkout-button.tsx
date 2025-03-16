@@ -27,14 +27,48 @@ export function CheckoutButton({
   const { data: session } = useSession();
 
   const handleCheckout = async () => {
+    setIsLoading(true);
+    setError(null);
+
+    if (!session?.user?.email) {
+      toast({
+        title: "Error",
+        description: locale === "ar" ? "يرجى تسجيل الدخول أولاً" : "Please sign in first",
+        variant: "destructive",
+      });
+      router.push(`/${locale}/auth/signin?callbackUrl=/${locale}/pricing`);
+      setIsLoading(false);
+      return;
+    }
+
     try {
-      // If user is not logged in, redirect to login page
-      if (!session) {
-        router.push(`/${locale}/auth/login?redirect=/pricing`);
+      // Enhanced validation and logging for priceId
+      if (!priceId) {
+        console.error("Missing priceId in checkout button");
+        setError("Missing price ID");
+        setIsLoading(false);
         return;
       }
 
-      setIsLoading(true);
+      // Log the price ID for debugging
+      console.log("Checkout attempted with:", {
+        priceId,
+        isValid: priceId.startsWith('price_'),
+        length: priceId.length
+      });
+
+      // Basic validation for Stripe price ID format
+      if (!priceId.startsWith('price_')) {
+        console.error("Invalid price ID format:", priceId);
+        setError("Invalid price ID format");
+        setIsLoading(false);
+        return;
+      }
+
+      // Track checkout button click
+      console.log("Tracking checkout:", {
+        userId: session?.user?.id,
+      });
 
       // Log checkout attempt for debugging
       console.log("Starting checkout process:", {
