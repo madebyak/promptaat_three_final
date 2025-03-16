@@ -5,6 +5,8 @@ import GoogleProvider from "next-auth/providers/google"
 import { prisma } from "./prisma/client"
 import { comparePasswords } from "./crypto"
 
+const useSecureCookies = process.env.NODE_ENV === 'production';
+
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
   session: {
@@ -13,36 +15,31 @@ export const authOptions: NextAuthOptions = {
   },
   cookies: {
     sessionToken: {
-      name: process.env.NODE_ENV === 'production' 
-        ? `__Secure-next-auth.session-token` 
-        : `next-auth.session-token`,
+      name: `${useSecureCookies ? "__Secure-" : ""}next-auth.session-token`,
       options: {
         httpOnly: true,
-        sameSite: 'lax',
-        path: '/',
-        secure: process.env.NODE_ENV === 'production',
+        sameSite: "none",  // Always use 'none' for cross-origin requests
+        path: "/",
+        secure: true,      // Always use secure in production
+        domain: process.env.COOKIE_DOMAIN || undefined  // Use domain with leading dot
       }
     },
     callbackUrl: {
-      name: process.env.NODE_ENV === 'production' 
-        ? `__Secure-next-auth.callback-url` 
-        : `next-auth.callback-url`,
+      name: `${useSecureCookies ? "__Secure-" : ""}next-auth.callback-url`,
       options: {
-        httpOnly: true,
-        sameSite: 'lax',
-        path: '/',
-        secure: process.env.NODE_ENV === 'production',
+        sameSite: "none",
+        path: "/",
+        secure: true,
+        domain: process.env.COOKIE_DOMAIN || undefined
       }
     },
     csrfToken: {
-      name: process.env.NODE_ENV === 'production' 
-        ? `__Host-next-auth.csrf-token` 
-        : `next-auth.csrf-token`,
+      name: `${useSecureCookies ? "__Host-" : ""}next-auth.csrf-token`,
       options: {
         httpOnly: true,
-        sameSite: 'lax',
-        path: '/',
-        secure: process.env.NODE_ENV === 'production',
+        sameSite: "none",
+        path: "/",
+        secure: true
       }
     }
   },

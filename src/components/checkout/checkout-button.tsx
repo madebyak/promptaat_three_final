@@ -31,6 +31,15 @@ export function CheckoutButton({
       userEmail: session.user?.email,
       userId: session.user?.id
     } : null);
+    
+    // Check for cookie presence
+    const hasCookies = document.cookie.length > 0;
+    console.log("Cookies present:", hasCookies);
+    
+    // Check for specific session cookie
+    const hasSessionCookie = document.cookie.includes("next-auth.session-token") || 
+                             document.cookie.includes("__Secure-next-auth.session-token");
+    console.log("Session cookie present:", hasSessionCookie);
   }, [session, status]);
 
   const handleSubscribe = async () => {
@@ -44,7 +53,9 @@ export function CheckoutButton({
     
     if (!session || status !== "authenticated") {
       console.log("No active session, redirecting to login");
+      // Store the current URL to redirect back after login
       const callbackUrl = `${window.location.origin}/${locale}/pricing`;
+      console.log("Setting callback URL:", callbackUrl);
       signIn(undefined, { callbackUrl });
       return;
     }
@@ -67,15 +78,27 @@ export function CheckoutButton({
         appUrl: process.env.NEXT_PUBLIC_APP_URL
       });
 
+      // Get the origin for API requests
+      const apiOrigin = process.env.NEXT_PUBLIC_API_URL || window.location.origin;
+      const apiUrl = `${apiOrigin}/api/subscriptions`;
+      console.log("Using API URL:", apiUrl);
+
       // Call the API to create a Stripe checkout session
-      const response = await fetch("/api/subscriptions", {
+      const response = await fetch(apiUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include", // Critical for sending cookies
         body: JSON.stringify({
           priceId,
         }),
+      });
+
+      console.log("API response status:", response.status, response.statusText);
+      console.log("Response headers:", {
+        contentType: response.headers.get("content-type"),
+        cors: response.headers.get("access-control-allow-origin"),
       });
 
       if (!response.ok) {
@@ -92,7 +115,14 @@ export function CheckoutButton({
           errorCode
         });
         
-        throw new Error(`${errorMessage} (${errorCode})`);
+        // Provide more user-friendly error messages based on status code
+        if (response.status === 401) {
+          throw new Error(locale === "ar" 
+            ? "فشل المصادقة. يرجى تسجيل الخروج وتسجيل الدخول مرة أخرى." 
+            : "Authentication failed. Please log out and log in again.");
+        } else {
+          throw new Error(`${errorMessage} (${errorCode})`);
+        }
       }
 
       const data = await response.json();

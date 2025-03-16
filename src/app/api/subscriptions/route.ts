@@ -15,6 +15,19 @@ const legacySubscriptionCreateSchema = z.object({
   interval: z.enum(["monthly", "quarterly", "annual"]),
 });
 
+// CORS headers for cross-origin requests
+const corsHeaders = {
+  "Access-Control-Allow-Origin": process.env.NEXT_PUBLIC_APP_URL || "*",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
+  "Access-Control-Allow-Credentials": "true",
+};
+
+// Handle OPTIONS requests for CORS preflight
+export async function OPTIONS() {
+  return NextResponse.json({}, { headers: corsHeaders });
+}
+
 export async function POST(req: NextRequest) {
   try {
     // Validate environment variables first
@@ -26,7 +39,7 @@ export async function POST(req: NextRequest) {
           code: "missing_stripe_secret",
           message: "The Stripe secret key is not configured",
         },
-        { status: 500 }
+        { status: 500, headers: corsHeaders }
       );
     }
 
@@ -38,7 +51,7 @@ export async function POST(req: NextRequest) {
           code: "missing_app_url",
           message: "The application URL is not configured",
         },
-        { status: 500 }
+        { status: 500, headers: corsHeaders }
       );
     }
 
@@ -52,7 +65,8 @@ export async function POST(req: NextRequest) {
       console.log("[API] Session check result:", { 
         hasSession: !!session, 
         hasUser: session ? !!session.user : false,
-        userEmail: session?.user?.email ? `${session.user.email.substring(0, 3)}...` : null
+        userEmail: session?.user?.email ? `${session.user.email.substring(0, 3)}...` : null,
+        cookies: req.headers.get('cookie') ? 'Present' : 'Missing'
       });
     } catch (error) {
       console.error("[API] Error retrieving session:", error);
@@ -61,8 +75,9 @@ export async function POST(req: NextRequest) {
           error: "Authentication error",
           code: "session_retrieval_error",
           message: "Failed to retrieve user session",
+          debug: { errorMessage: error instanceof Error ? error.message : "Unknown error" }
         },
-        { status: 401 }
+        { status: 401, headers: corsHeaders }
       );
     }
 
@@ -75,7 +90,7 @@ export async function POST(req: NextRequest) {
           code: "unauthorized",
           message: "You must be logged in to create a subscription",
         },
-        { status: 401 }
+        { status: 401, headers: corsHeaders }
       );
     }
 
@@ -116,7 +131,7 @@ export async function POST(req: NextRequest) {
             code: "invalid_request",
             message: "Missing or invalid price ID",
           },
-          { status: 400 }
+          { status: 400, headers: corsHeaders }
         );
       }
     }
@@ -129,7 +144,7 @@ export async function POST(req: NextRequest) {
           code: "missing_price_id",
           message: "Price ID is required",
         },
-        { status: 400 }
+        { status: 400, headers: corsHeaders }
       );
     }
 
@@ -145,7 +160,7 @@ export async function POST(req: NextRequest) {
           code: "invalid_session",
           message: "User ID and email are required",
         },
-        { status: 400 }
+        { status: 400, headers: corsHeaders }
       );
     }
 
@@ -172,7 +187,7 @@ export async function POST(req: NextRequest) {
     });
 
     // Return the checkout session URL
-    return NextResponse.json({ url: checkoutSession.url });
+    return NextResponse.json({ url: checkoutSession.url }, { headers: corsHeaders });
   } catch (error) {
     // Handle any unexpected errors
     console.error("[API] Unhandled error in subscription creation:", error);
@@ -196,7 +211,7 @@ export async function POST(req: NextRequest) {
         message: errorMessage,
         details: errorDetails
       },
-      { status: 500 }
+      { status: 500, headers: corsHeaders }
     );
   }
 }
