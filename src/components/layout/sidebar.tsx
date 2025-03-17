@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useState, useCallback } from 'react'
+import React, { useEffect, useState, useCallback, useRef } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -68,6 +68,7 @@ export function Sidebar({ locale, className, items = [] }: SidebarProps) {
   const [isLoading, setIsLoading] = useState<boolean>(true)
   const [error, setError] = useState<string | null>(null)
   const debouncedSearch = useDebounce(searchQuery, 300)
+  const searchInputRef = useRef<HTMLInputElement>(null)
 
   console.log('[Sidebar Debug] Current activeCategory:', activeCategory);
   console.log('[Sidebar Debug] Categories with subcategories:', 
@@ -293,7 +294,21 @@ export function Sidebar({ locale, className, items = [] }: SidebarProps) {
               <Input
                 placeholder={locale === 'ar' ? "البحث في الفئات..." : "Search categories..."}
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value)
+                  // Store the current selection/cursor position
+                  const selectionStart = e.target.selectionStart
+                  const selectionEnd = e.target.selectionEnd
+                  
+                  // Use setTimeout to restore focus and selection after the state update
+                  setTimeout(() => {
+                    if (searchInputRef.current) {
+                      searchInputRef.current.focus()
+                      searchInputRef.current.setSelectionRange(selectionStart, selectionEnd)
+                    }
+                  }, 0)
+                }}
+                ref={searchInputRef}
                 className={cn(
                   "bg-light-white dark:bg-dark border-light-grey-light dark:border-dark-grey text-dark dark:text-white-pure placeholder:text-light-grey w-full",
                   isRTL ? "pr-8" : "pl-8"
