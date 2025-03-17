@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -51,9 +51,43 @@ export function PromptCard({
   const [isBookmarking, setIsBookmarking] = useState(false)
   const [bookmarkStatus, setBookmarkStatus] = useState(isBookmarked)
   const [copyCount, setCopyCount] = useState(initialCopyCount)
+  const prefetched = useRef(false)
   const { toast } = useToast()
   const { data: session } = useSession()
   const router = useRouter()
+  
+  // Prefetch prompt details when hovering over the card
+  const prefetchPromptData = useCallback(() => {
+    if (!prefetched.current) {
+      const prefetchController = new AbortController();
+      // Add a timeout to cancel the prefetch if it takes too long
+      const timeoutId = setTimeout(() => prefetchController.abort(), 3000);
+      
+      fetch(`/api/prompts/${id}?locale=${locale}`, {
+        signal: prefetchController.signal,
+        headers: { 
+          'Purpose': 'prefetch',
+          'Cache-Control': 'max-age=3600' // Cache for 1 hour
+        }
+      })
+      .then(response => {
+        clearTimeout(timeoutId);
+        if (response.ok) {
+          // Just parse the response to warm the cache, we don't need to do anything with the data
+          return response.json();
+        }
+      })
+      .then(() => {
+        prefetched.current = true;
+      })
+      .catch(err => {
+        // Silently ignore prefetch errors
+        if (err.name !== 'AbortError') {
+          console.error('Prefetch error (non-critical):', err);
+        }
+      });
+    }
+  }, [id, locale]);
   
   // Validate tools on client-side to prevent rendering errors
   useEffect(() => {
@@ -228,6 +262,7 @@ export function PromptCard({
       <Card 
         className="h-full hover:shadow-md transition-shadow cursor-pointer"
         onClick={() => setIsModalOpen(true)}
+        onMouseEnter={prefetchPromptData}
       >
         <div className="flex flex-col h-full p-4">
           {/* Top row with badges */}

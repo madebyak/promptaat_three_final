@@ -69,7 +69,12 @@ export function PromptModal({
         setError('Request timed out. Please try again.')
       } else {
         console.error('Error fetching prompt:', err)
-        setError('Failed to load prompt details')
+        // Check if this is a Pro subscription error
+        if (err instanceof Error && err.message.includes('Pro subscription')) {
+          setError(err.message)
+        } else {
+          setError('Failed to load prompt details')
+        }
       }
     } finally {
       setLoading(false)
@@ -257,21 +262,115 @@ export function PromptModal({
   if (!isOpen) return null
   if (loading) return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className={cn(
+        "max-h-[90vh] overflow-y-auto",
+        "w-full p-4 sm:p-6",
+        "sm:max-w-2xl",
+        "sm:rounded-lg",
+        // Mobile-specific styles
+        "max-sm:bottom-0 max-sm:top-auto max-sm:translate-y-0 max-sm:rounded-b-none max-sm:rounded-t-xl",
+        // Animation for mobile
+        "max-sm:data-[state=open]:slide-in-from-bottom max-sm:data-[state=closed]:slide-out-to-bottom"
+      )}>
         <DialogTitle className="sr-only">Prompt Details</DialogTitle>
-        <div className="flex items-center justify-center p-8">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+        <div className="space-y-4">
+          {/* Badge and Title skeleton */}
+          <div className="mb-4 sm:mb-6">
+            <div className="mb-3">
+              <div className="h-6 w-20 bg-muted animate-pulse rounded" />
+            </div>
+            <div className="h-8 w-3/4 bg-muted animate-pulse rounded" />
+          </div>
+          
+          {/* Categories skeleton */}
+          <div className="flex flex-wrap gap-2 mb-3 sm:mb-4">
+            <div className="h-6 w-24 bg-muted animate-pulse rounded" />
+            <div className="h-6 w-32 bg-muted animate-pulse rounded" />
+          </div>
+          
+          {/* Tools skeleton */}
+          <div className="flex flex-wrap gap-2 mb-4 sm:mb-6">
+            <div className="h-6 w-20 bg-muted animate-pulse rounded" />
+            <div className="h-6 w-24 bg-muted animate-pulse rounded" />
+            <div className="h-6 w-16 bg-muted animate-pulse rounded" />
+          </div>
+          
+          {/* Description skeleton */}
+          <div className="mb-4 sm:mb-6">
+            <div className="h-5 w-24 bg-muted animate-pulse rounded mb-2" />
+            <div className="space-y-2">
+              <div className="h-4 w-full bg-muted animate-pulse rounded" />
+              <div className="h-4 w-5/6 bg-muted animate-pulse rounded" />
+              <div className="h-4 w-4/6 bg-muted animate-pulse rounded" />
+            </div>
+          </div>
+          
+          {/* Stats skeleton */}
+          <div className="flex flex-wrap items-center gap-3 sm:gap-6 mb-4 sm:mb-6">
+            <div className="h-5 w-32 bg-muted animate-pulse rounded" />
+            <div className="h-5 w-40 bg-muted animate-pulse rounded" />
+          </div>
+          
+          {/* Prompt text skeleton */}
+          <div className="h-40 w-full bg-muted animate-pulse rounded mb-4 sm:mb-6" />
+          
+          {/* Keywords skeleton */}
+          <div className="flex flex-wrap gap-2">
+            <div className="h-6 w-16 bg-muted animate-pulse rounded" />
+            <div className="h-6 w-20 bg-muted animate-pulse rounded" />
+            <div className="h-6 w-24 bg-muted animate-pulse rounded" />
+          </div>
         </div>
       </DialogContent>
     </Dialog>
   )
   if (error || !prompt) return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className={cn(
+        "max-h-[90vh] overflow-y-auto",
+        "w-full p-4 sm:p-6",
+        "sm:max-w-2xl",
+        "sm:rounded-lg",
+        // Mobile-specific styles
+        "max-sm:bottom-0 max-sm:top-auto max-sm:translate-y-0 max-sm:rounded-b-none max-sm:rounded-t-xl",
+        // Animation for mobile
+        "max-sm:data-[state=open]:slide-in-from-bottom max-sm:data-[state=closed]:slide-out-to-bottom"
+      )}>
         <DialogTitle className="sr-only">Error</DialogTitle>
-        <div className="flex items-center justify-center p-8 text-destructive">
-          {error || 'Failed to load prompt'}
-        </div>
+        
+        {/* Pro subscription required error */}
+        {error && error.includes("Pro subscription") ? (
+          <div className="flex flex-col items-center justify-center py-6 px-4 text-center">
+            <div className="mb-6 w-full max-w-[200px]">
+              <Image 
+                src="/Go-pro.svg" 
+                alt="Pro Subscription Required" 
+                width={200} 
+                height={200} 
+                className="w-full h-auto"
+              />
+            </div>
+            <h3 className="text-xl font-bold mb-2 text-primary">Only for Pro Members</h3>
+            <p className="text-muted-foreground mb-6 max-w-md">
+              Unlock this premium prompt and many more by upgrading to our Pro plan. 
+              Get access to exclusive content and advanced features.
+            </p>
+            <Button 
+              onClick={() => {
+                onClose();
+                router.push('/pricing');
+              }}
+              className="bg-accent-green hover:bg-accent-green/90 text-black font-medium px-6"
+            >
+              <Crown className="mr-2 h-4 w-4" />
+              Go Pro
+            </Button>
+          </div>
+        ) : (
+          <div className="flex items-center justify-center p-8 text-destructive">
+            {error || 'Failed to load prompt'}
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   )
@@ -294,7 +393,16 @@ export function PromptModal({
         />
       )}
       
-      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className={cn(
+        "max-h-[90vh] overflow-y-auto",
+        "w-full p-4 sm:p-6",
+        "sm:max-w-2xl",
+        "sm:rounded-lg",
+        // Mobile-specific styles
+        "max-sm:bottom-0 max-sm:top-auto max-sm:translate-y-0 max-sm:rounded-b-none max-sm:rounded-t-xl",
+        // Animation for mobile
+        "max-sm:data-[state=open]:slide-in-from-bottom max-sm:data-[state=closed]:slide-out-to-bottom"
+      )}>
         <DialogTitle className="sr-only">Prompt Details</DialogTitle>
         <div className="relative">
           {/* Header Actions */}
@@ -325,7 +433,7 @@ export function PromptModal({
           </div>
 
           {/* Badge and Title section */}
-          <div className="mb-6">
+          <div className="mb-4 sm:mb-6">
             <div className="mb-3">
               {prompt.isPro ? (
                 <Badge variant="purple" className="inline-flex items-center gap-1.5 px-2.5 py-1">
@@ -340,7 +448,7 @@ export function PromptModal({
               )}
             </div>
             <h2 className={cn(
-              "text-2xl font-semibold",
+              "text-xl sm:text-2xl font-semibold",
               isRTL && "text-right"
             )}>
               {prompt.title}
@@ -348,7 +456,7 @@ export function PromptModal({
           </div>
 
           {/* Categories */}
-          <div className="flex flex-wrap gap-2 mb-4">
+          <div className="flex flex-wrap gap-2 mb-3 sm:mb-4">
             {prompt.categories.map((category) => (
               <div key={category.id} className="flex items-center gap-1.5">
                 <Badge variant="outline" className="text-xs px-2 py-0.5">
@@ -367,7 +475,7 @@ export function PromptModal({
           </div>
 
           {/* Tools section */}
-          <div className="flex flex-wrap gap-2 mb-6">
+          <div className="flex flex-wrap gap-2 mb-4 sm:mb-6">
             {prompt.tools?.map((tool) => (
               <Badge 
                 key={tool.id}
@@ -399,12 +507,12 @@ export function PromptModal({
           </div>
 
           {/* Description */}
-          <div className="mb-6">
+          <div className="mb-4 sm:mb-6">
             <h3 className="text-sm font-medium text-muted-foreground mb-2">
               Description
             </h3>
             <p className={cn(
-              "text-sm",
+              "text-base sm:text-sm leading-relaxed",
               isRTL && "text-right"
             )}>
               {prompt.description}
@@ -412,7 +520,7 @@ export function PromptModal({
           </div>
 
           {/* Stats Row */}
-          <div className="flex items-center gap-6 mb-6 text-sm text-muted-foreground">
+          <div className="flex flex-wrap items-center gap-3 sm:gap-6 mb-4 sm:mb-6 text-sm text-muted-foreground">
             <div className="flex items-center gap-1.5">
               <BarChart2 className="h-4 w-4" />
               <span>Copied {prompt.copyCount} times</span>
@@ -430,7 +538,7 @@ export function PromptModal({
           </div>
 
           {/* Prompt Text */}
-          <Alert className="mb-6">
+          <Alert className="mb-4 sm:mb-6">
             <div className="relative">
               <AlertDescription className="whitespace-pre-wrap font-mono text-sm pr-24">
                 {prompt.promptText}
@@ -438,6 +546,8 @@ export function PromptModal({
               <Button
                 className={cn(
                   "absolute top-0 right-0 mt-2 mr-2 transition-all duration-200",
+                  "h-10 sm:h-8", // Larger touch target on mobile
+                  "min-w-[80px] sm:min-w-[60px]",
                   isCopied ? "border-accent-green text-accent-green" : "bg-accent-green text-black hover:bg-accent-green/90"
                 )}
                 variant={isCopied ? "outline" : "secondary"}
@@ -456,7 +566,7 @@ export function PromptModal({
 
           {/* Instructions */}
           {prompt.instruction && (
-            <Alert variant="default" className="mb-6">
+            <Alert variant="default" className="mb-4 sm:mb-6">
               <AlertDescription className="whitespace-pre-wrap text-sm">
                 {prompt.instruction}
               </AlertDescription>
