@@ -68,7 +68,12 @@ export function Sidebar({ locale, className, items = [] }: SidebarProps) {
   const [isLoading, setIsLoading] = useState<boolean>(true)
   const [error, setError] = useState<string | null>(null)
   const debouncedSearch = useDebounce(searchQuery, 300)
+  // Create a ref for the search input to maintain focus
   const searchInputRef = useRef<HTMLInputElement>(null)
+  // Track if the input should maintain focus
+  const [shouldMaintainFocus, setShouldMaintainFocus] = useState(false)
+  // Track cursor position
+  const [cursorPosition, setCursorPosition] = useState<{ start: number | null, end: number | null }>({ start: null, end: null })
 
   console.log('[Sidebar Debug] Current activeCategory:', activeCategory);
   console.log('[Sidebar Debug] Categories with subcategories:', 
@@ -96,6 +101,18 @@ export function Sidebar({ locale, className, items = [] }: SidebarProps) {
   useEffect(() => {
     localStorage.setItem('sidebarCollapsed', isCollapsed.toString())
   }, [isCollapsed])
+
+  // Effect to maintain focus on the search input
+  useEffect(() => {
+    if (shouldMaintainFocus && searchInputRef.current) {
+      searchInputRef.current.focus()
+      
+      // Restore cursor position if available
+      if (cursorPosition.start !== null && cursorPosition.end !== null) {
+        searchInputRef.current.setSelectionRange(cursorPosition.start, cursorPosition.end)
+      }
+    }
+  }, [shouldMaintainFocus, searchQuery, cursorPosition])
 
   const fetchCategories = useCallback(async () => {
     setIsLoading(true)
@@ -295,18 +312,19 @@ export function Sidebar({ locale, className, items = [] }: SidebarProps) {
                 placeholder={locale === 'ar' ? "البحث في الفئات..." : "Search categories..."}
                 value={searchQuery}
                 onChange={(e) => {
+                  // Store cursor position before updating state
+                  setCursorPosition({
+                    start: e.target.selectionStart,
+                    end: e.target.selectionEnd
+                  })
                   setSearchQuery(e.target.value)
-                  // Store the current selection/cursor position
-                  const selectionStart = e.target.selectionStart
-                  const selectionEnd = e.target.selectionEnd
-                  
-                  // Use setTimeout to restore focus and selection after the state update
-                  setTimeout(() => {
-                    if (searchInputRef.current) {
-                      searchInputRef.current.focus()
-                      searchInputRef.current.setSelectionRange(selectionStart, selectionEnd)
-                    }
-                  }, 0)
+                  setShouldMaintainFocus(true)
+                }}
+                onFocus={() => setShouldMaintainFocus(true)}
+                onBlur={() => {
+                  // Only set to false if the blur is not due to our own focus management
+                  // Give a small delay to allow our focus effect to work
+                  setTimeout(() => setShouldMaintainFocus(false), 100)
                 }}
                 ref={searchInputRef}
                 className={cn(
