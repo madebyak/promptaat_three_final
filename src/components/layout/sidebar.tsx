@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useState, useCallback } from 'react'
+import React, { useEffect, useState, useCallback, memo, useRef } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -53,17 +53,46 @@ interface APIResponse {
   error?: string
 }
 
-function SidebarSearchInput({ 
+// Memoized search input component that manages its own state to prevent re-renders from parent affecting focus
+const SidebarSearchInput = memo(({ 
   placeholder, 
   onChange, 
-  value, 
+  value: externalValue, 
   isRTL 
 }: { 
   placeholder: string; 
   onChange: (value: string) => void; 
   value: string; 
   isRTL: boolean; 
-}) {
+}) => {
+  // Use internal state for the input value to prevent focus loss during parent re-renders
+  const [internalValue, setInternalValue] = useState(externalValue);
+  const inputRef = useRef<HTMLInputElement>(null);
+  
+  // Sync internal value with external value when it changes from outside
+  useEffect(() => {
+    if (externalValue !== internalValue) {
+      setInternalValue(externalValue);
+    }
+  }, [externalValue, internalValue]);
+  
+  // Handle input changes
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = e.target.value;
+    setInternalValue(newValue);
+    onChange(newValue);
+  };
+  
+  // Focus preservation logic
+  useEffect(() => {
+    // Auto-focus and restore cursor position on mount
+    if (inputRef.current) {
+      const end = inputRef.current.value.length;
+      inputRef.current.focus();
+      inputRef.current.setSelectionRange(end, end);
+    }
+  }, []);
+  
   return (
     <div className="relative flex-1">
       <Search className={cn(
@@ -72,8 +101,16 @@ function SidebarSearchInput({
       )} />
       <Input
         placeholder={placeholder}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
+        value={internalValue}
+        onChange={handleChange}
+        onFocus={() => {
+          // When focusing, ensure the cursor is at the end
+          if (inputRef.current) {
+            const length = inputRef.current.value.length;
+            inputRef.current.setSelectionRange(length, length);
+          }
+        }}
+        ref={inputRef}
         className={cn(
           "bg-light-white dark:bg-dark border-light-grey-light dark:border-dark-grey text-dark dark:text-white-pure placeholder:text-light-grey w-full",
           isRTL ? "pr-8" : "pl-8"
@@ -82,7 +119,10 @@ function SidebarSearchInput({
       />
     </div>
   );
-}
+});
+
+// Add display name for debugging
+SidebarSearchInput.displayName = "SidebarSearchInput";
 
 export function Sidebar({ locale, className, items = [] }: SidebarProps) {
   const router = useRouter()
