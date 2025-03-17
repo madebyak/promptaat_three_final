@@ -21,7 +21,7 @@ export async function generateMetadata({
     openGraph: {
       images: [
         {
-          url: `https://promptaat.com${ogImagePath}`,
+          url: ogImagePath,
           width: 1200,
           height: 630,
           alt: locale === 'ar' ? 'برومبتات - مكتبة بروبتات الذكاء الاصطناعي' : 'Promptaat - Your AI Prompt Library',
@@ -29,7 +29,7 @@ export async function generateMetadata({
       ],
     },
     twitter: {
-      images: [`https://promptaat.com${ogImagePath}`],
+      images: [ogImagePath],
     },
   };
 }

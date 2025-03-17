@@ -30,10 +30,11 @@ export const metadata: Metadata = {
   publisher: 'Promptaat',
   icons: {
     icon: [
+      { url: '/favicon.ico', sizes: 'any' },
       { url: '/favicon-32px.jpg', sizes: '32x32', type: 'image/jpeg' },
       { url: '/favicon-16px.jpg', sizes: '16x16', type: 'image/jpeg' }
     ],
-    shortcut: '/favicon-32px.jpg',
+    shortcut: '/favicon.ico',
     apple: '/favicon-32px.jpg',
   },
   robots: {
@@ -57,7 +58,7 @@ export const metadata: Metadata = {
     siteName: 'Promptaat',
     images: [
       {
-        url: 'https://promptaat.com/og/home-og-en.jpg',
+        url: '/og/home-og-en.jpg',
         width: 1200,
         height: 630,
         alt: 'Promptaat - Your AI Prompt Library',
@@ -68,7 +69,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Promptaat - Your AI Prompt Library',
     description: 'Discover and use the best AI prompts for ChatGPT, Gemini, Claude and more.',
-    images: ['https://promptaat.com/og/home-og-en.jpg'],
+    images: ['/og/home-og-en.jpg'],
   },
   verification: {
     google: 'google-site-verification-code', // Replace with your verification code
