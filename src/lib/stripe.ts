@@ -263,35 +263,70 @@ export async function handleStripeWebhook({
   handleSubscriptionUpdated: (subscription: Stripe.Subscription) => Promise<void>;
   handleSubscriptionCancelled: (subscription: Stripe.Subscription) => Promise<void>;
 }) {
-  switch (event.type) {
-    case "customer.subscription.created":
-      await handleSubscriptionCreated(event.data.object as Stripe.Subscription);
-      break;
-    case "customer.subscription.updated":
-      await handleSubscriptionUpdated(event.data.object as Stripe.Subscription);
-      break;
-    case "customer.subscription.deleted":
-      await handleSubscriptionCancelled(event.data.object as Stripe.Subscription);
-      break;
-    case "checkout.session.completed":
-      // Handle checkout session completed event
-      const session = event.data.object as Stripe.Checkout.Session;
-      
-      // Only process subscription-mode checkout sessions
-      if (session.mode === 'subscription' && session.subscription) {
-        console.log(`Processing checkout.session.completed with subscription: ${session.subscription}`);
+  console.log(`Processing Stripe webhook event: ${event.type}`, {
+    eventId: event.id,
+    eventType: event.type,
+    timestamp: new Date().toISOString(),
+  });
+
+  try {
+    switch (event.type) {
+      case "customer.subscription.created":
+        await handleSubscriptionCreated(event.data.object as Stripe.Subscription);
+        break;
+      case "customer.subscription.updated":
+        await handleSubscriptionUpdated(event.data.object as Stripe.Subscription);
+        break;
+      case "customer.subscription.deleted":
+        await handleSubscriptionCancelled(event.data.object as Stripe.Subscription);
+        break;
+      case "checkout.session.completed":
+        // Handle checkout session completed event
+        const session = event.data.object as Stripe.Checkout.Session;
         
-        try {
-          // Retrieve the subscription details from Stripe
-          const subscription = await stripe.subscriptions.retrieve(session.subscription as string);
+        // Only process subscription-mode checkout sessions
+        if (session.mode === 'subscription' && session.subscription) {
+          console.log(`Processing checkout.session.completed with subscription: ${session.subscription}`, {
+            sessionId: session.id,
+            customerId: session.customer,
+            subscriptionId: session.subscription,
+            paymentStatus: session.payment_status,
+          });
           
-          // Process the subscription created event
-          await handleSubscriptionCreated(subscription);
-        } catch (error) {
-          console.error(`Error processing checkout.session.completed event:`, error);
+          try {
+            // Retrieve the subscription details from Stripe
+            const subscription = await stripe.subscriptions.retrieve(session.subscription as string);
+            console.log(`Retrieved subscription details from Stripe`, {
+              subscriptionId: subscription.id,
+              status: subscription.status,
+              customerId: subscription.customer,
+            });
+            
+            // Process the subscription created event
+            await handleSubscriptionCreated(subscription);
+            console.log(`Successfully processed subscription from checkout session`, {
+              sessionId: session.id,
+              subscriptionId: subscription.id,
+            });
+          } catch (error) {
+            console.error(`Error processing checkout.session.completed event:`, error);
+            // Rethrow the error to be caught by the outer try-catch
+            throw new Error(`Failed to process checkout session: ${error.message}`);
+          }
+        } else {
+          console.log(`Skipping non-subscription checkout session`, {
+            sessionId: session.id,
+            mode: session.mode,
+          });
         }
-      }
-      break;
+        break;
+      default:
+        console.log(`Unhandled event type: ${event.type}`);
+    }
+  } catch (error) {
+    console.error(`Error handling webhook event ${event.type}:`, error);
+    // Rethrow the error to be handled by the route handler
+    throw error;
   }
 }
 

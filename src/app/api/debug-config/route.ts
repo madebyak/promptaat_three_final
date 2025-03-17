@@ -4,16 +4,17 @@ import { authOptions } from "@/lib/auth";
 
 export async function GET() {
   try {
-    // Only allow in development or with admin session
+    // For temporary debugging, provide limited information without strict auth check
+    // TODO: Restore proper authorization after debugging is complete
     const session = await getServerSession(authOptions);
-    const isAdmin = session?.user?.email?.endsWith("@promptaat.com") || false;
     
-    if (process.env.NODE_ENV !== "development" && !isAdmin) {
-      return NextResponse.json({ error: "Not authorized" }, { status: 401 });
-    }
-    
-    // Check if critical environment variables exist (without returning their values)
+    // Basic configuration status without sensitive values
     const configStatus = {
+      auth: {
+        hasSession: !!session,
+        userEmail: session?.user?.email ? `${session.user.email.substring(0, 3)}...` : null,
+      },
+      env: process.env.NODE_ENV || "unknown",
       stripe: {
         publishableKey: !!process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY,
         secretKey: !!process.env.STRIPE_SECRET_KEY,
@@ -43,6 +44,7 @@ export async function GET() {
       },
       app: {
         url: process.env.NEXT_PUBLIC_APP_URL || "not-set",
+        baseUrl: process.env.NEXTAUTH_URL || "not-set",
         nodeEnv: process.env.NODE_ENV || "not-set" 
       }
     };
@@ -50,8 +52,15 @@ export async function GET() {
     return NextResponse.json(configStatus);
   } catch (error) {
     console.error("Config debug error:", error);
+    const errorDetails = error instanceof Error 
+      ? { message: error.message, stack: error.stack } 
+      : { message: String(error) };
+      
     return NextResponse.json(
-      { error: "Failed to check configuration" },
+      { 
+        error: "Failed to check configuration",
+        details: errorDetails
+      },
       { status: 500 }
     );
   }

@@ -80,18 +80,25 @@ export async function POST(req: NextRequest) {
               
               if (user) {
                 await createOrUpdateSubscription(subscription, customerUserId);
+                console.log("Successfully created/updated subscription using customer metadata userId", {
+                  userId: customerUserId,
+                  subscriptionId: subscription.id,
+                });
               } else {
                 console.error("User not found in database", {
                   userId: customerUserId,
                 });
+                throw new Error(`User not found in database: ${customerUserId}`);
               }
             } else {
               console.error("No userId found in customer metadata", {
                 customerId: subscription.customer,
               });
+              throw new Error(`No userId found in customer metadata: ${subscription.customer}`);
             }
           } catch (error) {
             console.error("Error retrieving customer:", error);
+            throw error;
           }
           
           return;
@@ -106,10 +113,14 @@ export async function POST(req: NextRequest) {
           console.error("User not found in database", {
             userId,
           });
-          return;
+          throw new Error(`User not found in database: ${userId}`);
         }
         
         await createOrUpdateSubscription(subscription, userId);
+        console.log("Successfully created/updated subscription", {
+          userId,
+          subscriptionId: subscription.id,
+        });
       },
       
       // Handle subscription updated event
@@ -136,6 +147,7 @@ export async function POST(req: NextRequest) {
             const userId = subscription.metadata.userId;
             console.log("Attempting to find subscription by userId from metadata", {
               userId,
+              subscriptionId: subscription.id,
             });
             
             const userSubscription = await prisma.subscription.findFirst({
@@ -148,23 +160,59 @@ export async function POST(req: NextRequest) {
                 userId,
               });
               
-              // Update the subscription with the Stripe subscription ID
-              await prisma.subscription.update({
-                where: { id: userSubscription.id },
-                data: {
-                  stripeSubscriptionId: subscription.id,
-                  stripeCustomerId: subscription.customer as string,
-                  stripePriceId: subscription.items.data[0].price.id,
-                  currentPeriodStart: new Date(subscription.current_period_start * 1000),
-                  currentPeriodEnd: new Date(subscription.current_period_end * 1000),
-                  status: subscription.status,
-                  cancelAtPeriodEnd: subscription.cancel_at_period_end,
-                  plan: subscription.metadata?.plan || "pro",
-                  interval: subscription.metadata?.interval || "monthly",
-                },
+              try {
+                // Update the subscription with the Stripe subscription ID
+                const updatedSubscription = await prisma.subscription.update({
+                  where: { id: userSubscription.id },
+                  data: {
+                    stripeSubscriptionId: subscription.id,
+                    stripeCustomerId: subscription.customer as string,
+                    stripePriceId: subscription.items.data[0].price.id,
+                    currentPeriodStart: new Date(subscription.current_period_start * 1000),
+                    currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+                    status: subscription.status,
+                    cancelAtPeriodEnd: subscription.cancel_at_period_end,
+                    plan: subscription.metadata?.plan || "pro",
+                    interval: subscription.metadata?.interval || "monthly",
+                  },
+                });
+                
+                console.log("Successfully updated subscription by userId", {
+                  subscriptionId: updatedSubscription.id,
+                  userId,
+                  status: updatedSubscription.status,
+                });
+                
+                return;
+              } catch (error) {
+                console.error("Error updating subscription by userId:", error);
+                throw error;
+              }
+            } else {
+              console.error("No subscription found for userId", {
+                userId,
+                subscriptionId: subscription.id,
               });
               
-              return;
+              // Create a new subscription as fallback
+              try {
+                console.log("Creating new subscription for user", {
+                  userId,
+                  subscriptionId: subscription.id,
+                });
+                
+                await createOrUpdateSubscription(subscription, userId);
+                
+                console.log("Successfully created new subscription for user", {
+                  userId,
+                  subscriptionId: subscription.id,
+                });
+                
+                return;
+              } catch (error) {
+                console.error("Error creating new subscription:", error);
+                throw error;
+              }
             }
           }
           
@@ -173,33 +221,40 @@ export async function POST(req: NextRequest) {
             metadata: subscription.metadata,
           });
           
-          return;
+          throw new Error(`Subscription not found in database and no userId in metadata: ${subscription.id}`);
         }
         
         // Get the subscription item and price details
         const subscriptionItem = subscription.items.data[0];
         const priceId = subscriptionItem.price.id;
         
-        // Update the subscription in the database
-        await prisma.subscription.update({
-          where: { id: existingSubscription.id },
-          data: {
-            stripePriceId: priceId,
-            currentPeriodStart: new Date(subscription.current_period_start * 1000),
-            currentPeriodEnd: new Date(subscription.current_period_end * 1000),
-            status: subscription.status,
-            cancelAtPeriodEnd: subscription.cancel_at_period_end,
-            plan: subscription.metadata?.plan || existingSubscription.plan || "pro",
-            interval: subscription.metadata?.interval || existingSubscription.interval || "monthly",
-          },
-        });
-        
-        console.log("Successfully updated subscription", {
-          subscriptionId: existingSubscription.id,
-          userId: existingSubscription.userId,
-          newStatus: subscription.status,
-          cancelAtPeriodEnd: subscription.cancel_at_period_end,
-        });
+        try {
+          // Update the subscription in the database
+          const updatedSubscription = await prisma.subscription.update({
+            where: { id: existingSubscription.id },
+            data: {
+              stripePriceId: priceId,
+              currentPeriodStart: new Date(subscription.current_period_start * 1000),
+              currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+              status: subscription.status,
+              cancelAtPeriodEnd: subscription.cancel_at_period_end,
+            },
+          });
+          
+          console.log("Successfully updated subscription", {
+            subscriptionId: updatedSubscription.id,
+            status: updatedSubscription.status,
+            userId: updatedSubscription.userId,
+          });
+        } catch (error) {
+          if (error instanceof Error) {
+            console.error("Error updating subscription:", error);
+            throw new Error(`Failed to update subscription: ${error.message}`);
+          } else {
+            console.error("Unknown error updating subscription:", error);
+            throw new Error("Failed to update subscription: Unknown error");
+          }
+        }
       },
       
       // Handle subscription cancelled event
@@ -241,11 +296,19 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ received: true });
     
   } catch (error) {
-    console.error("Error handling webhook event:", error);
-    return NextResponse.json(
-      { error: "Failed to handle webhook" },
-      { status: 500 }
-    );
+    if (error instanceof Error) {
+      console.error("Error handling webhook event:", error);
+      return NextResponse.json(
+        { error: "Failed to handle webhook" },
+        { status: 500 }
+      );
+    } else {
+      console.error("Unknown error handling webhook event:", error);
+      return NextResponse.json(
+        { error: "Failed to handle webhook" },
+        { status: 500 }
+      );
+    }
   }
 }
 
@@ -310,7 +373,12 @@ export async function createOrUpdateSubscription(subscription: Stripe.Subscripti
       });
     }
   } catch (error) {
-    console.error("Error creating/updating subscription:", error);
-    throw error;
+    if (error instanceof Error) {
+      console.error("Error creating/updating subscription:", error);
+      throw error;
+    } else {
+      console.error("Unknown error creating/updating subscription:", error);
+      throw new Error("Failed to create/update subscription: Unknown error");
+    }
   }
 }
