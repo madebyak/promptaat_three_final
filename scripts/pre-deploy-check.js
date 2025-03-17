@@ -7,10 +7,23 @@
  * It checks for common issues that might cause deployment failures on Vercel.
  */
 
-const fs = require('fs');
-const path = require('path');
-const { execSync } = require('child_process');
-const chalk = require('chalk') || { green: (t) => t, red: (t) => t, yellow: (t) => t, blue: (t) => t };
+import fs from 'fs';
+import path from 'path';
+import { execSync } from 'child_process';
+
+// Try to import chalk, or create fallback functions
+let chalk;
+try {
+  const chalkModule = await import('chalk');
+  chalk = chalkModule.default;
+} catch {
+  chalk = { 
+    green: (t) => t, 
+    red: (t) => t, 
+    yellow: (t) => t, 
+    blue: (t) => t 
+  };
+}
 
 // Configuration
 const SRC_DIR = path.join(process.cwd(), 'src');
@@ -27,7 +40,9 @@ function checkTypeScript() {
     // Use --skipLibCheck to ignore errors in node_modules
     // Add a custom tsconfig that excludes .next/types directory
     const tempTsConfigPath = path.join(process.cwd(), 'tsconfig.check.json');
-    const originalTsConfig = require(path.join(process.cwd(), 'tsconfig.json'));
+    const originalTsConfigPath = path.join(process.cwd(), 'tsconfig.json');
+    const originalTsConfigContent = fs.readFileSync(originalTsConfigPath, 'utf8');
+    const originalTsConfig = JSON.parse(originalTsConfigContent);
     
     // Create a modified tsconfig that excludes .next/types
     const checkTsConfig = {
@@ -179,13 +194,15 @@ function checkMixedExports() {
 }
 
 // Run a test build
+// This function is commented out in the main function to save time
+// but kept here for reference or future use
 function runTestBuild() {
   console.log(chalk.blue('\n🏗️ Running a test build...'));
   try {
     execSync('npm run build', { stdio: 'inherit' });
     console.log(chalk.green('✅ Build successful!'));
     return true;
-  } catch (error) {
+  } catch {
     console.log(chalk.red('❌ Build failed!'));
     return false;
   }
@@ -200,45 +217,36 @@ async function main() {
     mixedExports: checkMixedExports(),
   };
   
-  console.log(chalk.blue('\n📊 Pre-deployment check summary:'));
-  for (const [check, passed] of Object.entries(results)) {
-    if (check === 'eslint' && passed) {
-      // Special handling for ESLint - it might have passed with warnings
-      console.log(`${chalk.yellow('⚠️')} ${check} (warnings present but not blocking deployment)`);
-    } else {
-      console.log(`${passed ? chalk.green('✅') : chalk.red('❌')} ${check}`);
-    }
-  }
+  // Optionally run a test build (commented out to save time)
+  // results.build = runTestBuild();
   
-  // Only consider TypeScript, linkImports, and mixedExports for deployment readiness
-  // ESLint errors are now treated as warnings
-  const criticalChecks = {
-    typescript: results.typescript,
-    linkImports: results.linkImports,
-    mixedExports: results.mixedExports
-  };
+  // Calculate overall result
+  const overallResult = Object.values(results).every(Boolean);
   
-  const allCriticalPassed = Object.values(criticalChecks).every(result => result);
+  console.log('\n' + '-'.repeat(50));
+  console.log(chalk.blue('📋 Pre-deployment Check Results:'));
+  console.log('-'.repeat(50));
   
-  if (allCriticalPassed) {
-    console.log(chalk.green('\n🚀 Critical checks passed! Ready for deployment.'));
-    if (!results.eslint) {
-      console.log(chalk.yellow('⚠️ ESLint warnings are present but not blocking deployment.'));
-      console.log(chalk.yellow('   Consider fixing these issues in a future update.'));
-    }
-    console.log(chalk.blue('Next steps:'));
-    console.log('1. Run `npm run vercel:local` to test in a production-like environment');
-    console.log('2. Complete the pre-deployment checklist in pre-deployment-checklist.md');
+  console.log(`TypeScript: ${results.typescript ? chalk.green('✅ PASS') : chalk.red('❌ FAIL')}`);
+  console.log(`ESLint: ${results.eslint ? chalk.green('✅ PASS') : chalk.red('❌ FAIL')}`);
+  console.log(`Link Imports: ${results.linkImports ? chalk.green('✅ PASS') : chalk.red('❌ FAIL')}`);
+  console.log(`Mixed Exports: ${results.mixedExports ? chalk.green('✅ PASS') : chalk.yellow('⚠️ WARNING')}`);
+  // console.log(`Test Build: ${results.build ? chalk.green('✅ PASS') : chalk.red('❌ FAIL')}`);
+  
+  console.log('-'.repeat(50));
+  console.log(`Overall: ${overallResult ? chalk.green('✅ READY FOR DEPLOYMENT') : chalk.red('❌ ISSUES FOUND')}`);
+  console.log('-'.repeat(50));
+  
+  if (!overallResult) {
+    console.log(chalk.yellow('\n⚠️ Please fix the issues above before deploying.'));
+    process.exit(1);
   } else {
-    console.log(chalk.red('\n⚠️ Some critical checks failed. Please fix the issues before deploying.'));
-    console.log(chalk.blue('Recommendation:'));
-    console.log('1. Fix the reported issues');
-    console.log('2. Run this script again to verify all issues are resolved');
-    console.log('3. Complete the pre-deployment checklist before pushing to GitHub');
+    console.log(chalk.green('\n🚀 Your code is ready for deployment!'));
   }
 }
 
-main().catch(error => {
-  console.error('Error running pre-deployment checks:', error);
+// Run the main function
+main().catch(() => {
+  console.error(chalk.red('Error running pre-deployment checks'));
   process.exit(1);
 });

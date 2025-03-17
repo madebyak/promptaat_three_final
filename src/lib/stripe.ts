@@ -308,10 +308,10 @@ export async function handleStripeWebhook({
               sessionId: session.id,
               subscriptionId: subscription.id,
             });
-          } catch (error) {
+          } catch (error: Error | unknown) {
             console.error(`Error processing checkout.session.completed event:`, error);
             // Rethrow the error to be caught by the outer try-catch
-            throw new Error(`Failed to process checkout session: ${error.message}`);
+            throw new Error(`Failed to process checkout session: ${error instanceof Error ? error.message : String(error)}`);
           }
         } else {
           console.log(`Skipping non-subscription checkout session`, {
@@ -323,7 +323,7 @@ export async function handleStripeWebhook({
       default:
         console.log(`Unhandled event type: ${event.type}`);
     }
-  } catch (error) {
+  } catch (error: Error | unknown) {
     console.error(`Error handling webhook event ${event.type}:`, error);
     // Rethrow the error to be handled by the route handler
     throw error;
