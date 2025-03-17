@@ -129,8 +129,8 @@ export const Banner = memo(function Banner({ locale = 'en', className }: BannerP
         />
       </div>
 
-      {/* Dark Overlay */}
-      <div className="absolute inset-0 bg-black-main/40" />
+      {/* Dark Overlay - Reduced opacity */}
+      <div className="absolute inset-0 bg-black-main/20" />
 
       {/* Content - Centered with animations */}
       <div className="relative h-full flex items-center justify-center p-6">
