@@ -4,6 +4,7 @@ import { Toaster } from "@/components/ui/toaster"
 import { SpeedInsights } from "@vercel/speed-insights/next"
 import AuthSessionProvider from '@/components/auth/auth-session-provider'
 import './globals.css'
+import '@/styles/scrollbar.css' // Import custom scrollbar styles
 import Script from 'next/script'
 
 // Optimize font loading with display: swap to prevent blocking render

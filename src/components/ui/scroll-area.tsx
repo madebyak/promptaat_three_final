@@ -31,11 +31,14 @@ const ScrollBar = React.forwardRef<
     ref={ref}
     orientation={orientation}
     className={cn(
-      "flex touch-none select-none transition-colors opacity-0 group-hover:opacity-100 hover:opacity-100 focus:opacity-100 data-[state=visible]:opacity-100",
+      "flex touch-none select-none transition-colors",
+      // Start with very low opacity and increase on hover/focus
+      "opacity-0 group-hover:opacity-100 hover:opacity-100 focus:opacity-100 data-[state=visible]:opacity-100",
+      // Make the scrollbar thinner
       orientation === "vertical" &&
-        "h-full w-1 border-l border-l-transparent p-[1px]",
+        "h-full w-1.5 border-l border-l-transparent p-[1px]",
       orientation === "horizontal" &&
-        "h-1 flex-col border-t border-t-transparent p-[1px]",
+        "h-1.5 flex-col border-t border-t-transparent p-[1px]",
       className
     )}
     {...props}
@@ -43,8 +46,11 @@ const ScrollBar = React.forwardRef<
     <ScrollAreaPrimitive.ScrollAreaThumb 
       className={cn(
         "relative flex-1 rounded-full transition-colors duration-200 ease-out",
-        "bg-light-grey-light/50 dark:bg-dark-grey/50",
-        "hover:bg-light-grey-light dark:hover:bg-dark-grey"
+        // More subtle colors that work well in both light and dark modes
+        "bg-light-grey-light/40 dark:bg-dark-grey/60",
+        "hover:bg-light-grey/60 dark:hover:bg-dark-grey/80",
+        // Add a subtle shadow to make it stand out better
+        "shadow-sm"
       )}
     />
   </ScrollAreaPrimitive.ScrollAreaScrollbar>
