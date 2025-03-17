@@ -53,6 +53,63 @@ interface APIResponse {
   error?: string
 }
 
+// New PersistentSearchInput component to handle search with persistent focus
+// This is a specialized component that maintains focus state internally
+function PersistentSearchInput({
+  placeholder,
+  value,
+  onChange,
+  isRTL,
+}: {
+  placeholder: string;
+  value: string;
+  onChange: (value: string) => void;
+  isRTL: boolean;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [inputValue, setInputValue] = useState(value);
+  
+  // Sync internal value with external value
+  useEffect(() => {
+    setInputValue(value);
+  }, [value]);
+  
+  // Handle changes in the input
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Update internal state immediately
+    setInputValue(e.target.value);
+    // Propagate changes to parent
+    onChange(e.target.value);
+  };
+  
+  return (
+    <div className="relative flex-1">
+      <Search className={cn(
+        "absolute top-2.5 h-4 w-4 text-light-grey",
+        isRTL ? "right-2" : "left-2"
+      )} />
+      <Input
+        placeholder={placeholder}
+        value={inputValue}
+        onChange={handleChange}
+        ref={inputRef}
+        className={cn(
+          "bg-light-white dark:bg-dark border-light-grey-light dark:border-dark-grey text-dark dark:text-white-pure placeholder:text-light-grey w-full",
+          isRTL ? "pr-8" : "pl-8"
+        )}
+        dir={isRTL ? 'rtl' : 'ltr'}
+        // Ensure focus is not hijacked
+        onBlur={(e) => {
+          // If we're clicking within our component, prevent blur
+          if (e.currentTarget.contains(e.relatedTarget as Node)) {
+            e.preventDefault();
+          }
+        }}
+      />
+    </div>
+  );
+}
+
 export function Sidebar({ locale, className, items = [] }: SidebarProps) {
   const router = useRouter()
   const pathname = usePathname()
@@ -68,11 +125,7 @@ export function Sidebar({ locale, className, items = [] }: SidebarProps) {
   const [isLoading, setIsLoading] = useState<boolean>(true)
   const [error, setError] = useState<string | null>(null)
   const debouncedSearch = useDebounce(searchQuery, 300)
-  // Create a ref for the search input to maintain focus
-  const searchInputRef = useRef<HTMLInputElement>(null)
-  // Track cursor position
-  const [cursorPosition, setCursorPosition] = useState<{ start: number | null, end: number | null }>({ start: null, end: null })
-
+  
   console.log('[Sidebar Debug] Current activeCategory:', activeCategory);
   console.log('[Sidebar Debug] Categories with subcategories:', 
     categories.filter(cat => cat.subcategories && cat.subcategories.length > 0)
@@ -99,47 +152,6 @@ export function Sidebar({ locale, className, items = [] }: SidebarProps) {
   useEffect(() => {
     localStorage.setItem('sidebarCollapsed', isCollapsed.toString())
   }, [isCollapsed])
-
-  // Simple and direct approach to maintain focus on the search input
-  useEffect(() => {
-    // Only run this effect on client-side
-    if (typeof window === 'undefined') return;
-    
-    // Focus the input element directly after any change to searchQuery
-    if (searchInputRef.current) {
-      // Use requestAnimationFrame to ensure DOM is updated before focusing
-      requestAnimationFrame(() => {
-        if (searchInputRef.current) {
-          searchInputRef.current.focus();
-          
-          // Restore cursor position if available
-          if (cursorPosition.start !== null && cursorPosition.end !== null) {
-            searchInputRef.current.setSelectionRange(cursorPosition.start, cursorPosition.end);
-          }
-        }
-      });
-    }
-  }, [searchQuery, cursorPosition]);
-
-  // Add an effect to handle click outside the search input
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        searchInputRef.current && 
-        !searchInputRef.current.contains(event.target as Node)
-      ) {
-        // No need to set isSearching state here
-      }
-    };
-
-    // Add event listener
-    document.addEventListener('mousedown', handleClickOutside);
-    
-    // Clean up
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
 
   const fetchCategories = useCallback(async () => {
     setIsLoading(true)
@@ -330,35 +342,12 @@ export function Sidebar({ locale, className, items = [] }: SidebarProps) {
       >
         <div className="flex items-center px-4 py-2">
           {!isCollapsed && (
-            <div className="relative flex-1">
-              <Search className={cn(
-                "absolute top-2.5 h-4 w-4 text-light-grey",
-                isRTL ? "right-2" : "left-2"
-              )} />
-              <Input
-                placeholder={locale === 'ar' ? "البحث في الفئات..." : "Search categories..."}
-                value={searchQuery}
-                onChange={(e) => {
-                  // Store cursor position before updating state
-                  const newCursorPos = {
-                    start: e.target.selectionStart,
-                    end: e.target.selectionEnd
-                  };
-                  
-                  // Update cursor position first
-                  setCursorPosition(newCursorPos);
-                  
-                  // Then update search query
-                  setSearchQuery(e.target.value);
-                }}
-                ref={searchInputRef}
-                className={cn(
-                  "bg-light-white dark:bg-dark border-light-grey-light dark:border-dark-grey text-dark dark:text-white-pure placeholder:text-light-grey w-full",
-                  isRTL ? "pr-8" : "pl-8"
-                )}
-                dir={isRTL ? 'rtl' : 'ltr'}
-              />
-            </div>
+            <PersistentSearchInput
+              placeholder={locale === 'ar' ? "البحث في الفئات..." : "Search categories..."}
+              value={searchQuery}
+              onChange={setSearchQuery}
+              isRTL={isRTL}
+            />
           )}
           <Button
             variant="ghost"
