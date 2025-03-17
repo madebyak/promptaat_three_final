@@ -319,7 +319,7 @@ export function Sidebar({ locale, className, items = [] }: SidebarProps) {
           </Button>
         </div>
 
-        <ScrollArea className="flex-1 px-2">
+        <ScrollArea className="flex-1 px-2 group">
           {isCmsPath && items.length > 0 ? (
             // Render CMS navigation items
             <div className="space-y-1 py-2">
