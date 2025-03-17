@@ -70,10 +70,12 @@ export function Sidebar({ locale, className, items = [] }: SidebarProps) {
   const debouncedSearch = useDebounce(searchQuery, 300)
   // Create a ref for the search input to maintain focus
   const searchInputRef = useRef<HTMLInputElement>(null)
-  // Track if the input should maintain focus
-  const [shouldMaintainFocus, setShouldMaintainFocus] = useState(false)
+  // Track if we're currently in a search operation to prevent focus loss
+  const [isSearching, setIsSearching] = useState(false)
   // Track cursor position
   const [cursorPosition, setCursorPosition] = useState<{ start: number | null, end: number | null }>({ start: null, end: null })
+  // Add a ref to track if we're handling a focus event to prevent focus/blur loops
+  const isHandlingFocusEvent = useRef(false)
 
   console.log('[Sidebar Debug] Current activeCategory:', activeCategory);
   console.log('[Sidebar Debug] Categories with subcategories:', 
@@ -102,17 +104,47 @@ export function Sidebar({ locale, className, items = [] }: SidebarProps) {
     localStorage.setItem('sidebarCollapsed', isCollapsed.toString())
   }, [isCollapsed])
 
-  // Effect to maintain focus on the search input
+  // Effect to maintain focus on the search input during search operations
   useEffect(() => {
-    if (shouldMaintainFocus && searchInputRef.current) {
-      searchInputRef.current.focus()
+    if (isSearching && searchInputRef.current && !isHandlingFocusEvent.current) {
+      // Set flag to prevent recursive focus events
+      isHandlingFocusEvent.current = true;
+      
+      // Focus the input element
+      searchInputRef.current.focus();
       
       // Restore cursor position if available
       if (cursorPosition.start !== null && cursorPosition.end !== null) {
-        searchInputRef.current.setSelectionRange(cursorPosition.start, cursorPosition.end)
+        searchInputRef.current.setSelectionRange(cursorPosition.start, cursorPosition.end);
       }
+      
+      // Reset the flag after a short delay
+      setTimeout(() => {
+        isHandlingFocusEvent.current = false;
+      }, 0);
     }
-  }, [shouldMaintainFocus, searchQuery, cursorPosition])
+  }, [isSearching, searchQuery, cursorPosition]);
+
+  // Add an effect to handle click outside the search input
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        searchInputRef.current && 
+        !searchInputRef.current.contains(event.target as Node) &&
+        isSearching
+      ) {
+        setIsSearching(false);
+      }
+    };
+
+    // Add event listener
+    document.addEventListener('mousedown', handleClickOutside);
+    
+    // Clean up
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isSearching]);
 
   const fetchCategories = useCallback(async () => {
     setIsLoading(true)
@@ -313,18 +345,42 @@ export function Sidebar({ locale, className, items = [] }: SidebarProps) {
                 value={searchQuery}
                 onChange={(e) => {
                   // Store cursor position before updating state
-                  setCursorPosition({
+                  const newCursorPos = {
                     start: e.target.selectionStart,
                     end: e.target.selectionEnd
-                  })
-                  setSearchQuery(e.target.value)
-                  setShouldMaintainFocus(true)
+                  };
+                  
+                  // Update search query
+                  setSearchQuery(e.target.value);
+                  
+                  // Update cursor position
+                  setCursorPosition(newCursorPos);
+                  
+                  // Ensure we maintain focus
+                  setIsSearching(true);
                 }}
-                onFocus={() => setShouldMaintainFocus(true)}
-                onBlur={() => {
-                  // Only set to false if the blur is not due to our own focus management
-                  // Give a small delay to allow our focus effect to work
-                  setTimeout(() => setShouldMaintainFocus(false), 100)
+                onFocus={() => {
+                  if (!isHandlingFocusEvent.current) {
+                    setIsSearching(true);
+                  }
+                }}
+                onBlur={(e) => {
+                  // Check if the relatedTarget is within our component
+                  // Only blur if we're not clicking on something within our search component
+                  if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+                    // Add a small delay to prevent immediate blur
+                    setTimeout(() => {
+                      if (!isHandlingFocusEvent.current) {
+                        setIsSearching(false);
+                      }
+                    }, 50);
+                  }
+                }}
+                onKeyDown={(e) => {
+                  // Prevent default behavior for tab key to maintain focus
+                  if (e.key === 'Tab') {
+                    e.preventDefault();
+                  }
                 }}
                 ref={searchInputRef}
                 className={cn(
