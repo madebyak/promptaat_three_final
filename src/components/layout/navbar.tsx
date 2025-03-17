@@ -38,7 +38,10 @@ export function Navbar({ locale = 'en', user }: NavbarProps) {
           <div className="flex flex-1 items-center justify-end gap-4">
             <div className="hidden md:flex items-center gap-4">
               {/* Pricing Link */}
-              <Link href={`/${locale}/pricing`} className="text-sm font-medium hover:text-primary transition-colors">
+              <Link 
+                href={`/${locale}/pricing`} 
+                className="text-sm font-medium text-black-main dark:text-white-pure hover:bg-accent-purple/10 hover:text-accent-purple dark:hover:text-accent-purple px-3 py-2 rounded-md transition-all duration-200 ease-in-out"
+              >
                 {locale === 'ar' ? 'الأسعار' : 'Pricing'}
               </Link>
               <LanguageSwitcher locale={locale} />

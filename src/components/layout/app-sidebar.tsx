@@ -129,6 +129,7 @@ export function AppSidebar({ locale, className }: AppSidebarProps) {
   const [searchQuery, setSearchQuery] = useState("")
   const [categories, setCategories] = useState<Category[]>([])
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
+  const [activeSubcategory, setActiveSubcategory] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isMobileOpen, setIsMobileOpen] = useState(false)
@@ -224,6 +225,34 @@ export function AppSidebar({ locale, className }: AppSidebarProps) {
     }
   }, [pathname])
 
+  useEffect(() => {
+    if (!pathname || categories.length === 0) return
+    
+    console.log('[AppSidebar Debug] Current pathname:', pathname)
+    
+    // Try to match standard category/subcategory pattern
+    // Pattern: /{locale}/category/{categoryId}/subcategory/{subcategoryId}
+    const standardPattern = pathname.match(/\/[^\/]+\/category\/([^\/]+)(?:\/subcategory\/([^\/]+))?/)
+    
+    if (standardPattern) {
+      const categoryId = standardPattern[1]
+      const subcategoryId = standardPattern[2] || null
+      
+      console.log('[AppSidebar Debug] Matched standard pattern - Category:', categoryId, 'Subcategory:', subcategoryId)
+      
+      setActiveCategory(categoryId)
+      setActiveSubcategory(subcategoryId)
+      return
+    }
+    
+    // Reset active states if no patterns match
+    // But keep the current states if we're just navigating within the same category/subcategory
+    if (!pathname.includes('/category/')) {
+      setActiveCategory(null)
+      setActiveSubcategory(null)
+    }
+  }, [pathname, categories])
+
   const handleCategoryClick = (categoryId: string | null) => {
     setActiveCategory(activeCategory === categoryId ? null : categoryId)
     
@@ -240,6 +269,13 @@ export function AppSidebar({ locale, className }: AppSidebarProps) {
     e: React.MouseEvent
   ) => {
     e.stopPropagation()
+    
+    // Set both active category and subcategory to ensure proper highlighting
+    setActiveCategory(categoryId)
+    setActiveSubcategory(subcategoryId)
+    
+    console.log('[AppSidebar Debug] Subcategory clicked:', { categoryId, subcategoryId })
+    
     router.push(`/${locale}/category/${categoryId}/subcategory/${subcategoryId}`)
   }
 
@@ -371,8 +407,11 @@ export function AppSidebar({ locale, className }: AppSidebarProps) {
               {category.subcategories?.map((subcategory) => (
                 <Button
                   key={subcategory.id}
-                  variant="ghost"
-                  className="w-full justify-start"
+                  variant={activeSubcategory === subcategory.id ? "secondary" : "ghost"}
+                  className={cn(
+                    "w-full justify-start",
+                    activeSubcategory === subcategory.id && "bg-muted text-accent-purple"
+                  )}
                   onClick={(e) =>
                     handleSubcategoryClick(
                       category.id,
@@ -388,11 +427,18 @@ export function AppSidebar({ locale, className }: AppSidebarProps) {
                     isRTL && "flex-row-reverse"
                   )}>
                     {subcategory.iconName && (
-                      <span className="flex-shrink-0 inline-flex items-center justify-center w-5 h-5">
+                      <span className={cn(
+                        "flex-shrink-0 inline-flex items-center justify-center w-5 h-5",
+                        activeSubcategory === subcategory.id && "text-accent-purple"
+                      )}>
                         {renderCategoryIcon(subcategory.iconName)}
                       </span>
                     )}
-                    <span>{locale === "ar" ? subcategory.nameAr : subcategory.nameEn}</span>
+                    <span className={cn(
+                      activeSubcategory === subcategory.id && "font-medium"
+                    )}>
+                      {locale === "ar" ? subcategory.nameAr : subcategory.nameEn}
+                    </span>
                   </div>
                 </Button>
               ))}

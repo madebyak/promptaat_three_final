@@ -28,8 +28,16 @@ export async function GET(req: Request) {
       ...(category && {
         categories: {
           some: {
-            categoryId: category,
-            ...(subcategory && { subcategoryId: subcategory })
+            OR: [
+              // Match the exact category and subcategory if both are provided
+              {
+                categoryId: category,
+                ...(subcategory && { subcategoryId: subcategory })
+              },
+              // If no subcategory is provided, match any prompt with this category
+              // regardless of subcategory (to include all subcategories)
+              ...(subcategory ? [] : [{ categoryId: category }])
+            ]
           }
         }
       }),
