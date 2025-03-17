@@ -1,8 +1,9 @@
 'use client'
 
-import React, { useEffect, useState, useCallback, useRef } from 'react'
+import React, { useEffect, useState, useCallback } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { useTheme } from 'next-themes'
 import { cn } from '@/lib/utils'
@@ -52,6 +53,37 @@ interface APIResponse {
   error?: string
 }
 
+function SidebarSearchInput({ 
+  placeholder, 
+  onChange, 
+  value, 
+  isRTL 
+}: { 
+  placeholder: string; 
+  onChange: (value: string) => void; 
+  value: string; 
+  isRTL: boolean; 
+}) {
+  return (
+    <div className="relative flex-1">
+      <Search className={cn(
+        "absolute top-2.5 h-4 w-4 text-light-grey",
+        isRTL ? "right-2" : "left-2"
+      )} />
+      <Input
+        placeholder={placeholder}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className={cn(
+          "bg-light-white dark:bg-dark border-light-grey-light dark:border-dark-grey text-dark dark:text-white-pure placeholder:text-light-grey w-full",
+          isRTL ? "pr-8" : "pl-8"
+        )}
+        dir={isRTL ? 'rtl' : 'ltr'}
+      />
+    </div>
+  );
+}
+
 export function Sidebar({ locale, className, items = [] }: SidebarProps) {
   const router = useRouter()
   const pathname = usePathname()
@@ -64,11 +96,9 @@ export function Sidebar({ locale, className, items = [] }: SidebarProps) {
   const [isLoading, setIsLoading] = useState<boolean>(true)
   const [error, setError] = useState<string | null>(null)
   
-  // Create a ref for the search input
-  const searchInputRef = useRef<HTMLInputElement>(null);
-  // Track search query separately from the input value
-  const [searchQuery, setSearchQuery] = useState('');
-  const debouncedSearch = useDebounce(searchQuery, 300);
+  // Simple state for search query - same pattern as the working SearchBar
+  const [searchQuery, setSearchQuery] = useState('')
+  const debouncedSearch = useDebounce(searchQuery, 300)
 
   // We need the useTheme hook for dark mode support, but don't need to use the theme value directly
   const { } = useTheme()
@@ -216,29 +246,6 @@ export function Sidebar({ locale, className, items = [] }: SidebarProps) {
     router.push(targetUrl);
   }
 
-  // Set up a manual focus management system using the ref
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    
-    // Function to handle input changes directly from the DOM
-    const handleInputChange = () => {
-      if (searchInputRef.current) {
-        setSearchQuery(searchInputRef.current.value);
-      }
-    };
-    
-    // Add event listener directly to the DOM element
-    const inputElement = searchInputRef.current;
-    if (inputElement) {
-      inputElement.addEventListener('input', handleInputChange);
-      
-      // Clean up on unmount
-      return () => {
-        inputElement.removeEventListener('input', handleInputChange);
-      };
-    }
-  }, []);
-
   // Render icon with fallback
   const renderIcon = (iconName: string | undefined) => {
     if (!iconName) {
@@ -312,27 +319,12 @@ export function Sidebar({ locale, className, items = [] }: SidebarProps) {
       >
         <div className="flex items-center px-4 py-2">
           {!isCollapsed && (
-            <div className="relative flex-1">
-              <Search className={cn(
-                "absolute top-2.5 h-4 w-4 text-light-grey",
-                isRTL ? "right-2" : "left-2"
-              )} />
-              {/* Use an uncontrolled input that maintains its own state */}
-              <input
-                type="text"
-                placeholder={locale === 'ar' ? "البحث في الفئات..." : "Search categories..."}
-                defaultValue=""
-                ref={searchInputRef}
-                className={cn(
-                  "w-full px-3 py-2 rounded-md text-sm",
-                  "bg-light-white dark:bg-dark",
-                  "border border-light-grey-light dark:border-dark-grey",
-                  "text-dark dark:text-white-pure placeholder:text-light-grey",
-                  isRTL ? "pr-8" : "pl-8"
-                )}
-                dir={isRTL ? 'rtl' : 'ltr'}
-              />
-            </div>
+            <SidebarSearchInput
+              placeholder={locale === 'ar' ? "البحث في الفئات..." : "Search categories..."}
+              onChange={setSearchQuery}
+              value={searchQuery}
+              isRTL={isRTL}
+            />
           )}
           <Button
             variant="ghost"
