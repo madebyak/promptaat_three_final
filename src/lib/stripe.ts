@@ -263,17 +263,34 @@ export async function handleStripeWebhook({
   handleSubscriptionUpdated: (subscription: Stripe.Subscription) => Promise<void>;
   handleSubscriptionCancelled: (subscription: Stripe.Subscription) => Promise<void>;
 }) {
-  const subscription = event.data.object as Stripe.Subscription;
-  
   switch (event.type) {
     case "customer.subscription.created":
-      await handleSubscriptionCreated(subscription);
+      await handleSubscriptionCreated(event.data.object as Stripe.Subscription);
       break;
     case "customer.subscription.updated":
-      await handleSubscriptionUpdated(subscription);
+      await handleSubscriptionUpdated(event.data.object as Stripe.Subscription);
       break;
     case "customer.subscription.deleted":
-      await handleSubscriptionCancelled(subscription);
+      await handleSubscriptionCancelled(event.data.object as Stripe.Subscription);
+      break;
+    case "checkout.session.completed":
+      // Handle checkout session completed event
+      const session = event.data.object as Stripe.Checkout.Session;
+      
+      // Only process subscription-mode checkout sessions
+      if (session.mode === 'subscription' && session.subscription) {
+        console.log(`Processing checkout.session.completed with subscription: ${session.subscription}`);
+        
+        try {
+          // Retrieve the subscription details from Stripe
+          const subscription = await stripe.subscriptions.retrieve(session.subscription as string);
+          
+          // Process the subscription created event
+          await handleSubscriptionCreated(subscription);
+        } catch (error) {
+          console.error(`Error processing checkout.session.completed event:`, error);
+        }
+      }
       break;
   }
 }
