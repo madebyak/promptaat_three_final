@@ -1,0 +1,21 @@
+User-agent: *
+Allow: /
+
+# Disallow authentication and private routes
+Disallow: /*/auth/login
+Disallow: /*/auth/register
+Disallow: /*/auth/forgot-password
+Disallow: /*/auth/reset-password
+Disallow: /*/account
+Disallow: /*/profile
+Disallow: /*/settings
+Disallow: /*/my-prompts
+Disallow: /*/cms
+Disallow: /api/
+
+# Allow important pages
+Allow: /*/category/
+Allow: /*/pricing
+
+# Sitemap
+Sitemap: https://promptaat.com/sitemap.xml

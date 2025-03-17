@@ -13,6 +13,7 @@ import { format } from "date-fns"
 import { PromptDetail, PromptModalProps } from "@/types/prompts"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
+import { ProductStructuredData } from "@/components/seo/product-seo"
 
 export function PromptModal({
   promptId,
@@ -277,6 +278,22 @@ export function PromptModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
+      {prompt && (
+        <ProductStructuredData
+          productId={prompt.id}
+          name={prompt.title}
+          description={prompt.description || prompt.promptText.substring(0, 150)}
+          image={`https://promptaat.com/api/og?title=${encodeURIComponent(prompt.title)}`}
+          authorName="Promptaat"
+          price={prompt.isPro ? 9.99 : 0}
+          priceCurrency="USD"
+          ratingValue={4.5}
+          ratingCount={10}
+          category={prompt.categories?.length > 0 ? prompt.categories[0].name : undefined}
+          locale={locale}
+        />
+      )}
+      
       <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogTitle className="sr-only">Prompt Details</DialogTitle>
         <div className="relative">

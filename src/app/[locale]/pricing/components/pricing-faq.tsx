@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { FAQStructuredData } from "@/components/seo/faq-seo";
 
 interface PricingFAQProps {
   items: Array<{
@@ -31,8 +32,21 @@ export function PricingFAQ({ items, locale, isRTL }: PricingFAQProps) {
     setOpenIndex(openIndex === index ? null : index);
   };
   
+  // Convert localized FAQ items to FAQ items for structured data
+  const faqItemsForStructuredData = items.map(item => ({
+    question: t(item.question),
+    answer: t(item.answer)
+  }));
+  
   return (
     <div className="max-w-3xl mx-auto">
+      {/* Add SEO structured data */}
+      <FAQStructuredData 
+        faqItems={faqItemsForStructuredData} 
+        mainEntity={locale === 'ar' ? "أسئلة شائعة حول التسعير والاشتراك" : "Pricing and Subscription FAQ"}
+        url={`https://promptaat.com/${locale}/pricing`}
+      />
+      
       <div className="space-y-5">
         {items.map((item, index) => (
           <div 

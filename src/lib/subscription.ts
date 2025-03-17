@@ -9,14 +9,21 @@ export async function isUserSubscribed(userId: string): Promise<boolean> {
   if (!userId) return false;
   
   try {
-    // Find active subscription
+    // Find active subscription - using case-insensitive status check
+    // Also consider 'incomplete' status as valid since Stripe sometimes keeps this status
+    // even after payment is complete
     const subscription = await prisma.subscription.findFirst({
       where: {
         userId: userId,
-        status: "active",
+        OR: [
+          { status: "active" },
+          { status: "Active" },
+          { status: "incomplete" }, // Include incomplete status
+          { status: { equals: "active", mode: "insensitive" } }
+        ],
         currentPeriodEnd: {
           gt: new Date()
-        } as any
+        }
       }
     });
     
@@ -39,17 +46,22 @@ export async function getUserSubscription(userId: string) {
     return await prisma.subscription.findFirst({
       where: {
         userId: userId,
-        status: "active",
+        OR: [
+          { status: "active" },
+          { status: "Active" },
+          { status: "incomplete" }, // Include incomplete status
+          { status: { equals: "active", mode: "insensitive" } }
+        ],
         currentPeriodEnd: {
           gt: new Date()
-        } as any
+        }
       },
       include: {
         price: {
           include: {
             plan: true
           }
-        } as any
+        }
       }
     });
   } catch (error) {

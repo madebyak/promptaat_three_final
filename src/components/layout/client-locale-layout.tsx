@@ -11,6 +11,7 @@ import { useSession, SessionProvider } from 'next-auth/react'
 import { VerificationBanner } from '@/components/auth/verification-banner'
 import { UserAccountLayout } from '@/components/layout/user-account-layout'
 import { NextIntlClientProvider, AbstractIntlMessages } from 'next-intl'
+import { SEOProvider } from '@/components/seo/seo-provider'
 
 export function ClientLocaleLayout({
   children,
@@ -38,18 +39,20 @@ export function ClientLocaleLayout({
       <NextIntlClientProvider locale={locale} messages={messages}>
         <ThemeProvider defaultDirection={defaultDirection}>
           <QueryProvider>
-            <div className="relative min-h-screen bg-white-pure dark:bg-black-main">
-              {!isAuthRoute && !isPricingRoute && (
-                <MainLayout
-                  locale={locale}
-                  isRTL={isRTL}
-                  isUserAccountRoute={isUserAccountRoute}
-                >
-                  {children}
-                </MainLayout>
-              )}
-              {(isAuthRoute || isPricingRoute) && children}
-            </div>
+            <SEOProvider locale={locale}>
+              <div className="relative min-h-screen bg-white-pure dark:bg-black-main">
+                {!isAuthRoute && !isPricingRoute && (
+                  <MainLayout
+                    locale={locale}
+                    isRTL={isRTL}
+                    isUserAccountRoute={isUserAccountRoute}
+                  >
+                    {children}
+                  </MainLayout>
+                )}
+                {(isAuthRoute || isPricingRoute) && children}
+              </div>
+            </SEOProvider>
           </QueryProvider>
         </ThemeProvider>
       </NextIntlClientProvider>

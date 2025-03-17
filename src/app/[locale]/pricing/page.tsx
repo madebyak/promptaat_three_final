@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import { FeaturesList } from "@/app/[locale]/pricing/components/features-list";
 import { PricingFAQ } from "@/app/[locale]/pricing/components/pricing-faq";
 import { CheckoutButton } from "@/components/checkout/checkout-button";
+import { PricingStructuredData } from "@/app/[locale]/pricing/components/pricing-seo";
 
 // Pricing data
 const pricingData = {
@@ -24,18 +25,18 @@ const pricingData = {
     description: { en: "Unlock the full potential of AI prompts", ar: "أطلق العنان للإمكانات الكاملة لمطالبات الذكاء الاصطناعي" },
     price: {
       monthly: 9.99,
-      quarterly: 26.99,
-      annual: 99.99
+      quarterly: 24.99,
+      annual: 69.99
     },
     monthlyEquivalent: {
       monthly: 9.99,
-      quarterly: 8.99,
-      annual: 8.33
+      quarterly: 8.33,
+      annual: 5.83
     },
     savings: {
       monthly: 0,
-      quarterly: 11,
-      annual: 33
+      quarterly: 17,
+      annual: 42
     },
     cta: { en: "Upgrade to Pro", ar: "الترقية إلى الاحترافي" }
   }
@@ -141,6 +142,46 @@ export default function PricingPage() {
     return locale === "ar" ? obj.ar : obj.en;
   };
   
+  // Generate pricing plans for SEO structured data
+  const generatePricingPlans = () => {
+    const baseUrl = 'https://promptaat.com';
+    const pricingPlans = [
+      {
+        name: t(pricingData.free.name),
+        price: 0,
+        currency: 'USD',
+        billingPeriod: '',
+        description: t(pricingData.free.description),
+        url: `${baseUrl}/${locale}/pricing`
+      },
+      {
+        name: `${t(pricingData.pro.name)} ${t({ en: "Monthly", ar: "شهري" })}`,
+        price: pricingData.pro.price.monthly,
+        currency: 'USD',
+        billingPeriod: 'P1M',
+        description: t(pricingData.pro.description),
+        url: `${baseUrl}/${locale}/pricing`
+      },
+      {
+        name: `${t(pricingData.pro.name)} ${t({ en: "Quarterly", ar: "ربع سنوي" })}`,
+        price: pricingData.pro.price.quarterly,
+        currency: 'USD',
+        billingPeriod: 'P3M',
+        description: t(pricingData.pro.description),
+        url: `${baseUrl}/${locale}/pricing`
+      },
+      {
+        name: `${t(pricingData.pro.name)} ${t({ en: "Annual", ar: "سنوي" })}`,
+        price: pricingData.pro.price.annual,
+        currency: 'USD',
+        billingPeriod: 'P1Y',
+        description: t(pricingData.pro.description),
+        url: `${baseUrl}/${locale}/pricing`
+      }
+    ];
+    return pricingPlans;
+  };
+  
   // Handle subscription button click for free plan
   const handleFreeSubscribe = () => {
     if (!session) {
@@ -155,6 +196,9 @@ export default function PricingPage() {
   
   return (
     <div className="w-full">
+      {/* SEO Structured Data */}
+      <PricingStructuredData plans={generatePricingPlans()} locale={locale} />
+      
       {/* Hero Section with elegant gradient background */}
       <div className={cn(
         "w-full text-center py-20 px-4 bg-gradient-to-b from-primary/20 via-primary/10 to-background",
@@ -256,7 +300,7 @@ export default function PricingPage() {
         {/* Pro Quarterly Plan Card */}
         <div className="relative border rounded-xl p-6 shadow-sm hover:shadow-md transition-all duration-300 bg-card hover:border-primary/20 h-full flex flex-col">
           <div className="absolute -top-3 right-6 bg-green-600 text-white px-3 py-1 rounded-full text-xs font-semibold">
-            {t({ en: "SAVE 11%", ar: "وفر 11%" })}
+            {t({ en: "SAVE 17%", ar: "وفر 17%" })}
           </div>
           
           <div className="flex justify-between items-start mb-6">
@@ -302,7 +346,7 @@ export default function PricingPage() {
         {/* Pro Annual Plan Card */}
         <div className="relative border rounded-xl p-6 shadow-lg bg-card border-primary/20 hover:shadow-xl transition-all duration-300 hover:border-primary/30 h-full flex flex-col">
           <div className="absolute -top-3 right-6 bg-green-600 text-white px-3 py-1 rounded-full text-xs font-semibold">
-            {t({ en: "SAVE 33%", ar: "وفر 33%" })}
+            {t({ en: "SAVE 42%", ar: "وفر 42%" })}
           </div>
           
           <div className="absolute -top-3 left-6 bg-primary text-primary-foreground px-3 py-1 rounded-full text-xs font-semibold flex items-center">
