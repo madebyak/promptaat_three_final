@@ -3,9 +3,11 @@
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
-import { Menu, User, FileText, Settings, LogOut } from "lucide-react"
+import { Menu, User, FileText, Settings, LogOut, Sun, Moon } from "lucide-react"
 import { signOut } from "next-auth/react"
 import { useState } from "react"
+import { LanguageSwitcher } from "./language-switcher"
+import { useTheme } from "@/components/providers/theme-provider"
 
 interface MobileMenuProps {
   locale: string
@@ -18,6 +20,8 @@ interface MobileMenuProps {
 
 export function MobileMenu({ locale, user }: MobileMenuProps) {
   const [isSigningOut, setIsSigningOut] = useState(false);
+  const { theme, setTheme } = useTheme();
+  const isDark = theme === 'dark';
 
   const handleSignOut = async () => {
     setIsSigningOut(true);
@@ -58,6 +62,40 @@ export function MobileMenu({ locale, user }: MobileMenuProps) {
             </Link>
           </Button>
           <hr className="border-light-grey-light dark:border-dark-grey my-4" />
+          
+          {/* Language and Theme Controls */}
+          <div className="flex items-center justify-between px-2 mb-2">
+            <div className="flex items-center">
+              <span className="text-sm font-medium mr-2 text-dark dark:text-white-pure">
+                {locale === 'ar' ? 'اللغة' : 'Language'}:
+              </span>
+              <LanguageSwitcher locale={locale} />
+            </div>
+            
+            <div className="flex items-center">
+              <span className="text-sm font-medium mr-2 text-dark dark:text-white-pure">
+                {locale === 'ar' ? 'المظهر' : 'Theme'}:
+              </span>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setTheme(isDark ? 'light' : 'dark')}
+                className="h-9 w-9 border-light-grey-light hover:bg-light-grey-light dark:border-dark-grey dark:hover:bg-dark-grey"
+              >
+                {isDark ? (
+                  <Sun className="h-4 w-4" />
+                ) : (
+                  <Moon className="h-4 w-4" />
+                )}
+                <span className="sr-only">
+                  {locale === 'ar' ? 'تبديل المظهر' : 'Toggle theme'}
+                </span>
+              </Button>
+            </div>
+          </div>
+          
+          <hr className="border-light-grey-light dark:border-dark-grey my-2" />
+          
           <div className="flex flex-col gap-4">
             {user ? (
               // Show user-specific options when logged in
