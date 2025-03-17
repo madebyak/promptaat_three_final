@@ -17,6 +17,32 @@ export async function generateMetadata({
   // Set locale-specific OpenGraph images
   const ogImagePath = locale === 'ar' ? '/og/home-og-ar.jpg' : '/og/home-og-en.jpg';
   
+  // Define locale-specific metadata
+  if (locale === 'ar') {
+    return {
+      title: 'برومتات - أكبر مكتبة للموجهات الذكية',
+      description: 'في مستقبل يقوده الذكاء الاصطناعي، وقتك ثمين. مع برومتات ستحصل على أكبر مكتبة من الموجهات الجاهزة التي تتيح لك تركيز جهودك على إبداع المحتوى وتحقيق نتائج باهرة بنقرة واحدة.',
+      openGraph: {
+        title: 'برومتات - أكبر مكتبة للموجهات الذكية',
+        description: 'في مستقبل يقوده الذكاء الاصطناعي، وقتك ثمين. مع برومتات ستحصل على أكبر مكتبة من الموجهات الجاهزة التي تتيح لك تركيز جهودك على إبداع المحتوى وتحقيق نتائج باهرة بنقرة واحدة.',
+        images: [
+          {
+            url: ogImagePath,
+            width: 1200,
+            height: 630,
+            alt: 'برومتات - أكبر مكتبة للموجهات الذكية',
+          },
+        ],
+      },
+      twitter: {
+        images: [ogImagePath],
+        title: 'برومتات - أكبر مكتبة للموجهات الذكية',
+        description: 'في مستقبل يقوده الذكاء الاصطناعي، وقتك ثمين. مع برومتات ستحصل على أكبر مكتبة من الموجهات الجاهزة لتحقيق نتائج باهرة بنقرة واحدة.',
+      },
+    };
+  }
+  
+  // Default English metadata
   return {
     openGraph: {
       images: [
@@ -24,7 +50,7 @@ export async function generateMetadata({
           url: ogImagePath,
           width: 1200,
           height: 630,
-          alt: locale === 'ar' ? 'برومبتات - مكتبة بروبتات الذكاء الاصطناعي' : 'Promptaat - Your AI Prompt Library',
+          alt: 'Promptaat | The Largest AI Prompt Library',
         },
       ],
     },

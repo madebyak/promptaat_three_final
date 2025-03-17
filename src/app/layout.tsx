@@ -17,14 +17,14 @@ const geistSans = Geist({
 
 export const metadata: Metadata = {
   title: {
-    default: 'Promptaat - Your AI Prompt Library',
+    default: 'Promptaat | The Largest AI Prompt Library',
     template: '%s | Promptaat'
   },
-  description: 'Discover and use the best AI prompts for ChatGPT, Gemini, Claude and more. Find prompts for business, writing, creativity, and productivity.',
+  description: 'In an era where AI is reshaping creativity, crafting effective prompts can be overwhelming. Promptaat\'s vast, engineered collection saves you time—just copy and paste to fuel your ideas, letting you focus on the details that matter.',
   viewport: 'width=device-width, initial-scale=1, maximum-scale=5',
   themeColor: '#ffffff',
   metadataBase: new URL('https://promptaat.com'),
-  keywords: ['AI prompts', 'ChatGPT prompts', 'prompt library', 'AI assistant prompts', 'generative AI', 'prompt engineering'],
+  keywords: ['AI Prompts', 'ChatGPT Prompts', 'Top Prompts', 'Advance Prompt', 'Claude AI Prompts', 'Cursor AI Prompts', 'Wind Surf Prompts', 'Gemini Prompts', 'Professional Prompts', 'Marketing Prompts', 'Content writing prompts', 'Best prompts'],
   applicationName: 'Promptaat',
   creator: 'Promptaat Team',
   publisher: 'Promptaat',
@@ -47,10 +47,10 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: {
-      default: 'Promptaat - Your AI Prompt Library',
+      default: 'Promptaat | The Largest AI Prompt Library',
       template: '%s | Promptaat'
     },
-    description: 'Discover and use the best AI prompts for ChatGPT, Gemini, Claude and more. Find prompts for business, writing, creativity, and productivity.',
+    description: 'In an era where AI is reshaping creativity, crafting effective prompts can be overwhelming. Promptaat\'s vast, engineered collection saves you time—just copy and paste to fuel your ideas, letting you focus on the details that matter.',
     type: 'website',
     locale: 'en_US',
     alternateLocale: 'ar_SA',
@@ -61,14 +61,14 @@ export const metadata: Metadata = {
         url: '/og/home-og-en.jpg',
         width: 1200,
         height: 630,
-        alt: 'Promptaat - Your AI Prompt Library',
+        alt: 'Promptaat | The Largest AI Prompt Library',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Promptaat - Your AI Prompt Library',
-    description: 'Discover and use the best AI prompts for ChatGPT, Gemini, Claude and more.',
+    title: 'Promptaat | The Largest AI Prompt Library',
+    description: 'In an era where AI is reshaping creativity, crafting effective prompts can be overwhelming. Promptaat\'s vast collection saves you time with one-click solutions.',
     images: ['/og/home-og-en.jpg'],
   },
   verification: {

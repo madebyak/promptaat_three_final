@@ -10,7 +10,7 @@ interface GenerateMetadataProps {
 
 /**
  * Generate dynamic SEO metadata for category pages
- * This fetches the actual category data to create optimized, content-specific metadata
+ * This fetches category data to create targeted metadata
  */
 export async function generateMetadata(
   { params }: GenerateMetadataProps
@@ -18,8 +18,8 @@ export async function generateMetadata(
   const { locale, categoryId } = params
   const isArabic = locale === 'ar'
   
-  // Fetch the category data to use in metadata
   try {
+    // Fetch category data
     const category = await prisma.category.findUnique({
       where: { id: categoryId }
     })
@@ -27,14 +27,14 @@ export async function generateMetadata(
     if (!category) {
       // Fallback metadata if category not found
       return {
-        title: isArabic ? 'فئة غير موجودة | برومبتات' : 'Category Not Found | Promptaat',
+        title: isArabic ? 'فئة غير موجودة | برومتات' : 'Category Not Found | Promptaat',
         description: isArabic 
           ? 'عذراً، الفئة التي تبحث عنها غير موجودة.' 
           : 'Sorry, the category you are looking for does not exist.',
       }
     }
     
-    // Get category name based on locale
+    // Get name based on locale
     const categoryName = isArabic ? category.nameAr : category.nameEn
     
     // Base metadata that's common across locales
@@ -49,34 +49,34 @@ export async function generateMetadata(
       },
     }
     
-    // Construct optimized descriptions based on category
+    // Construct optimized descriptions
     const descriptionEn = `Browse the best ${categoryName} AI prompts at Promptaat. Find expertly crafted prompts for ChatGPT, Gemini, and Claude to enhance your ${categoryName.toLowerCase()} tasks and workflows.`
-    const descriptionAr = `تصفح أفضل بروبتات الذكاء الاصطناعي لـ ${categoryName} في برومبتات. جد بروبتات مصممة بعناية لـ ChatGPT وGemini وClaude لتحسين مهامك وسير عملك في ${categoryName}.`
+    const descriptionAr = `تصفح أفضل موجهات الذكاء الاصطناعي لـ ${categoryName} في برومتات. جد موجهات مصممة بعناية لـ ChatGPT وGemini وClaude لتحسين مهامك وسير عملك في ${categoryName}.`
     
     // Locale-specific metadata
     if (isArabic) {
       return {
         ...baseMetadata,
-        title: `${categoryName} | برومبتات`,
+        title: `${categoryName} | برومتات - أكبر مكتبة للموجهات الذكية`,
         description: descriptionAr,
         keywords: [
-          `بروبتات ${categoryName}`, 
-          'بروبتات الذكاء الاصطناعي', 
+          `موجهات ${categoryName}`, 
+          'موجهات الذكاء الاصطناعي', 
           'شات جي بي تي', 
           'جيميني', 
           'كلود'
         ],
         openGraph: {
-          title: `${categoryName} | برومبتات`,
+          title: `${categoryName} | برومتات - أكبر مكتبة للموجهات الذكية`,
           description: descriptionAr,
           locale: 'ar_SA',
           type: 'website',
           url: `https://promptaat.com/ar/category/${categoryId}`,
-          siteName: 'برومبتات',
+          siteName: 'برومتات',
         },
         twitter: {
           card: 'summary',
-          title: `${categoryName} | برومبتات`,
+          title: `${categoryName} | برومتات - أكبر مكتبة للموجهات الذكية`,
           description: descriptionAr,
         },
       }
@@ -85,18 +85,19 @@ export async function generateMetadata(
     // Default to English metadata
     return {
       ...baseMetadata,
-      title: `${categoryName} | Promptaat`,
+      title: `${categoryName} | Promptaat - The Largest AI Prompt Library`,
       description: descriptionEn,
       keywords: [
         `${categoryName} prompts`,
-        'AI prompts',
-        'ChatGPT prompts',
-        'Gemini prompts',
-        'Claude prompts',
-        'prompt library'
+        'AI Prompts',
+        'ChatGPT Prompts',
+        'Top Prompts',
+        'Advance Prompt',
+        'Claude AI Prompts',
+        'Gemini Prompts'
       ],
       openGraph: {
-        title: `${categoryName} | Promptaat`,
+        title: `${categoryName} | Promptaat - The Largest AI Prompt Library`,
         description: descriptionEn,
         locale: 'en_US',
         type: 'website',
@@ -105,7 +106,7 @@ export async function generateMetadata(
       },
       twitter: {
         card: 'summary',
-        title: `${categoryName} | Promptaat`,
+        title: `${categoryName} | Promptaat - The Largest AI Prompt Library`,
         description: descriptionEn,
       },
     }
@@ -114,9 +115,9 @@ export async function generateMetadata(
     
     // Fallback metadata in case of error
     return {
-      title: isArabic ? 'فئة | برومبتات' : 'Category | Promptaat',
+      title: isArabic ? 'فئة | برومتات - أكبر مكتبة للموجهات الذكية' : 'Category | Promptaat - The Largest AI Prompt Library',
       description: isArabic 
-        ? 'اكتشف بروبتات الذكاء الاصطناعي حسب الفئة' 
+        ? 'اكتشف موجهات الذكاء الاصطناعي حسب الفئة' 
         : 'Discover AI prompts by category',
     }
   }

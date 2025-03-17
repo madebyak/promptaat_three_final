@@ -33,7 +33,7 @@ export async function generateMetadata(
     if (!category || !subcategory) {
       // Fallback metadata if data not found
       return {
-        title: isArabic ? 'فئة فرعية غير موجودة | برومبتات' : 'Subcategory Not Found | Promptaat',
+        title: isArabic ? 'فئة فرعية غير موجودة | برومتات' : 'Subcategory Not Found | Promptaat',
         description: isArabic 
           ? 'عذراً، الفئة الفرعية التي تبحث عنها غير موجودة.' 
           : 'Sorry, the subcategory you are looking for does not exist.',
@@ -58,33 +58,33 @@ export async function generateMetadata(
     
     // Construct optimized descriptions that target both category and subcategory
     const descriptionEn = `Explore ${subcategoryName} prompts in our ${categoryName} collection. Find specialized AI prompts for ChatGPT, Gemini, and Claude to optimize your ${subcategoryName.toLowerCase()} tasks and workflows.`
-    const descriptionAr = `استكشف بروبتات ${subcategoryName} في مجموعة ${categoryName} لدينا. اعثر على بروبتات الذكاء الاصطناعي المتخصصة لـ ChatGPT وGemini وClaude لتحسين مهام ${subcategoryName} وسير العمل.`
+    const descriptionAr = `استكشف موجهات ${subcategoryName} في مجموعة ${categoryName} لدينا. اعثر على موجهات الذكاء الاصطناعي المتخصصة لـ ChatGPT وGemini وClaude لتحسين مهام ${subcategoryName} وسير العمل.`
     
     // Locale-specific metadata
     if (isArabic) {
       return {
         ...baseMetadata,
-        title: `${subcategoryName} | ${categoryName} | برومبتات`,
+        title: `${subcategoryName} | ${categoryName} | برومتات - أكبر مكتبة للموجهات الذكية`,
         description: descriptionAr,
         keywords: [
-          `بروبتات ${subcategoryName}`,
+          `موجهات ${subcategoryName}`,
           `${categoryName}`,
-          'بروبتات الذكاء الاصطناعي',
+          'موجهات الذكاء الاصطناعي',
           'شات جي بي تي',
           'جيميني',
           'كلود'
         ],
         openGraph: {
-          title: `${subcategoryName} | ${categoryName} | برومبتات`,
+          title: `${subcategoryName} | ${categoryName} | برومتات - أكبر مكتبة للموجهات الذكية`,
           description: descriptionAr,
           locale: 'ar_SA',
           type: 'website',
           url: `https://promptaat.com/ar/category/${categoryId}/subcategory/${subcategoryId}`,
-          siteName: 'برومبتات',
+          siteName: 'برومتات',
         },
         twitter: {
           card: 'summary',
-          title: `${subcategoryName} | ${categoryName} | برومبتات`,
+          title: `${subcategoryName} | ${categoryName} | برومتات - أكبر مكتبة للموجهات الذكية`,
           description: descriptionAr,
         },
       }
@@ -93,18 +93,20 @@ export async function generateMetadata(
     // Default to English metadata
     return {
       ...baseMetadata,
-      title: `${subcategoryName} | ${categoryName} | Promptaat`,
+      title: `${subcategoryName} | ${categoryName} | Promptaat - The Largest AI Prompt Library`,
       description: descriptionEn,
       keywords: [
         `${subcategoryName} prompts`,
         `${categoryName} prompts`,
-        'AI prompts',
-        'ChatGPT prompts',
-        'Gemini prompts',
-        'Claude prompts'
+        'AI Prompts',
+        'ChatGPT Prompts',
+        'Top Prompts',
+        'Advance Prompt',
+        'Claude AI Prompts',
+        'Gemini Prompts'
       ],
       openGraph: {
-        title: `${subcategoryName} | ${categoryName} | Promptaat`,
+        title: `${subcategoryName} | ${categoryName} | Promptaat - The Largest AI Prompt Library`,
         description: descriptionEn,
         locale: 'en_US',
         type: 'website',
@@ -113,7 +115,7 @@ export async function generateMetadata(
       },
       twitter: {
         card: 'summary',
-        title: `${subcategoryName} | ${categoryName} | Promptaat`,
+        title: `${subcategoryName} | ${categoryName} | Promptaat - The Largest AI Prompt Library`,
         description: descriptionEn,
       },
     }
@@ -122,9 +124,9 @@ export async function generateMetadata(
     
     // Fallback metadata in case of error
     return {
-      title: isArabic ? 'فئة فرعية | برومبتات' : 'Subcategory | Promptaat',
+      title: isArabic ? 'فئة فرعية | برومتات - أكبر مكتبة للموجهات الذكية' : 'Subcategory | Promptaat - The Largest AI Prompt Library',
       description: isArabic 
-        ? 'استكشف بروبتات الذكاء الاصطناعي المتخصصة' 
+        ? 'استكشف موجهات الذكاء الاصطناعي المتخصصة' 
         : 'Explore specialized AI prompts',
     }
   }
