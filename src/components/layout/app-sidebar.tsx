@@ -1,6 +1,6 @@
 "use client"
 
-import { Fragment, useEffect, useState } from "react"
+import { Fragment, useEffect, useState, useRef, memo } from "react"
 import { usePathname, useRouter } from "next/navigation"
 import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -49,6 +49,78 @@ interface APIResponse {
   data: Category[]
   error?: string
 }
+
+// Memoized search input component that manages its own state to prevent re-renders from parent affecting focus
+const SidebarSearchInput = memo(({ 
+  placeholder, 
+  onChange, 
+  value: externalValue, 
+  isRTL 
+}: { 
+  placeholder: string; 
+  onChange: (value: string) => void; 
+  value: string; 
+  isRTL: boolean; 
+}) => {
+  // Use internal state for the input value to prevent focus loss during parent re-renders
+  const [internalValue, setInternalValue] = useState(externalValue);
+  const inputRef = useRef<HTMLInputElement>(null);
+  
+  // Sync internal value with external value when it changes from outside
+  useEffect(() => {
+    if (externalValue !== internalValue) {
+      setInternalValue(externalValue);
+    }
+  }, [externalValue, internalValue]);
+  
+  // Handle input changes
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = e.target.value;
+    setInternalValue(newValue);
+    onChange(newValue);
+  };
+  
+  // Focus preservation logic
+  useEffect(() => {
+    // Auto-focus and restore cursor position on mount
+    if (inputRef.current) {
+      const end = inputRef.current.value.length;
+      inputRef.current.focus();
+      inputRef.current.setSelectionRange(end, end);
+    }
+  }, []);
+  
+  return (
+    <div className="relative flex-1">
+      <Search className={cn(
+        "absolute top-2.5 h-4 w-4 text-light-grey",
+        isRTL ? "right-2" : "left-2"
+      )} />
+      <Input
+        placeholder={placeholder}
+        value={internalValue}
+        onChange={handleChange}
+        onFocus={() => {
+          // When focusing, ensure the cursor is at the end
+          if (inputRef.current) {
+            const length = inputRef.current.value.length;
+            inputRef.current.setSelectionRange(length, length);
+          }
+        }}
+        ref={inputRef}
+        className={cn(
+          "bg-light-white dark:bg-dark border-light-grey-light dark:border-dark-grey",
+          "text-dark dark:text-white-pure placeholder:text-light-grey w-full",
+          isRTL ? "pr-8" : "pl-8"
+        )}
+        dir={isRTL ? "rtl" : "ltr"}
+      />
+    </div>
+  );
+});
+
+// Add display name for debugging
+SidebarSearchInput.displayName = "SidebarSearchInput";
 
 export function AppSidebar({ locale, className }: AppSidebarProps) {
   const router = useRouter()
@@ -174,23 +246,12 @@ export function AppSidebar({ locale, className }: AppSidebarProps) {
   const CategoryList = () => (
     <>
       <SidebarHeader>
-        <div className="relative flex-1">
-          <Search className={cn(
-            "absolute top-2.5 h-4 w-4 text-light-grey",
-            isRTL ? "right-2" : "left-2"
-          )} />
-          <Input
-            placeholder={locale === "ar" ? "البحث في الفئات..." : "Search categories..."}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className={cn(
-              "bg-light-white dark:bg-dark border-light-grey-light dark:border-dark-grey",
-              "text-dark dark:text-white-pure placeholder:text-light-grey w-full",
-              isRTL ? "pr-8" : "pl-8"
-            )}
-            dir={isRTL ? "rtl" : "ltr"}
-          />
-        </div>
+        <SidebarSearchInput
+          placeholder={locale === "ar" ? "البحث في الفئات..." : "Search categories..."}
+          value={searchQuery}
+          onChange={setSearchQuery}
+          isRTL={isRTL}
+        />
       </SidebarHeader>
 
       <SidebarContent>
