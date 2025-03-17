@@ -3,7 +3,6 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { useTheme } from 'next-themes'
 import { cn } from '@/lib/utils'
@@ -53,79 +52,27 @@ interface APIResponse {
   error?: string
 }
 
-// New PersistentSearchInput component to handle search with persistent focus
-// This is a specialized component that maintains focus state internally
-function PersistentSearchInput({
-  placeholder,
-  value,
-  onChange,
-  isRTL,
-}: {
-  placeholder: string;
-  value: string;
-  onChange: (value: string) => void;
-  isRTL: boolean;
-}) {
-  const inputRef = useRef<HTMLInputElement>(null);
-  const [inputValue, setInputValue] = useState(value);
-  
-  // Sync internal value with external value
-  useEffect(() => {
-    setInputValue(value);
-  }, [value]);
-  
-  // Handle changes in the input
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // Update internal state immediately
-    setInputValue(e.target.value);
-    // Propagate changes to parent
-    onChange(e.target.value);
-  };
-  
-  return (
-    <div className="relative flex-1">
-      <Search className={cn(
-        "absolute top-2.5 h-4 w-4 text-light-grey",
-        isRTL ? "right-2" : "left-2"
-      )} />
-      <Input
-        placeholder={placeholder}
-        value={inputValue}
-        onChange={handleChange}
-        ref={inputRef}
-        className={cn(
-          "bg-light-white dark:bg-dark border-light-grey-light dark:border-dark-grey text-dark dark:text-white-pure placeholder:text-light-grey w-full",
-          isRTL ? "pr-8" : "pl-8"
-        )}
-        dir={isRTL ? 'rtl' : 'ltr'}
-        // Ensure focus is not hijacked
-        onBlur={(e) => {
-          // If we're clicking within our component, prevent blur
-          if (e.currentTarget.contains(e.relatedTarget as Node)) {
-            e.preventDefault();
-          }
-        }}
-      />
-    </div>
-  );
-}
-
 export function Sidebar({ locale, className, items = [] }: SidebarProps) {
   const router = useRouter()
   const pathname = usePathname()
-  // We need the useTheme hook for dark mode support, but don't need to use the theme value directly
-  const { } = useTheme()
   const [isRTL, setIsRTL] = useState(false)
   const [isCollapsed, setIsCollapsed] = useState<boolean>(
     typeof window !== 'undefined' ? localStorage.getItem('sidebarCollapsed') === 'true' : false
   )
-  const [searchQuery, setSearchQuery] = useState('')
   const [categories, setCategories] = useState<Category[]>([])
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState<boolean>(true)
   const [error, setError] = useState<string | null>(null)
-  const debouncedSearch = useDebounce(searchQuery, 300)
   
+  // Create a ref for the search input
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  // Track search query separately from the input value
+  const [searchQuery, setSearchQuery] = useState('');
+  const debouncedSearch = useDebounce(searchQuery, 300);
+
+  // We need the useTheme hook for dark mode support, but don't need to use the theme value directly
+  const { } = useTheme()
+
   console.log('[Sidebar Debug] Current activeCategory:', activeCategory);
   console.log('[Sidebar Debug] Categories with subcategories:', 
     categories.filter(cat => cat.subcategories && cat.subcategories.length > 0)
@@ -269,6 +216,29 @@ export function Sidebar({ locale, className, items = [] }: SidebarProps) {
     router.push(targetUrl);
   }
 
+  // Set up a manual focus management system using the ref
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
+    // Function to handle input changes directly from the DOM
+    const handleInputChange = () => {
+      if (searchInputRef.current) {
+        setSearchQuery(searchInputRef.current.value);
+      }
+    };
+    
+    // Add event listener directly to the DOM element
+    const inputElement = searchInputRef.current;
+    if (inputElement) {
+      inputElement.addEventListener('input', handleInputChange);
+      
+      // Clean up on unmount
+      return () => {
+        inputElement.removeEventListener('input', handleInputChange);
+      };
+    }
+  }, []);
+
   // Render icon with fallback
   const renderIcon = (iconName: string | undefined) => {
     if (!iconName) {
@@ -342,12 +312,27 @@ export function Sidebar({ locale, className, items = [] }: SidebarProps) {
       >
         <div className="flex items-center px-4 py-2">
           {!isCollapsed && (
-            <PersistentSearchInput
-              placeholder={locale === 'ar' ? "البحث في الفئات..." : "Search categories..."}
-              value={searchQuery}
-              onChange={setSearchQuery}
-              isRTL={isRTL}
-            />
+            <div className="relative flex-1">
+              <Search className={cn(
+                "absolute top-2.5 h-4 w-4 text-light-grey",
+                isRTL ? "right-2" : "left-2"
+              )} />
+              {/* Use an uncontrolled input that maintains its own state */}
+              <input
+                type="text"
+                placeholder={locale === 'ar' ? "البحث في الفئات..." : "Search categories..."}
+                defaultValue=""
+                ref={searchInputRef}
+                className={cn(
+                  "w-full px-3 py-2 rounded-md text-sm",
+                  "bg-light-white dark:bg-dark",
+                  "border border-light-grey-light dark:border-dark-grey",
+                  "text-dark dark:text-white-pure placeholder:text-light-grey",
+                  isRTL ? "pr-8" : "pl-8"
+                )}
+                dir={isRTL ? 'rtl' : 'ltr'}
+              />
+            </div>
           )}
           <Button
             variant="ghost"
