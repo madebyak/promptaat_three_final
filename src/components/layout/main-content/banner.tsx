@@ -2,13 +2,11 @@
 
 import { useState, useEffect, useCallback, memo } from 'react'
 import Image from 'next/image'
-import Link from 'next/link'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 // Add custom easing function for animations
 import '@/styles/animations.css'
-import { Button } from '@/components/ui/button'
 
 interface BannerProps {
   locale?: string
@@ -18,7 +16,6 @@ interface BannerProps {
 interface BannerContent {
   headline: string
   subheading: string
-  ctaText: string
   image: string
 }
 
@@ -27,19 +24,16 @@ const content: Record<string, BannerContent[]> = {
     {
       headline: "Elevate Your AI Conversations",
       subheading: "Discover and share powerful prompts that unlock the full potential of AI tools",
-      ctaText: "Get Started",
       image: "/Banner_img_01.jpg"
     },
     {
       headline: "Find the Perfect Prompt",
       subheading: "Browse our curated collection of high-quality prompts for various AI tools",
-      ctaText: "Explore",
       image: "/Banner_img_02.jpg"
     },
     {
       headline: "Share Your Expertise",
       subheading: "Contribute your own prompts and help others achieve better results with AI",
-      ctaText: "Contribute",
       image: "/Banner_img_03.jpg"
     }
   ],
@@ -47,19 +41,16 @@ const content: Record<string, BannerContent[]> = {
     {
       headline: "ارتقِ بمحادثاتك مع الذكاء الاصطناعي",
       subheading: "اكتشف وشارك أقوى الإرشادات التي تطلق العنان لإمكانات أدوات الذكاء الاصطناعي",
-      ctaText: "ابدأ الآن",
       image: "/Banner_img_01.jpg"
     },
     {
       headline: "ابحث عن الإرشاد المثالي",
       subheading: "تصفح مجموعتنا المنسقة من الإرشادات عالية الجودة لمختلف أدوات الذكاء الاصطناعي",
-      ctaText: "استكشف",
       image: "/Banner_img_02.jpg"
     },
     {
       headline: "شارك خبرتك",
       subheading: "ساهم بإرشاداتك الخاصة وساعد الآخرين على تحقيق نتائج أفضل مع الذكاء الاصطناعي",
-      ctaText: "ساهم",
       image: "/Banner_img_03.jpg"
     }
   ]
@@ -71,7 +62,7 @@ export const Banner = memo(function Banner({ locale = 'en', className }: BannerP
   const bannerItems = content[locale] || content.en
   const [currentIndex, setCurrentIndex] = useState(0)
   const [isTransitioning, setIsTransitioning] = useState(false)
-  const { headline, subheading, ctaText, image } = bannerItems[currentIndex]
+  const { headline, subheading, image } = bannerItems[currentIndex]
 
   // Handle smooth transitions - wrapped in useCallback to avoid dependency issues
   const handleTransition = useCallback((indexFn: (prev: number) => number) => {
@@ -144,39 +135,37 @@ export const Banner = memo(function Banner({ locale = 'en', className }: BannerP
       {/* Content - Centered with animations */}
       <div className="relative h-full flex items-center justify-center p-6">
         <div className={cn(
-          "max-w-2xl text-center",
-          isRTL && "text-right"
+          "max-w-2xl text-center w-full px-4",
+          isRTL ? "rtl" : "ltr"
         )}>
           <h1 
             className={cn(
-              "text-3xl md:text-4xl lg:text-5xl font-bold text-white-pure mb-4 transition-opacity duration-200 ease-in-out-circ",
+              "text-3xl md:text-4xl lg:text-5xl font-bold text-white-pure mb-4 transition-opacity duration-200 ease-in-out-circ mx-auto",
               isRTL ? "font-ibm-plex-sans-arabic" : "font-ibm-plex-sans",
-              isTransitioning ? "opacity-0" : "opacity-100"
+              isTransitioning ? "opacity-0" : "opacity-100",
+              "max-w-3xl" // Limit width to prevent line breaks
             )}
+            style={{
+              lineHeight: isRTL ? '1.4' : '1.2', // Adjust line height for Arabic
+              direction: isRTL ? 'rtl' : 'ltr'
+            }}
           >
             {headline}
           </h1>
           <p 
             className={cn(
-              "text-base md:text-lg text-white-pure/90 mb-6 transition-opacity duration-200 ease-in-out-circ",
+              "text-base md:text-lg text-white-pure/90 transition-opacity duration-200 ease-in-out-circ mx-auto",
               isRTL ? "font-ibm-plex-sans-arabic" : "font-ibm-plex-sans",
-              isTransitioning ? "opacity-0" : "opacity-100"
+              isTransitioning ? "opacity-0" : "opacity-100",
+              "max-w-2xl" // Limit width to prevent line breaks
             )}
+            style={{
+              lineHeight: isRTL ? '1.6' : '1.5', // Adjust line height for Arabic
+              direction: isRTL ? 'rtl' : 'ltr'
+            }}
           >
             {subheading}
           </p>
-          <Link href={`/${locale}/explore`} passHref>
-            <Button 
-              size="lg" 
-              className={cn(
-                "font-medium shadow-lg hover:shadow-xl transition-opacity duration-200 ease-in-out-circ",
-                isRTL && "font-ibm-plex-sans-arabic",
-                isTransitioning ? "opacity-0" : "opacity-100"
-              )}
-            >
-              {ctaText}
-            </Button>
-          </Link>
         </div>
       </div>
 
