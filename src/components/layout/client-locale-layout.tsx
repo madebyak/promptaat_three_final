@@ -110,7 +110,8 @@ export function MainLayout({
           <AppSidebar locale={locale} className={isRTL ? "right-0" : "left-0"} />
           <main className={cn(
             "flex-1",
-            isRTL ? "md:mr-64" : "md:ml-64"
+            isRTL ? "md:mr-64" : "md:ml-64",
+            "lg:pt-0 pt-12"
           )}>
             {children}
           </main>

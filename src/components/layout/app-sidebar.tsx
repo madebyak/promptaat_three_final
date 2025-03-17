@@ -133,6 +133,10 @@ export function AppSidebar({ locale, className }: AppSidebarProps) {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isMobileOpen, setIsMobileOpen] = useState(false)
+  const [currentPath, setCurrentPath] = useState<{category: string | null, subcategory: string | null}>({
+    category: null,
+    subcategory: null
+  })
   const debouncedSearch = useDebounce(searchQuery, 300)
 
   // Helper function to render category icons
@@ -153,6 +157,29 @@ export function AppSidebar({ locale, className }: AppSidebarProps) {
       console.error(`[Sidebar Error] Failed to render icon: ${iconName}`, error);
       return <div className="h-4 w-4 bg-muted rounded-sm" />;
     }
+  };
+
+  // Default category icon for the mobile bar
+  const CategoryIcon = () => {
+    return (
+      <svg 
+        xmlns="http://www.w3.org/2000/svg" 
+        width="20" 
+        height="20" 
+        viewBox="0 0 24 24" 
+        fill="none" 
+        stroke="currentColor" 
+        strokeWidth="2" 
+        strokeLinecap="round" 
+        strokeLinejoin="round"
+        className="h-5 w-5"
+      >
+        <rect width="7" height="7" x="3" y="3" rx="1" />
+        <rect width="7" height="7" x="14" y="3" rx="1" />
+        <rect width="7" height="7" x="14" y="14" rx="1" />
+        <rect width="7" height="7" x="3" y="14" rx="1" />
+      </svg>
+    );
   };
 
   useEffect(() => {
@@ -252,6 +279,35 @@ export function AppSidebar({ locale, className }: AppSidebarProps) {
       setActiveSubcategory(null)
     }
   }, [pathname, categories])
+
+  useEffect(() => {
+    if (!categories.length) return;
+    
+    let categoryName = null;
+    let subcategoryName = null;
+    
+    if (activeCategory) {
+      const category = categories.find(c => c.id === activeCategory);
+      if (category) {
+        categoryName = locale === "ar" ? category.nameAr : category.nameEn;
+        
+        if (activeSubcategory && category.subcategories) {
+          const subcategory = category.subcategories.find(s => s.id === activeSubcategory);
+          if (subcategory) {
+            subcategoryName = locale === "ar" ? subcategory.nameAr : subcategory.nameEn;
+          }
+        }
+      }
+    }
+    
+    setCurrentPath({
+      category: categoryName,
+      subcategory: subcategoryName
+    });
+    
+    // Close the mobile sidebar when a selection is made
+    setIsMobileOpen(false);
+  }, [activeCategory, activeSubcategory, categories, locale])
 
   const handleCategoryClick = (categoryId: string | null) => {
     setActiveCategory(activeCategory === categoryId ? null : categoryId)
@@ -449,20 +505,131 @@ export function AppSidebar({ locale, className }: AppSidebarProps) {
     </>
   )
 
+  const MobileCategoryList = () => (
+    <>
+      <div className="px-4 py-3 border-b border-light-grey-light dark:border-dark-grey">
+        <Input
+          placeholder={locale === "ar" ? "البحث في الفئات..." : "Search categories..."}
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className={cn(
+            "bg-light-white dark:bg-dark border-light-grey-light dark:border-dark-grey",
+            "text-dark dark:text-white-pure placeholder:text-light-grey w-full",
+            isRTL ? "pr-8" : "pl-8"
+          )}
+          dir={isRTL ? "rtl" : "ltr"}
+        />
+        <Search className={cn(
+          "absolute top-[1.2rem] h-4 w-4 text-light-grey",
+          isRTL ? "right-6" : "left-6"
+        )} />
+      </div>
+
+      <ScrollArea className="flex-1 h-[calc(100vh-8rem)]">
+        {isLoading ? (
+          <SidebarSkeleton locale={locale} />
+        ) : error ? (
+          <div className="flex flex-col items-center justify-center h-full p-4 text-center">
+            <AlertCircle className="h-8 w-8 text-red-500 mb-2" />
+            <p className="text-sm text-light-grey">{error}</p>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="mt-2 text-accent-purple hover:text-accent-purple-dark"
+              onClick={() => {
+                setSearchQuery("")
+                setError(null)
+              }}
+            >
+              {locale === "ar" ? "حاول مرة أخرى" : "Try Again"}
+            </Button>
+          </div>
+        ) : categories.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-full p-4 text-center">
+            <p className="text-sm text-light-grey">
+              {locale === "ar" ? "لا توجد فئات متاحة" : "No categories available"}
+            </p>
+          </div>
+        ) : (
+          <div className="py-2">
+            <div className="px-4 py-2">
+              <h3 className="text-sm font-medium text-light-grey">
+                {locale === "ar" ? "الفئات" : "Categories"}
+              </h3>
+            </div>
+            <CategoryItems />
+          </div>
+        )}
+      </ScrollArea>
+    </>
+  )
+
   return (
     <>
+      {/* Desktop Sidebar */}
       <Sidebar className={cn("hidden lg:flex", className)} direction={isRTL ? "rtl" : "ltr"}>
         <CategoryList />
       </Sidebar>
 
+      {/* Mobile Category Bar - Fixed below navbar */}
+      <div className={cn(
+        "lg:hidden fixed top-16 left-0 right-0 z-40 h-12 bg-white-pure dark:bg-black-main border-b border-light-grey-light dark:border-dark-grey flex items-center px-4",
+        "shadow-sm"
+      )}>
+        <Button
+          variant="ghost"
+          size="icon"
+          className={cn("mr-2", isRTL && "ml-2 mr-0")}
+          onClick={() => setIsMobileOpen(true)}
+          aria-label={locale === "ar" ? "فتح قائمة الفئات" : "Open categories menu"}
+        >
+          <CategoryIcon />
+        </Button>
+        
+        <div className={cn(
+          "flex items-center overflow-hidden",
+          isRTL ? "flex-row-reverse" : "flex-row"
+        )}>
+          {currentPath.category ? (
+            <>
+              <span className="text-sm font-medium truncate">
+                {currentPath.category}
+              </span>
+              
+              {currentPath.subcategory && (
+                <>
+                  <span className={cn(
+                    "mx-1 text-light-grey",
+                    isRTL ? "rotate-180" : ""
+                  )}>
+                    /
+                  </span>
+                  <span className="text-sm text-accent-purple font-medium truncate">
+                    {currentPath.subcategory}
+                  </span>
+                </>
+              )}
+            </>
+          ) : (
+            <span className="text-sm text-light-grey">
+              {locale === "ar" ? "جميع الفئات" : "All Categories"}
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Mobile Sidebar Sheet */}
       <Sheet open={isMobileOpen} onOpenChange={setIsMobileOpen}>
-        <SheetContent side={isRTL ? "right" : "left"} className="p-0">
-          <SheetHeader className="px-4 py-2">
-            <h2 className="text-lg font-semibold">
+        <SheetContent 
+          side={isRTL ? "right" : "left"} 
+          className="p-0 w-[280px] sm:w-[320px] flex flex-col"
+        >
+          <SheetHeader className="px-4 py-2 text-left border-b border-light-grey-light dark:border-dark-grey">
+            <h2 className={cn("text-lg font-semibold", isRTL && "text-right")}>
               {locale === "ar" ? "الفئات" : "Categories"}
             </h2>
           </SheetHeader>
-          <CategoryList />
+          <MobileCategoryList />
         </SheetContent>
       </Sheet>
     </>

@@ -133,6 +133,7 @@ export function Sidebar({ locale, className, items = [] }: SidebarProps) {
   )
   const [categories, setCategories] = useState<Category[]>([])
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
+  const [activeSubcategory, setActiveSubcategory] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState<boolean>(true)
   const [error, setError] = useState<string | null>(null)
   
@@ -169,6 +170,100 @@ export function Sidebar({ locale, className, items = [] }: SidebarProps) {
   useEffect(() => {
     localStorage.setItem('sidebarCollapsed', isCollapsed.toString())
   }, [isCollapsed])
+
+  // Extract category and subcategory IDs from the pathname
+  useEffect(() => {
+    if (!pathname || categories.length === 0) return;
+    
+    console.log('[Sidebar Debug] Current pathname:', pathname);
+    console.log('[Sidebar Debug] Available categories:', categories.map(c => ({ id: c.id, name: c.nameEn })));
+    
+    // First, try to match the standard category/subcategory pattern
+    // Pattern: /{locale}/category/{categoryId}/subcategory/{subcategoryId}
+    const standardPattern = pathname.match(/\/[^\/]+\/category\/([^\/]+)(?:\/subcategory\/([^\/]+))?/)
+    
+    if (standardPattern) {
+      const categoryId = standardPattern[1]
+      const subcategoryId = standardPattern[2] || null
+      
+      console.log('[Sidebar Debug] Matched standard pattern - Category:', categoryId, 'Subcategory:', subcategoryId)
+      
+      setActiveCategory(categoryId)
+      setActiveSubcategory(subcategoryId)
+      return
+    }
+    
+    // If standard pattern doesn't match, try to match direct category/subcategory names in the URL
+    // Pattern: /{locale}/{categoryName}/{subcategoryName}
+    const segments = pathname.split('/').filter(Boolean)
+    console.log('[Sidebar Debug] URL segments:', segments)
+    
+    if (segments.length >= 2) {
+      const localeSegment = segments[0]
+      const categorySegment = segments[1]
+      const subcategorySegment = segments.length >= 3 ? segments[2] : null
+      
+      console.log('[Sidebar Debug] Extracted segments - Locale:', localeSegment, 
+        'Category:', categorySegment, 'Subcategory:', subcategorySegment)
+      
+      // Find matching category by name (case insensitive)
+      const matchedCategory = categories.find(cat => 
+        cat.nameEn.toLowerCase() === categorySegment.toLowerCase() || 
+        cat.nameAr.toLowerCase() === categorySegment.toLowerCase() ||
+        cat.id === categorySegment
+      )
+      
+      if (matchedCategory) {
+        console.log('[Sidebar Debug] Found matching category:', matchedCategory.id, matchedCategory.nameEn)
+        setActiveCategory(matchedCategory.id)
+        
+        // If we have a subcategory segment, try to find a matching subcategory
+        if (subcategorySegment && matchedCategory.subcategories) {
+          // Convert kebab-case or snake_case to space-separated for comparison
+          const normalizedSubcategorySegment = subcategorySegment
+            .replace(/-/g, ' ')
+            .replace(/_/g, ' ')
+            .toLowerCase()
+          
+          // Find matching subcategory by name (case insensitive)
+          const matchedSubcategory = matchedCategory.subcategories.find(sub => {
+            const normalizedNameEn = sub.nameEn.toLowerCase()
+            const normalizedNameAr = sub.nameAr.toLowerCase()
+            
+            // Also check for kebab-case and snake_case variations of the name
+            const kebabNameEn = sub.nameEn.toLowerCase().replace(/\s+/g, '-')
+            const snakeNameEn = sub.nameEn.toLowerCase().replace(/\s+/g, '_')
+            
+            return normalizedNameEn === normalizedSubcategorySegment || 
+                   normalizedNameAr === normalizedSubcategorySegment ||
+                   kebabNameEn === subcategorySegment.toLowerCase() ||
+                   snakeNameEn === subcategorySegment.toLowerCase() ||
+                   sub.id === subcategorySegment
+          })
+          
+          if (matchedSubcategory) {
+            console.log('[Sidebar Debug] Found matching subcategory:', 
+              matchedSubcategory.id, matchedSubcategory.nameEn)
+            setActiveSubcategory(matchedSubcategory.id)
+          } else {
+            console.log('[Sidebar Debug] No matching subcategory found for:', subcategorySegment)
+            setActiveSubcategory(null)
+          }
+        } else {
+          setActiveSubcategory(null)
+        }
+      } else {
+        console.log('[Sidebar Debug] No matching category found for:', categorySegment)
+        setActiveCategory(null)
+        setActiveSubcategory(null)
+      }
+      return
+    }
+    
+    // If no patterns match, reset active states
+    setActiveCategory(null)
+    setActiveSubcategory(null)
+  }, [pathname, categories])
 
   const fetchCategories = useCallback(async () => {
     setIsLoading(true)
@@ -248,10 +343,20 @@ export function Sidebar({ locale, className, items = [] }: SidebarProps) {
     const category = categories.find(c => c.id === categoryId);
     console.log('[Sidebar Debug] Category details:', category);
     
-    // If clicking the same category, toggle it off
-    if (activeCategory === categoryId) {
-      console.log('[Sidebar Debug] Toggling category off');
+    // If clicking the same category and there are no subcategories, toggle it off
+    if (activeCategory === categoryId && (!category?.subcategories || category.subcategories.length === 0)) {
+      console.log('[Sidebar Debug] Toggling category off (no subcategories)');
       setActiveCategory(null);
+      setActiveSubcategory(null);
+      router.push(`/${locale}`);
+      return;
+    }
+    
+    // If clicking the same category with subcategories, keep it active but clear subcategory selection
+    if (activeCategory === categoryId && category?.subcategories && category.subcategories.length > 0) {
+      console.log('[Sidebar Debug] Navigating to category page (clearing subcategory)');
+      setActiveSubcategory(null);
+      router.push(`/${locale}/category/${categoryId}`);
       return;
     }
     
@@ -259,16 +364,18 @@ export function Sidebar({ locale, className, items = [] }: SidebarProps) {
     const hasSubcategories = category?.subcategories && category.subcategories.length > 0;
     console.log('[Sidebar Debug] Category has subcategories:', hasSubcategories);
     
-    // Set the active category
+    // Set the active category and clear any active subcategory
     setActiveCategory(categoryId);
+    setActiveSubcategory(null);
     
     // If it's "All Categories" or a category without subcategories, navigate
     if (categoryId === null || !hasSubcategories) {
       console.log('[Sidebar Debug] Navigating to category page');
       router.push(categoryId === null ? `/${locale}` : `/${locale}/category/${categoryId}`);
     } else {
-      console.log('[Sidebar Debug] Expanding category to show subcategories');
-      // Don't navigate, just expand the category
+      console.log('[Sidebar Debug] Expanding category and navigating to category page');
+      // Navigate to the category page
+      router.push(`/${locale}/category/${categoryId}`);
     }
   }
 
@@ -280,6 +387,10 @@ export function Sidebar({ locale, className, items = [] }: SidebarProps) {
     const category = categories.find(c => c.id === categoryId);
     const subcategory = category?.subcategories?.find(s => s.id === subcategoryId);
     console.log('[Sidebar Debug] Found subcategory:', subcategory);
+    
+    // Update active states - keep both category and subcategory active
+    setActiveCategory(categoryId);
+    setActiveSubcategory(subcategoryId);
     
     const targetUrl = `/${locale}/category/${categoryId}/subcategory/${subcategoryId}`;
     console.log('[Sidebar Debug] Navigating to:', targetUrl);
@@ -506,15 +617,23 @@ export function Sidebar({ locale, className, items = [] }: SidebarProps) {
                         'flex items-center gap-x-3 w-full transition-opacity duration-200 ease-in-out',
                         isRTL ? 'flex-row-reverse' : 'flex-row'
                       )}>
-                        <span className="text-light-grey flex-shrink-0 inline-flex items-center justify-center w-5 h-5">
+                        <span className={cn(
+                          "text-light-grey flex-shrink-0 inline-flex items-center justify-center w-5 h-5",
+                          activeCategory === category.id && "text-accent-purple"
+                        )}>
                           {renderCategoryIcon(category.iconName)}
                         </span>
-                        <span className="flex-1">{locale === 'ar' ? category.nameAr : category.nameEn}</span>
+                        <span className={cn(
+                          "flex-1",
+                          activeCategory === category.id && "font-medium text-accent-purple"
+                        )}>
+                          {locale === 'ar' ? category.nameAr : category.nameEn}
+                        </span>
                         {category.subcategories && category.subcategories.length > 0 && (
                           <ChevronDown
                             className={cn(
                               "h-4 w-4 flex-shrink-0 transition-transform duration-200 ease-in-out",
-                              activeCategory === category.id && "rotate-180",
+                              (activeCategory === category.id) && "rotate-180 text-accent-purple",
                               isRTL && activeCategory !== category.id && "rotate-180",
                               isRTL && activeCategory === category.id && "rotate-0"
                             )}
@@ -535,41 +654,60 @@ export function Sidebar({ locale, className, items = [] }: SidebarProps) {
                       onClick={() => handleCategoryClick(category.id)}
                       title={category.name}
                     >
-                      <span className="text-light-grey flex-shrink-0 inline-flex items-center justify-center w-5 h-5">
+                      <span className={cn(
+                        "text-light-grey flex-shrink-0 inline-flex items-center justify-center w-5 h-5",
+                        activeCategory === category.id && "text-accent-purple"
+                      )}>
                         {renderCategoryIcon(category.iconName)}
                       </span>
                     </Button>
                   )}
 
-                  {/* Subcategories - only show when not collapsed */}
+                  {/* Subcategories - only show when not collapsed and category is active */}
                   {!isCollapsed && activeCategory === category.id && (
                     <div className="transition-all duration-200 ease-in-out">
-                      {/* Debug information for subcategories */}
                       {category.subcategories && category.subcategories.length > 0 ? (
                         <>
-                          {category.subcategories.map((sub) => (
-                            <Button
-                              key={sub.id}
-                              variant="ghost"
-                              className={cn(
-                                'w-full text-sm text-light-grey hover:text-accent-purple dark:text-light-grey-low dark:hover:text-accent-purple px-4 py-2',
-                                isRTL ? 'text-right pr-8' : 'text-left pl-8',
-                                'flex items-center',
-                                isRTL ? 'flex-row-reverse' : 'flex-row'
-                              )}
-                              onClick={(e) => handleSubcategoryClick(category.id, sub.id, e)}
-                            >
-                              <div className={cn(
-                                'flex items-center gap-x-3 w-full',
-                                isRTL ? 'flex-row-reverse' : 'flex-row'
-                              )}>
-                                <span className="text-light-grey flex-shrink-0 inline-flex items-center justify-center w-5 h-5">
-                                  {renderCategoryIcon(sub.iconName)}
-                                </span>
-                                <span className="flex-1">{locale === 'ar' ? sub.nameAr : sub.nameEn}</span>
-                              </div>
-                            </Button>
-                          ))}
+                          {category.subcategories.map((sub) => {
+                            // Debug log to help identify why subcategory isn't highlighted
+                            const isActive = activeSubcategory === sub.id;
+                            if (isActive) {
+                              console.log('[Sidebar Debug] Rendering active subcategory:', sub.id, sub.nameEn);
+                            }
+                            
+                            return (
+                              <Button
+                                key={sub.id}
+                                variant="ghost"
+                                className={cn(
+                                  'w-full text-sm hover:bg-light-grey-light dark:hover:bg-dark-grey px-4 py-2',
+                                  isRTL ? 'text-right pr-8' : 'text-left pl-8',
+                                  'flex items-center',
+                                  isRTL ? 'flex-row-reverse' : 'flex-row',
+                                  isActive && 'bg-light-grey-light dark:bg-dark-grey text-accent-purple'
+                                )}
+                                onClick={(e) => handleSubcategoryClick(category.id, sub.id, e)}
+                              >
+                                <div className={cn(
+                                  'flex items-center gap-x-3 w-full',
+                                  isRTL ? 'flex-row-reverse' : 'flex-row'
+                                )}>
+                                  <span className={cn(
+                                    "text-light-grey flex-shrink-0 inline-flex items-center justify-center w-5 h-5",
+                                    isActive && "text-accent-purple"
+                                  )}>
+                                    {renderCategoryIcon(sub.iconName)}
+                                  </span>
+                                  <span className={cn(
+                                    "flex-1",
+                                    isActive && "font-medium text-accent-purple"
+                                  )}>
+                                    {locale === 'ar' ? sub.nameAr : sub.nameEn}
+                                  </span>
+                                </div>
+                              </Button>
+                            );
+                          })}
                         </>
                       ) : (
                         <div className="px-4 py-2 text-sm text-light-grey">
