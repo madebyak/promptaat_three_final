@@ -1,10 +1,9 @@
 import { MetadataRoute } from 'next'
-import { prisma } from '@/lib/db'
-import { Category } from '@prisma/client'
+import { prisma } from '@/lib/prisma/client'
+import type { Category } from '@prisma/client'
 
-interface CategoryWithChildren extends Category {
-  children: Category[];
-}
+// Force dynamic generation to prevent build-time database access
+export const dynamic = 'force-dynamic'
 
 /**
  * Dynamic sitemap generator for Promptaat
@@ -19,7 +18,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     include: {
       children: true // Include subcategories
     }
-  }) as CategoryWithChildren[]
+  }) as (Category & { children: Category[] })[]
 
   const baseUrl = 'https://promptaat.com'
   
@@ -76,7 +75,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ]
 
   // Category pages - for both English and Arabic
-  const categoryPages = categories.flatMap((category: CategoryWithChildren) => {
+  const categoryPages = categories.flatMap((category) => {
     const routes = [
       // Main category page - English
       {
@@ -96,7 +95,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     // Add subcategory pages if they exist
     if (category.children && category.children.length > 0) {
-      category.children.forEach((subcategory: Category) => {
+      category.children.forEach((subcategory) => {
         // Subcategory page - English
         routes.push({
           url: `${baseUrl}/en/category/${category.id}/subcategory/${subcategory.id}`,

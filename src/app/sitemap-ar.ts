@@ -1,6 +1,9 @@
 import { MetadataRoute } from 'next'
 import { prisma } from '@/lib/prisma/client'
 
+// Force dynamic generation to prevent build-time database access
+export const dynamic = 'force-dynamic'
+
 type ChangeFrequency = 'daily' | 'always' | 'hourly' | 'weekly' | 'monthly' | 'yearly' | 'never';
 
 /**
