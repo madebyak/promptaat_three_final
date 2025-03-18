@@ -441,6 +441,38 @@ export async function createOrUpdateSubscription(subscription: Stripe.Subscripti
   const plan = subscription.metadata?.plan || "pro";
   const interval = subscription.metadata?.interval || "monthly";
   
+  // Ensure we have a valid end date even for incomplete subscriptions
+  let currentPeriodEnd = new Date(subscription.current_period_end * 1000);
+  
+  // If the subscription is incomplete or the end date is the same as start date,
+  // set a proper end date based on the interval
+  if (
+    subscription.status.toLowerCase() === 'incomplete' || 
+    currentPeriodEnd.getTime() === new Date(subscription.current_period_start * 1000).getTime()
+  ) {
+    const startDate = new Date(subscription.current_period_start * 1000);
+    
+    // Set appropriate end date based on interval
+    if (interval === 'monthly') {
+      currentPeriodEnd = new Date(startDate);
+      currentPeriodEnd.setMonth(currentPeriodEnd.getMonth() + 1);
+    } else if (interval === 'yearly') {
+      currentPeriodEnd = new Date(startDate);
+      currentPeriodEnd.setFullYear(currentPeriodEnd.getFullYear() + 1);
+    } else {
+      // Default to 30 days if interval is unknown
+      currentPeriodEnd = new Date(startDate);
+      currentPeriodEnd.setDate(currentPeriodEnd.getDate() + 30);
+    }
+    
+    console.log(`[Stripe Webhook] Adjusted period end date for ${subscription.status} subscription:`, {
+      originalEndDate: new Date(subscription.current_period_end * 1000).toISOString(),
+      newEndDate: currentPeriodEnd.toISOString(),
+      interval,
+      userId
+    });
+  }
+  
   try {
     // Find existing subscription for this user
     const existingSubscription = await prisma.subscription.findFirst({
@@ -458,7 +490,7 @@ export async function createOrUpdateSubscription(subscription: Stripe.Subscripti
           stripeCustomerId: subscription.customer as string,
           stripePriceId: priceId,
           currentPeriodStart: new Date(subscription.current_period_start * 1000),
-          currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+          currentPeriodEnd: currentPeriodEnd,
           status: subscription.status.toLowerCase(), // Convert to lowercase
           cancelAtPeriodEnd: subscription.cancel_at_period_end,
         },
@@ -468,6 +500,7 @@ export async function createOrUpdateSubscription(subscription: Stripe.Subscripti
         subscriptionId: existingSubscription.id,
         userId,
         status: subscription.status,
+        periodEnd: currentPeriodEnd.toISOString()
       });
     } else {
       // Create new subscription
@@ -480,7 +513,7 @@ export async function createOrUpdateSubscription(subscription: Stripe.Subscripti
           stripeCustomerId: subscription.customer as string,
           stripePriceId: priceId,
           currentPeriodStart: new Date(subscription.current_period_start * 1000),
-          currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+          currentPeriodEnd: currentPeriodEnd,
           status: subscription.status.toLowerCase(), // Convert to lowercase
           cancelAtPeriodEnd: subscription.cancel_at_period_end,
         },
@@ -490,6 +523,7 @@ export async function createOrUpdateSubscription(subscription: Stripe.Subscripti
         subscriptionId: newSubscription.id,
         userId,
         status: subscription.status,
+        periodEnd: currentPeriodEnd.toISOString()
       });
     }
   } catch (error) {

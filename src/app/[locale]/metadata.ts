@@ -39,7 +39,7 @@ export function generateMetadata({ params }: GenerateMetadataProps): Metadata {
         siteName: 'برومبتات',
         images: [
           {
-            url: 'https://promptaat.com/og-image-ar.png',
+            url: '/home-og-ar.jpg',
             width: 1200,
             height: 630,
             alt: 'برومبتات - مكتبة بروبتات الذكاء الاصطناعي',
@@ -50,8 +50,11 @@ export function generateMetadata({ params }: GenerateMetadataProps): Metadata {
         card: 'summary_large_image',
         title: 'برومبتات - مكتبة بروبتات الذكاء الاصطناعي',
         description: 'اكتشف واستخدم أفضل بروبتات الذكاء الاصطناعي لـ ChatGPT وGemini وClaude والمزيد.',
-        images: ['https://promptaat.com/og-image-ar.png'],
+        images: ['/home-og-ar.jpg'],
       },
+      icons: {
+        icon: '/favicon.ico',
+      }
     }
   }
   
@@ -70,7 +73,7 @@ export function generateMetadata({ params }: GenerateMetadataProps): Metadata {
       siteName: 'Promptaat',
       images: [
         {
-          url: 'https://promptaat.com/og-image.png',
+          url: '/home-og-en.jpg',
           width: 1200,
           height: 630,
           alt: 'Promptaat - Your AI Prompt Library',
@@ -81,7 +84,10 @@ export function generateMetadata({ params }: GenerateMetadataProps): Metadata {
       card: 'summary_large_image',
       title: 'Promptaat - Your AI Prompt Library',
       description: 'Discover and use the best AI prompts for ChatGPT, Gemini, Claude and more.',
-      images: ['https://promptaat.com/og-image.png'],
+      images: ['/home-og-en.jpg'],
     },
+    icons: {
+      icon: '/favicon.ico',
+    }
   }
 }

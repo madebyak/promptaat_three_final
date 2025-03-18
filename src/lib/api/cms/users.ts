@@ -32,8 +32,11 @@ export interface UserData {
 export interface SubscriptionData extends Pick<PrismaSubscription, 
   'id' | 'status' | 'priceId' | 'stripeSubscriptionId' | 'stripePriceId' | 'plan' | 'interval'
 > {
-  startDate: string; // mapped from currentPeriodStart
-  endDate: string;   // mapped from currentPeriodEnd
+  startDate: Date | string; // mapped from currentPeriodStart
+  endDate: Date | string;   // mapped from currentPeriodEnd
+  currentPeriodStart?: Date;
+  currentPeriodEnd?: Date;
+  cancelAtPeriodEnd?: boolean;
 }
 
 export interface PaginationParams {

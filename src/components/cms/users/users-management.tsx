@@ -49,19 +49,29 @@ import {
   MoreHorizontal, 
   ChevronLeft, 
   ChevronRight, 
-  UserCheck, 
-  UserX, 
-  Key, 
-  Eye,
-  Mail,
-  Calendar,
-  MapPin,
+  Mail, 
+  Calendar, 
+  MapPin, 
   Briefcase,
-  BookmarkIcon,
-  Download
+  RefreshCw,
+  Download,
+  Check,
+  X,
+  Filter,
+  BookmarkIcon
 } from "lucide-react";
-import { fetchUsers, updateUserStatus, resetUserPassword, UserData } from "@/lib/api/cms/users";
+import { 
+  fetchUsers, 
+  updateUserStatus, 
+  resetUserPassword,
+  type UserData as ApiUserData
+} from "@/lib/api/cms/users";
 import { useToast } from "@/components/ui/use-toast";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { SubscriptionManagementPanel } from "./subscription-management-panel";
+
+// Define local UserData type that matches the component's expectations
+type UserData = ApiUserData;
 
 // Custom debounce hook
 function useDebounce<T>(value: T, delay: number): T {
@@ -627,22 +637,22 @@ export default function UsersManagement() {
                               <DropdownMenuItem onClick={() => toggleUserStatus(user.id, user.isActive)}>
                                 {user.isActive ? (
                                   <>
-                                    <UserX className="mr-2 h-4 w-4" />
+                                    <X className="mr-2 h-4 w-4" />
                                     <span>Deactivate</span>
                                   </>
                                 ) : (
                                   <>
-                                    <UserCheck className="mr-2 h-4 w-4" />
+                                    <Check className="mr-2 h-4 w-4" />
                                     <span>Activate</span>
                                   </>
                                 )}
                               </DropdownMenuItem>
                               <DropdownMenuItem onClick={() => handleResetPassword(user.id)}>
-                                <Key className="mr-2 h-4 w-4" />
+                                <RefreshCw className="mr-2 h-4 w-4" />
                                 <span>Reset Password</span>
                               </DropdownMenuItem>
                               <DropdownMenuItem onClick={() => handleViewUserDetails(user)}>
-                                <Eye className="mr-2 h-4 w-4" />
+                                <Filter className="mr-2 h-4 w-4" />
                                 <span>View Details</span>
                               </DropdownMenuItem>
                             </DropdownMenuContent>
@@ -848,32 +858,43 @@ export default function UsersManagement() {
                 </div>
               </div>
               
-              <div>
-                <h3 className="text-sm font-medium">Subscription Status</h3>
-                <div className="flex flex-col space-y-2 mt-1">
-                  {userDetailsDialog.user?.subscription ? (
-                    <>
-                      <div className="flex items-center">
-                        <Badge 
-                          variant={getSubscriptionBadgeVariant(userDetailsDialog.user.subscription.status)} 
-                          className="mr-2"
-                        >
-                          {userDetailsDialog.user.subscription.status}
-                        </Badge>
-                      </div>
-                      <span className="text-xs text-muted-foreground">
-                        {formatDate(userDetailsDialog.user.subscription.startDate)} - {formatDate(userDetailsDialog.user.subscription.endDate)}
-                      </span>
-                    </>
-                  ) : (
-                    <span className="text-sm text-muted-foreground">No active subscription</span>
-                  )}
-                </div>
-              </div>
-              
-              <DialogFooter>
-                <Button variant="outline" onClick={closeUserDetailsDialog}>Close</Button>
-              </DialogFooter>
+              <Tabs defaultValue="subscription" className="mt-4">
+                <TabsList className="grid grid-cols-2">
+                  <TabsTrigger value="subscription">Subscription Management</TabsTrigger>
+                  <TabsTrigger value="actions">User Actions</TabsTrigger>
+                </TabsList>
+                <TabsContent value="subscription" className="space-y-4">
+                  <h3 className="text-sm font-medium">Subscription Management</h3>
+                  <SubscriptionManagementPanel 
+                    user={userDetailsDialog.user as UserData} 
+                    onSubscriptionUpdated={() => {
+                      // Refresh user data after subscription update
+                      refetch();
+                      toast({
+                        title: "User data refreshed",
+                        description: "The subscription changes have been applied.",
+                      });
+                    }}
+                  />
+                </TabsContent>
+                <TabsContent value="actions" className="space-y-4">
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="text-sm font-medium">Reset Password</h3>
+                      <p className="text-xs text-muted-foreground mb-2">
+                        This will generate a new temporary password for the user.
+                      </p>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleResetPassword(userDetailsDialog.user?.id || "")}
+                      >
+                        Reset Password
+                      </Button>
+                    </div>
+                  </div>
+                </TabsContent>
+              </Tabs>
             </>
           )}
         </DialogContent>
@@ -897,7 +918,7 @@ export default function UsersManagement() {
                   onClick={() => handleBulkStatusChange(true)}
                   className="flex-1"
                 >
-                  <UserCheck className="mr-2 h-4 w-4" />
+                  <Check className="mr-2 h-4 w-4" />
                   Activate All
                 </Button>
                 <Button 
@@ -905,7 +926,7 @@ export default function UsersManagement() {
                   onClick={() => handleBulkStatusChange(false)}
                   className="flex-1"
                 >
-                  <UserX className="mr-2 h-4 w-4" />
+                  <X className="mr-2 h-4 w-4" />
                   Deactivate All
                 </Button>
               </div>
