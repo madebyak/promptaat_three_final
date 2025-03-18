@@ -3,7 +3,12 @@
     "title": "My Prompts",
     "description": "Manage your prompts",
     "noPrompts": "You haven't created any prompts yet",
-    "createPrompt": "Create a Prompt"
+    "createPrompt": "Create a Prompt",
+    "bookmarks": "Bookmarks",
+    "catalogs": "Catalogs",
+    "noBookmarks": "You haven't bookmarked any prompts yet",
+    "browsePrompts": "Browse Prompts",
+    "myCatalogs": "My Catalogs"
   },
   "Profile": {
     "title": "Profile",

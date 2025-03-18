@@ -101,3 +101,9 @@
 .dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background-color: rgba(154, 115, 255, 0.6);
 }
+
+/* PRO Badge Gradient Animation */
+.pro-badge-gradient {
+  background: linear-gradient(15deg, #440ED8, #440ED8, #6926EA, #6926EA, #1163F2, #1182F2, #14BBEF, #4BD51B, #4BD51B) no-repeat;
+  box-shadow: 0 10px 15px -8px rgba(68, 14, 216, 0.3);
+}

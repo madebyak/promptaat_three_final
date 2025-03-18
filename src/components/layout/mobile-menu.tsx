@@ -3,11 +3,13 @@
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
-import { Menu, User, FileText, Settings, LogOut, Sun, Moon } from "lucide-react"
+import { Menu, User, FileText, Settings, LogOut, Sun, Moon, Crown } from "lucide-react"
 import { signOut } from "next-auth/react"
 import { useState } from "react"
 import { LanguageSwitcher } from "./language-switcher"
 import { useTheme } from "@/components/providers/theme-provider"
+import { MembershipBadge } from "@/components/ui/membership-badge"
+import { cn } from "@/lib/utils"
 
 interface MobileMenuProps {
   locale: string
@@ -15,6 +17,7 @@ interface MobileMenuProps {
     name?: string | null
     email?: string | null
     image?: string | null
+    isSubscribed?: boolean
   }
 }
 
@@ -22,6 +25,7 @@ export function MobileMenu({ locale, user }: MobileMenuProps) {
   const [isSigningOut, setIsSigningOut] = useState(false);
   const { theme, setTheme } = useTheme();
   const isDark = theme === 'dark';
+  const isRTL = locale === 'ar';
 
   const handleSignOut = async () => {
     setIsSigningOut(true);
@@ -100,21 +104,47 @@ export function MobileMenu({ locale, user }: MobileMenuProps) {
             {user ? (
               // Show user-specific options when logged in
               <>
+                {/* User info section */}
+                {user.name && (
+                  <div className="px-3 py-2 bg-light-grey-light/20 dark:bg-dark-grey/20 rounded-md">
+                    <div className={cn("flex items-center gap-2 mb-1", isRTL && "flex-row-reverse")}>
+                      {/* Badge displayed outside user info */}
+                      {user.isSubscribed ? (
+                        <MembershipBadge type="pro" size="sm" />
+                      ) : (
+                        <MembershipBadge type="basic" size="sm" />
+                      )}
+                      <span className="text-sm font-medium text-dark dark:text-white-pure">
+                        {user.name}
+                      </span>
+                    </div>
+                    <span className="text-xs text-light-grey">
+                      {user.email}
+                    </span>
+                  </div>
+                )}
+                
                 <Button variant="ghost" asChild className="justify-start">
                   <Link href={`/${locale}/profile`} className="text-sm text-dark hover:text-accent-purple dark:text-white-pure dark:hover:text-accent-purple">
-                    <User className="mr-2 h-4 w-4" />
+                    <User className={cn("mr-2 h-4 w-4", isRTL && "ml-2 mr-0")} />
                     <span>{locale === 'ar' ? 'ملفي الشخصي' : 'My Account'}</span>
                   </Link>
                 </Button>
                 <Button variant="ghost" asChild className="justify-start">
                   <Link href={`/${locale}/my-prompts`} className="text-sm text-dark hover:text-accent-purple dark:text-white-pure dark:hover:text-accent-purple">
-                    <FileText className="mr-2 h-4 w-4" />
-                    <span>{locale === 'ar' ? 'بروماتي' : 'My Prompts'}</span>
+                    <FileText className={cn("mr-2 h-4 w-4", isRTL && "ml-2 mr-0")} />
+                    <span>{locale === 'ar' ? 'موجهاتي' : 'My Prompts'}</span>
+                  </Link>
+                </Button>
+                <Button variant="ghost" asChild className="justify-start">
+                  <Link href={`/${locale}/subscription`} className="text-sm text-dark hover:text-accent-purple dark:text-white-pure dark:hover:text-accent-purple">
+                    <Crown className={cn("mr-2 h-4 w-4", isRTL && "ml-2 mr-0")} />
+                    <span>{locale === 'ar' ? 'اشتراكي' : 'My Subscription'}</span>
                   </Link>
                 </Button>
                 <Button variant="ghost" asChild className="justify-start">
                   <Link href={`/${locale}/settings`} className="text-sm text-dark hover:text-accent-purple dark:text-white-pure dark:hover:text-accent-purple">
-                    <Settings className="mr-2 h-4 w-4" />
+                    <Settings className={cn("mr-2 h-4 w-4", isRTL && "ml-2 mr-0")} />
                     <span>{locale === 'ar' ? 'الإعدادات' : 'Settings'}</span>
                   </Link>
                 </Button>
@@ -124,7 +154,7 @@ export function MobileMenu({ locale, user }: MobileMenuProps) {
                   onClick={handleSignOut}
                   disabled={isSigningOut}
                 >
-                  <LogOut className="mr-2 h-4 w-4" />
+                  <LogOut className={cn("mr-2 h-4 w-4", isRTL && "ml-2 mr-0")} />
                   <span>{isSigningOut ? 'Signing out...' : locale === 'ar' ? 'تسجيل الخروج' : 'Log out'}</span>
                 </Button>
               </>

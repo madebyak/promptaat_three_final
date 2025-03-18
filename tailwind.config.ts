@@ -132,6 +132,15 @@ const config: Config = {
         '.will-change-transform': {
           'will-change': 'transform',
         },
+        '.bg-size-200': {
+          'background-size': '200% 200%',
+        },
+        '.bg-pos-0': {
+          'background-position': '0% 0%',
+        },
+        '.bg-pos-100': {
+          'background-position': '100% 100%',
+        },
       });
     },
   ],

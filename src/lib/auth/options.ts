@@ -86,7 +86,16 @@ declare module "next-auth" {
       isAdmin?: boolean;
       role?: string;
       emailVerified?: boolean;
+      isSubscribed?: boolean;
     };
+  }
+  
+  interface JWT {
+    id: string;
+    isAdmin?: boolean;
+    role?: string;
+    emailVerified?: boolean;
+    isSubscribed?: boolean;
   }
 }
 
@@ -288,6 +297,19 @@ export const authOptions: NextAuthOptions = {
         token.role = (user as ExtendedUser).role || 'user';
         token.emailVerified = (user as ExtendedUser).emailVerified;
       }
+      
+      // Check subscription status for the user
+      if (token.id) {
+        try {
+          // Import here to avoid circular dependencies
+          const { isUserSubscribed } = await import('@/lib/subscription');
+          token.isSubscribed = await isUserSubscribed(token.id as string);
+        } catch (error) {
+          console.error('Error checking subscription status:', error);
+          token.isSubscribed = false;
+        }
+      }
+      
       return token;
     },
     async session({ session, token }) {
@@ -296,6 +318,7 @@ export const authOptions: NextAuthOptions = {
         session.user.isAdmin = token.isAdmin as boolean;
         session.user.role = token.role as string;
         session.user.emailVerified = token.emailVerified as boolean;
+        session.user.isSubscribed = token.isSubscribed as boolean;
       }
       return session;
     },

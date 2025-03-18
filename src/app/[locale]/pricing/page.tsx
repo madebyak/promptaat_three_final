@@ -12,6 +12,7 @@ import { FeaturesList } from "@/app/[locale]/pricing/components/features-list";
 import { PricingFAQ } from "@/app/[locale]/pricing/components/pricing-faq";
 import { CheckoutButton } from "@/components/checkout/checkout-button";
 import { PricingStructuredData } from "@/app/[locale]/pricing/components/pricing-seo";
+import Image from "next/image";
 
 // Pricing data
 const pricingData = {
@@ -199,19 +200,28 @@ export default function PricingPage() {
       {/* SEO Structured Data */}
       <PricingStructuredData plans={generatePricingPlans()} locale={locale} />
       
-      {/* Hero Section with elegant gradient background */}
+      {/* Hero Section with banner image background */}
       <div className={cn(
-        "w-full text-center py-20 px-4 bg-gradient-to-b from-primary/20 via-primary/10 to-background",
+        "w-full text-center py-16 px-4 relative overflow-hidden",
         isRTL && "rtl"
       )}>
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-4xl md:text-5xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-[#2b79ef] to-[#6d36f1]">
-            {t({ en: "Elevate Your AI Experience", ar: "ارتقِ بتجربة الذكاء الاصطناعي الخاصة بك" })}
+        <div className="absolute inset-0 z-0 w-screen overflow-hidden">
+          <Image 
+            src="/pricing-banner.jpg" 
+            alt="Pricing Banner" 
+            fill
+            priority
+            className="object-cover"
+          />
+        </div>
+        <div className="max-w-4xl mx-auto relative z-10 flex flex-col items-center justify-center">
+          <h1 className="text-4xl md:text-5xl font-bold mb-6 text-white text-center">
+            {t({ en: "Empowering Your AI Journey", ar: "تمكين رحلتك مع الذكاء الاصطناعي" })}
           </h1>
-          <p className="text-xl text-muted-foreground mb-10 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-xl text-white/90 mb-10 max-w-2xl mx-auto leading-relaxed text-center">
             {t({ 
-              en: "Access premium prompts crafted by experts to unlock the full potential of AI for your projects", 
-              ar: "الوصول إلى مطالبات متميزة صممها خبراء لإطلاق الإمكانات الكاملة للذكاء الاصطناعي لمشاريعك" 
+              en: "Fair, straightforward pricing designed to unleash your creativity. Invest in a plan that lets you focus on breakthrough ideas while our ready-to-use prompts do the heavy lifting.", 
+              ar: "أسعار شفافة ومباشرة لتطلق إبداعك. اختر الخطة التي تتيح لك التركيز على الأفكار الثورية بينما تقوم موجهاتنا الجاهزة ببقية العمل." 
             })}
           </p>
         </div>

@@ -3,7 +3,12 @@
     "title": "مطالباتي",
     "description": "إدارة مطالباتك",
     "noPrompts": "لم تقم بإنشاء أي مطالبات بعد",
-    "createPrompt": "إنشاء مطالبة"
+    "createPrompt": "إنشاء مطالبة",
+    "bookmarks": "المفضلة",
+    "catalogs": "الكتالوجات",
+    "noBookmarks": "لم تقم بإضافة أي مطالبات إلى المفضلة بعد",
+    "browsePrompts": "تصفح المطالبات",
+    "myCatalogs": "كتالوجاتي"
   },
   "Profile": {
     "title": "الملف الشخصي",
