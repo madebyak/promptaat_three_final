@@ -1,7 +1,6 @@
 "use client"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
 import { signIn } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -31,7 +30,6 @@ interface LoginFormProps {
 
 export function LoginForm({ locale = 'en' }: LoginFormProps) {
   const [isLoading, setIsLoading] = useState(false)
-  const router = useRouter()
   const { toast } = useToast()
   const isRtl = locale === 'ar'
 
@@ -118,9 +116,9 @@ export function LoginForm({ locale = 'en' }: LoginFormProps) {
       await new Promise(resolve => setTimeout(resolve, sessionWaitTime))
       
       console.log('[Login] Session established, redirecting to home')
-      // Force a refresh to ensure the session is updated across the app
-      router.push(`/${locale}`)
-      router.refresh()
+      
+      // Use window.location for a full page reload to ensure session is properly reflected in the UI
+      window.location.href = `/${locale}`
     } catch (error) {
       console.error('[Login] Error during sign in:', error)
       toast({
