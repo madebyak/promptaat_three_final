@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils'
 import { Category as BaseCategory } from '@/types/prompts'
 import { AppSidebar } from './app-sidebar'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 
 // Extend the base Category interface with additional properties needed
 interface Category extends BaseCategory {
@@ -41,6 +42,12 @@ export function MobileNav({
   children,
 }: MobileNavProps) {
   const isRTL = locale === 'ar'
+  const pathname = usePathname()
+  
+  // Check if current page is company or resources page
+  const isCompanyRoute = pathname?.startsWith(`/${locale}/company/`)
+  const isResourcesRoute = pathname?.startsWith(`/${locale}/resources/`)
+  const shouldShowSidebar = !isCompanyRoute && !isResourcesRoute
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden">
@@ -88,7 +95,27 @@ export function MobileNav({
               isRTL ? "rtl" : "ltr"
             )}
           >
-            <AppSidebar locale={locale} />
+            {shouldShowSidebar ? (
+              <AppSidebar locale={locale} />
+            ) : (
+              <div className="p-6">
+                <h2 className="text-xl font-semibold mb-6">
+                  {locale === 'ar' ? 'القائمة' : 'Menu'}
+                </h2>
+                <div className="space-y-4">
+                  {items.map((item) => (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className="flex items-center gap-2 py-2 text-foreground hover:text-primary"
+                    >
+                      {item.icon && <item.icon className="h-5 w-5" />}
+                      <span>{item.label}</span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
           </SheetContent>
         </Sheet>
       </div>

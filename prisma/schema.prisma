@@ -222,17 +222,18 @@ model Subscription {
 }
 
 model AdminUser {
-  id           String     @id @default(uuid())
-  email        String     @unique
-  passwordHash String     @map("password_hash")
-  firstName    String     @map("first_name")
-  lastName     String     @map("last_name")
+  id           String    @id @default(uuid())
+  email        String    @unique
+  passwordHash String    @map("password_hash")
+  firstName    String    @map("first_name")
+  lastName     String    @map("last_name")
   role         String
-  lastLogin    DateTime?  @map("last_login")
-  createdAt    DateTime   @default(now()) @map("created_at")
-  updatedAt    DateTime   @updatedAt @map("updated_at")
-  isActive     Boolean    @default(true) @map("is_active")
+  lastLogin    DateTime? @map("last_login")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+  isActive     Boolean   @default(true) @map("is_active")
   auditLogs    AuditLog[]
+  blogs        Blog[]
 
   @@map("admin_users")
 }
@@ -270,4 +271,40 @@ model OtpVerification {
   user      User     @relation(fields: [userId], references: [id])
 
   @@map("otp_verifications")
+}
+
+model Blog {
+  id                 String    @id @default(uuid())
+  slug               String    @unique
+  titleEn            String    @map("title_en")
+  titleAr            String    @map("title_ar")
+  contentEn          String    @map("content_en") @db.Text
+  contentAr          String    @map("content_ar") @db.Text
+  summaryEn          String?   @map("summary_en")
+  summaryAr          String?   @map("summary_ar")
+  featuredImage      String?   @map("featured_image")
+  authorId           String    @map("author_id")
+  publishedAt        DateTime? @map("published_at")
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
+  deletedAt          DateTime? @map("deleted_at")
+  status             String    @default("draft")
+  readTimeMinutes    Int?      @map("read_time_minutes")
+  metaTitleEn        String?   @map("meta_title_en")
+  metaTitleAr        String?   @map("meta_title_ar")
+  metaDescriptionEn  String?   @map("meta_description_en")
+  metaDescriptionAr  String?   @map("meta_description_ar")
+  tags               BlogTag[]
+  author             AdminUser @relation(fields: [authorId], references: [id])
+
+  @@map("blogs")
+}
+
+model BlogTag {
+  blogId   String @map("blog_id")
+  tagName  String @map("tag_name")
+  blog     Blog   @relation(fields: [blogId], references: [id], onDelete: Cascade)
+
+  @@id([blogId, tagName])
+  @@map("blog_tags")
 }

@@ -27,6 +27,9 @@ export function ClientLocaleLayout({
   // Improved auth route detection - check for exact path pattern
   const isAuthRoute = pathname?.startsWith(`/${locale}/auth/`);
   const isPricingRoute = pathname === `/${locale}/pricing`;
+  const isCompanyRoute = pathname?.startsWith(`/${locale}/company/`);
+  const isResourcesRoute = pathname?.startsWith(`/${locale}/resources/`);
+  const isBlogRoute = pathname?.startsWith(`/${locale}/blog`);
   const isUserAccountRoute = pathname?.includes(`/${locale}/profile`) || 
                            pathname?.includes(`/${locale}/my-prompts`) || 
                            pathname?.includes(`/${locale}/settings`) ||
@@ -46,6 +49,9 @@ export function ClientLocaleLayout({
                     locale={locale}
                     isRTL={isRTL}
                     isUserAccountRoute={isUserAccountRoute}
+                    isCompanyRoute={isCompanyRoute}
+                    isResourcesRoute={isResourcesRoute}
+                    isBlogRoute={isBlogRoute}
                   >
                     {children}
                   </MainLayout>
@@ -65,12 +71,18 @@ export function MainLayout({
   children, 
   locale,
   isRTL,
-  isUserAccountRoute
+  isUserAccountRoute,
+  isCompanyRoute,
+  isResourcesRoute,
+  isBlogRoute
 }: { 
   children: React.ReactNode 
   locale: string
   isRTL: boolean
   isUserAccountRoute: boolean
+  isCompanyRoute: boolean
+  isResourcesRoute: boolean
+  isBlogRoute: boolean
 }) {
   const { data: session, status } = useSession();
   const pathname = usePathname();
@@ -98,7 +110,7 @@ export function MainLayout({
         <UserAccountLayout locale={locale} isRTL={isRTL}>
           {children}
         </UserAccountLayout>
-      ) : pathname === `/${locale}/pricing` ? (
+      ) : pathname === `/${locale}/pricing` || isCompanyRoute || isResourcesRoute || isBlogRoute ? (
         <main className="flex-1 min-h-[calc(100vh-64px)]">
           {children}
         </main>

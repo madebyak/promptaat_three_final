@@ -133,5 +133,62 @@
       "noBillingHistory": "No billing history",
       "subscribeToSee": "Subscribe to see your billing history"
     }
+  },
+  "AboutUs": {
+    "meta": {
+      "title": "About Us | Promptaat",
+      "description": "Learn about Promptaat's mission, vision, and the team behind the platform."
+    },
+    "title": "About Us",
+    "subtitle": "Discover the story behind Promptaat and our mission to revolutionize AI prompt engineering.",
+    "intro": "Promptaat is a platform dedicated to helping users create, share, and discover high-quality AI prompts. Our mission is to make AI more accessible and useful for everyone.",
+    "ourMission": {
+      "title": "Our Mission",
+      "content": "At Promptaat, we believe in the transformative power of AI. Our mission is to democratize access to AI technologies by providing a platform where users can easily create, share, and discover effective prompts for various AI models."
+    },
+    "ourVision": {
+      "title": "Our Vision",
+      "content": "We envision a world where AI is an accessible tool for everyone, regardless of technical expertise. By building a community-driven platform for prompt engineering, we aim to bridge the gap between AI capabilities and practical applications."
+    },
+    "ourValues": {
+      "title": "Our Values",
+      "innovation": {
+        "title": "Innovation",
+        "content": "We constantly push the boundaries of what's possible with AI prompt engineering."
+      },
+      "community": {
+        "title": "Community",
+        "content": "We believe in the power of collective intelligence and foster a supportive environment for sharing knowledge."
+      },
+      "accessibility": {
+        "title": "Accessibility",
+        "content": "We strive to make AI accessible to everyone, regardless of technical background."
+      },
+      "quality": {
+        "title": "Quality",
+        "content": "We are committed to maintaining high standards for the prompts shared on our platform."
+      }
+    },
+    "joinUs": {
+      "title": "Join Us",
+      "content": "Whether you're an AI enthusiast, a prompt engineer, or someone curious about the potential of AI, we invite you to join our community and be part of the AI revolution.",
+      "cta": "Sign Up Now"
+    }
+  },
+  "Blog": {
+    "title": "Blog",
+    "description": "Discover the latest insights, tutorials, and updates from Promptaat",
+    "readMore": "Read More",
+    "searchPlaceholder": "Search blogs...",
+    "filterByTag": "Filter by tag",
+    "clearFilters": "Clear filters",
+    "noResults": "No blog posts found",
+    "tryAdjustingFilters": "Try adjusting your filters",
+    "checkBackLater": "Check back later for new content",
+    "relatedPosts": "Related Posts",
+    "backToBlog": "Back to Blog",
+    "minuteRead": "min read",
+    "share": "Share",
+    "publishedOn": "Published on"
   }
 }

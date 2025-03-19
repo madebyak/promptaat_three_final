@@ -43,6 +43,11 @@ export function SidebarNav({ onLogout }: SidebarNavProps) {
       icon: <FileText className="mr-2 h-4 w-4" />,
     },
     {
+      title: "Blogs",
+      href: "/cms/blogs",
+      icon: <FileText className="mr-2 h-4 w-4" />,
+    },
+    {
       title: "Users",
       href: "/cms/users",
       icon: <Users className="mr-2 h-4 w-4" />,
