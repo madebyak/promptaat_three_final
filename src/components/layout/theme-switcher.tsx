@@ -14,6 +14,7 @@ export function ThemeSwitcher() {
       size="icon"
       onClick={() => setTheme(isDark ? 'light' : 'dark')}
       title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+      className="dark:hover:bg-dark hover:bg-light-grey-light"
     >
       {isDark ? (
         <Sun className="h-5 w-5 text-white-pure" />

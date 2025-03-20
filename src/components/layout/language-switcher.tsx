@@ -43,12 +43,12 @@ export function LanguageSwitcher({ locale }: LanguageSwitcherProps) {
         <Button
           variant="outline"
           size="icon"
-          className="h-9 w-9 border-light-grey-light hover:bg-light-grey-light dark:border-dark-grey dark:hover:bg-dark-grey"
+          className="h-9 w-9 border-light-grey-light dark:border-0 dark:bg-black-main dark:text-white-pure hover:bg-light-grey-light dark:hover:bg-dark"
         >
           {locale === 'ar' ? 'ع' : 'EN'}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
+      <DropdownMenuContent align="end" className="bg-white-pure dark:bg-dark">
         <DropdownMenuItem onClick={() => switchLanguage('en')}>
           English
         </DropdownMenuItem>

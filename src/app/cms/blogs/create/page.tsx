@@ -5,12 +5,8 @@ import { useRouter } from 'next/navigation';
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
-import BlogForm from "@/components/cms/blogs/blog-form";
+import { BlogForm, BlogFormValues } from "@/components/cms/blogs/blog-form";
 import { toast } from 'sonner';
-import { blogFormSchema } from '@/components/cms/blogs/blog-form';
-import { z } from 'zod';
-
-type BlogFormValues = z.infer<typeof blogFormSchema>;
 
 export default function CreateBlogPage() {
   const router = useRouter();
@@ -69,20 +65,19 @@ export default function CreateBlogPage() {
       
       <BlogForm 
         initialData={{
-          titleEn: "",
-          titleAr: "",
-          contentEn: "",
-          contentAr: "",
-          summaryEn: "",
-          summaryAr: "",
-          featuredImage: "",
-          status: "draft",
-          readTimeMinutes: 5,
-          metaTitleEn: "",
-          metaTitleAr: "",
-          metaDescriptionEn: "",
-          metaDescriptionAr: "",
-          publishedAt: null,
+          titleEn: '',
+          titleAr: '',
+          contentEn: '',
+          contentAr: '',
+          summaryEn: '',
+          summaryAr: '',
+          featuredImage: '',
+          status: 'draft',
+          readTimeMinutes: 0,
+          metaTitleEn: '',
+          metaTitleAr: '',
+          metaDescriptionEn: '',
+          metaDescriptionAr: '',
           tags: [],
         }}
         onSubmit={handleSubmit}

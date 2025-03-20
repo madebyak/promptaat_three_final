@@ -169,8 +169,8 @@ export function ToolsFilter({
           role="combobox"
           aria-expanded={open}
           className={cn(
-            "w-full justify-between hover:bg-accent-purple/10 border-light-grey hover:border-accent-purple transition-colors",
-            selectedTools.length > 0 && "border-accent-purple/60 bg-accent-purple/5",
+            "w-full justify-between bg-light-grey-light dark:bg-dark hover:bg-light-grey-light dark:hover:bg-dark border-0",
+            selectedTools.length > 0 && "border-accent-purple/60 bg-accent-purple/5 dark:bg-accent-purple/10",
             isRTL && "font-ibm-plex-sans-arabic text-right",
             className
           )}
@@ -192,11 +192,11 @@ export function ToolsFilter({
               />
             </div>
           ) : (
-            <span className={cn("text-slate-500", isRTL && "font-ibm-plex-sans-arabic")}>
+            <span className={cn("text-slate-500 dark:text-white-pure", isRTL && "font-ibm-plex-sans-arabic")}>
               {isRTL ? "تصفية حسب الأداة" : "Filter by tool"}
             </span>
           )}
-          <ChevronsUpDown className={cn("h-4 w-4 shrink-0 opacity-50", isRTL ? "mr-2" : "ml-2")} />
+          <ChevronsUpDown className={cn("h-4 w-4 shrink-0 opacity-50 dark:text-white-pure", isRTL ? "mr-2" : "ml-2")} />
         </Button>
       </PopoverTrigger>
       <PopoverContent 

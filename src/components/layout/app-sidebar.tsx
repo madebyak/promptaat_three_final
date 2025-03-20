@@ -407,7 +407,8 @@ export function AppSidebar({ locale, className }: AppSidebarProps) {
         className={cn(
           "w-full",
           isRTL ? "justify-end" : "justify-start",
-          activeCategory === null && "bg-muted"
+          activeCategory === null && "bg-light-grey-light dark:bg-dark text-accent-purple",
+          "hover:bg-light-grey-light dark:hover:bg-dark dark:text-white-pure"
         )}
         onClick={() => handleCategoryClick(null)}
       >
@@ -429,7 +430,8 @@ export function AppSidebar({ locale, className }: AppSidebarProps) {
             className={cn(
               "w-full justify-between",
               isRTL && "flex-row-reverse",
-              activeCategory === category.id && "bg-muted"
+              activeCategory === category.id && "bg-light-grey-light dark:bg-dark text-accent-purple",
+              "hover:bg-light-grey-light dark:hover:bg-dark dark:text-white-pure"
             )}
             onClick={() => handleCategoryClick(category.id)}
           >
@@ -466,7 +468,8 @@ export function AppSidebar({ locale, className }: AppSidebarProps) {
                   variant={activeSubcategory === subcategory.id ? "secondary" : "ghost"}
                   className={cn(
                     "w-full justify-start",
-                    activeSubcategory === subcategory.id && "bg-muted text-accent-purple"
+                    activeSubcategory === subcategory.id && "bg-light-grey-light dark:bg-dark text-accent-purple",
+                    "hover:bg-light-grey-light dark:hover:bg-dark dark:text-white-pure"
                   )}
                   onClick={(e) =>
                     handleSubcategoryClick(
@@ -579,7 +582,10 @@ export function AppSidebar({ locale, className }: AppSidebarProps) {
         <Button
           variant="ghost"
           size="icon"
-          className={cn("mr-2", isRTL && "ml-2 mr-0")}
+          className={cn(
+            "mr-2 text-light-grey hover:text-accent-purple hover:bg-light-grey-light dark:hover:bg-dark dark:text-white-pure",
+            isRTL && "ml-2 mr-0"
+          )}
           onClick={() => setIsMobileOpen(true)}
           aria-label={locale === "ar" ? "فتح قائمة الفئات" : "Open categories menu"}
         >

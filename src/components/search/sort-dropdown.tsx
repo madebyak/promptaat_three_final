@@ -48,14 +48,14 @@ export function SortDropdown({ onValueChange, className, isRTL = false, value = 
         <Button
           variant="outline"
           className={cn(
-            "w-full justify-between",
+            "w-full justify-between bg-light-grey-light dark:bg-dark hover:bg-light-grey-light dark:hover:bg-dark border-0",
             isRTL && "font-ibm-plex-sans-arabic text-right",
             className
           )}
         >
-          {displayLabel}
+          <span className="dark:text-white-pure">{displayLabel}</span>
           <ChevronsUpDown className={cn(
-            "h-4 w-4 shrink-0 opacity-50",
+            "h-4 w-4 shrink-0 opacity-50 dark:text-white-pure",
             isRTL ? "mr-2" : "ml-2"
           )} />
         </Button>

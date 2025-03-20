@@ -441,7 +441,7 @@ export function PromptModal({
                   PRO
                 </Badge>
               ) : (
-                <Badge variant="secondary" className="inline-flex items-center gap-1.5 px-2.5 py-1">
+                <Badge variant="secondary" className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-light-grey-light dark:bg-dark">
                   <Turtle className="h-3 w-3" />
                   Basic
                 </Badge>

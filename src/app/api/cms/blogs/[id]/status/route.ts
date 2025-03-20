@@ -44,8 +44,11 @@ export async function PATCH(
     const body = await request.json();
     const { status } = updateStatusSchema.parse(body);
 
-    // Prepare update data
-    const updateData: any = { status };
+    // Prepare update data with proper type definition
+    const updateData: { 
+      status: string; 
+      publishedAt?: Date | null;
+    } = { status };
 
     // Set publishedAt if status is changing to published
     if (status === "published" && existingBlog.status !== "published") {
@@ -64,8 +67,8 @@ export async function PATCH(
     // Create audit log
     await createAuditLog({
       adminId,
-      action: "UPDATE_STATUS",
-      entityType: "BLOG",
+      action: "status_change",
+      entityType: "blog",
       entityId: id,
       details: { 
         blogTitle: existingBlog.titleEn,

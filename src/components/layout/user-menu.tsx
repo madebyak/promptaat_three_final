@@ -49,7 +49,11 @@ export function UserMenu({ user, locale }: UserMenuProps) {
   if (!user?.name || !user?.email) {
     return (
       <div className="flex items-center gap-4">
-        <Button variant="outline" asChild className="text-sm">
+        <Button 
+          variant="outline" 
+          asChild 
+          className="text-sm dark:bg-dark dark:border-0 dark:text-white-pure dark:hover:bg-accent-purple"
+        >
           <Link href={`/${locale}/auth/login`}>{isRTL ? 'تسجيل الدخول' : 'Sign In'}</Link>
         </Button>
         <Button asChild className="text-sm bg-accent-purple hover:bg-accent-purple/90">

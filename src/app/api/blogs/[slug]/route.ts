@@ -64,7 +64,21 @@ export async function GET(
     // Get related blogs with the same tags
     const tagNames = blog.tags.map(tag => tag.tagName);
     
-    let relatedBlogs = [];
+    // Define explicit type for relatedBlogs
+    interface RelatedBlog {
+      id: string;
+      slug: string;
+      titleEn: string | null;
+      titleAr: string | null;
+      summaryEn: string | null;
+      summaryAr: string | null;
+      featuredImage: string | null;
+      publishedAt: Date | null;
+      readTimeMinutes: number | null;
+      tags: string[];
+    }
+    
+    let relatedBlogs: RelatedBlog[] = [];
     if (tagNames.length > 0) {
       // Find blogs that share tags with the current blog
       const blogsWithRelatedTags = await prisma.blog.findMany({

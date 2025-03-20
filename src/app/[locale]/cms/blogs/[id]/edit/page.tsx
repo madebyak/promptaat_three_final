@@ -3,11 +3,11 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { CMSLayout } from '@/components/layouts/cms-layout';
-import BlogForm from '@/components/cms/blogs/blog-form';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { z } from 'zod';
+import { BlogForm, BlogFormValues } from '@/components/cms/blogs/blog-form';
 
 // Define the schema directly since imports are causing issues
 const blogFormSchema = z.object({
@@ -27,8 +27,6 @@ const blogFormSchema = z.object({
   publishedAt: z.date().optional().nullable(),
   tags: z.array(z.string()).default([]),
 });
-
-type BlogFormValues = z.infer<typeof blogFormSchema>;
 
 interface BlogEditPageProps {
   params: {

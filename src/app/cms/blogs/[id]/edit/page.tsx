@@ -1,16 +1,13 @@
 'use client';
 
-import { useState, useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useState, useEffect } from 'react';
+import { useRouter, useParams } from 'next/navigation';
 import Link from "next/link";
+import { CMSLayout } from '@/components/layouts/cms-layout';
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
-import BlogForm from "@/components/cms/blogs/blog-form";
+import { BlogForm, BlogFormValues } from "@/components/cms/blogs/blog-form";
 import { toast } from "sonner";
-import { blogFormSchema } from "@/components/cms/blogs/blog-form";
-import { z } from "zod";
-
-type BlogFormValues = z.infer<typeof blogFormSchema>;
 
 export default function EditBlogPage() {
   const params = useParams();
@@ -18,7 +15,7 @@ export default function EditBlogPage() {
   
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [blog, setBlog] = useState<(BlogFormValues & { id: string }) | null>(null);
+  const [blog, setBlog] = useState<BlogFormValues & { id: string } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   
   useEffect(() => {
@@ -94,24 +91,26 @@ export default function EditBlogPage() {
   }
   
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-2">
-          <Button variant="outline" size="sm" asChild>
-            <Link href="/cms/blogs">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Blogs
-            </Link>
-          </Button>
-          <h1 className="text-2xl font-bold tracking-tight">Edit Blog</h1>
+    <CMSLayout>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <Button variant="outline" size="sm" asChild>
+              <Link href="/cms/blogs">
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to Blogs
+              </Link>
+            </Button>
+            <h1 className="text-2xl font-bold tracking-tight">Edit Blog</h1>
+          </div>
         </div>
+        
+        <BlogForm 
+          initialData={blog}
+          onSubmit={handleSubmit}
+          isSubmitting={isSubmitting}
+        />
       </div>
-      
-      <BlogForm 
-        initialData={blog}
-        onSubmit={handleSubmit}
-        isSubmitting={isSubmitting}
-      />
-    </div>
+    </CMSLayout>
   );
 }

@@ -24,14 +24,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { X, CalendarIcon, Upload } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { X, Upload } from 'lucide-react';
 import RichTextEditor from './rich-text-editor';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Calendar } from '@/components/ui/calendar';
-import { format } from 'date-fns';
-import { ar } from 'date-fns/locale';
-import { useDirection } from '@/app/[locale]/components/direction-provider';
 import { toast } from 'sonner';
 import Image from 'next/image';
 
@@ -52,6 +46,7 @@ export const blogFormSchema = z
     metaDescriptionEn: z.string().optional(),
     metaDescriptionAr: z.string().optional(),
     tags: z.array(z.string()).default([]),
+    publishedAt: z.string().nullable().optional(),
   })
   .refine(
     (data) => {
@@ -76,16 +71,15 @@ export const blogFormSchema = z
     }
   );
 
-type BlogFormValues = z.infer<typeof blogFormSchema>;
+export type BlogFormValues = z.infer<typeof blogFormSchema>;
 
-type BlogFormProps = {
+export type BlogFormProps = {
   initialData?: BlogFormValues & { id?: string };
   onSubmit: (data: BlogFormValues) => Promise<void>;
   isSubmitting: boolean;
 };
 
-export default function BlogForm({ initialData, onSubmit, isSubmitting }: BlogFormProps) {
-  const { direction } = useDirection();
+export function BlogForm({ initialData, onSubmit, isSubmitting }: BlogFormProps) {
   const [activeTab, setActiveTab] = useState<'english' | 'arabic'>('english');
   const [tagInput, setTagInput] = useState('');
   const [uploadingImage, setUploadingImage] = useState(false);
@@ -108,6 +102,7 @@ export default function BlogForm({ initialData, onSubmit, isSubmitting }: BlogFo
       metaDescriptionEn: '',
       metaDescriptionAr: '',
       tags: [],
+      publishedAt: null,
     },
   });
 

@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import DeleteBlog from '@/components/cms/blogs/delete-blog';
 import { useTheme } from 'next-themes';
 import { cn } from '@/lib/utils';
+import Image from 'next/image';
 
 interface BlogDetailPageProps {
   params: {
@@ -104,7 +105,7 @@ export default function BlogDetailPage({ params }: BlogDetailPageProps) {
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
       case 'published':
-        return 'success';
+        return 'default';
       case 'draft':
         return 'outline';
       case 'archived':
@@ -206,10 +207,12 @@ export default function BlogDetailPage({ params }: BlogDetailPageProps) {
               {/* Featured Image */}
               {blog.featuredImage && (
                 <div className="relative w-full h-64 sm:h-80 md:h-96 rounded-t-lg overflow-hidden">
-                  <img
+                  <Image
                     src={blog.featuredImage}
                     alt={activeTab === 'english' ? blog.titleEn : blog.titleAr}
-                    className="w-full h-full object-cover"
+                    fill
+                    className="object-cover"
+                    priority
                   />
                 </div>
               )}
