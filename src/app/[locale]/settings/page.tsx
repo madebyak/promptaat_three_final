@@ -11,6 +11,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { useState } from 'react';
+import { AppearanceSettings } from './components/appearance-settings';
+import { SecuritySettings } from './components/security-settings';
+import { PrivacySettings } from './components/privacy-settings';
 
 interface SettingsPageProps {
   params: Promise<{
@@ -24,6 +27,8 @@ interface Translations {
   accountTab: string;
   notificationsTab: string;
   appearanceTab: string;
+  securityTab: string;
+  privacyTab: string;
   // Account tab
   profileSettings: string;
   nameLabel: string;
@@ -49,6 +54,8 @@ const translations: Record<string, Translations> = {
     accountTab: 'Account',
     notificationsTab: 'Notifications',
     appearanceTab: 'Appearance',
+    securityTab: 'Security',
+    privacyTab: 'Privacy',
     profileSettings: 'Profile Settings',
     nameLabel: 'Name',
     emailLabel: 'Email',
@@ -69,6 +76,8 @@ const translations: Record<string, Translations> = {
     accountTab: 'الحساب',
     notificationsTab: 'الإشعارات',
     appearanceTab: 'المظهر',
+    securityTab: 'الأمان',
+    privacyTab: 'الخصوصية',
     profileSettings: 'إعدادات الملف الشخصي',
     nameLabel: 'الاسم',
     emailLabel: 'البريد الإلكتروني',
@@ -124,6 +133,8 @@ export default function SettingsPage({ params }: SettingsPageProps) {
             <TabsTrigger value="account">{t.accountTab}</TabsTrigger>
             <TabsTrigger value="notifications">{t.notificationsTab}</TabsTrigger>
             <TabsTrigger value="appearance">{t.appearanceTab}</TabsTrigger>
+            <TabsTrigger value="security">{t.securityTab}</TabsTrigger>
+            <TabsTrigger value="privacy">{t.privacyTab}</TabsTrigger>
           </TabsList>
           
           <TabsContent value="account">
@@ -186,15 +197,15 @@ export default function SettingsPage({ params }: SettingsPageProps) {
           </TabsContent>
           
           <TabsContent value="appearance">
-            <Card>
-              <CardHeader>
-                <CardTitle>{t.themeSettings}</CardTitle>
-                <CardDescription>{t.themeSettingsDescription}</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {/* Theme controls would go here */}
-              </CardContent>
-            </Card>
+            <AppearanceSettings locale={locale} />
+          </TabsContent>
+          
+          <TabsContent value="security">
+            <SecuritySettings locale={locale} />
+          </TabsContent>
+          
+          <TabsContent value="privacy">
+            <PrivacySettings locale={locale} />
           </TabsContent>
         </Tabs>
       </div>
