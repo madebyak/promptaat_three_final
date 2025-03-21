@@ -11,6 +11,7 @@ import {
   Settings,
   LogOut,
   Wrench,
+  Clock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -46,6 +47,11 @@ export function SidebarNav({ onLogout }: SidebarNavProps) {
       title: "Blogs",
       href: "/cms/blogs",
       icon: <FileText className="mr-2 h-4 w-4" />,
+    },
+    {
+      title: "Changelog",
+      href: "/cms/changelog",
+      icon: <Clock className="mr-2 h-4 w-4" />,
     },
     {
       title: "Users",
