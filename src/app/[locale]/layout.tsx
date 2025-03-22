@@ -14,8 +14,11 @@ export async function generateMetadata({
   // Get the locale from params
   const locale = params.locale;
   
-  // Set locale-specific OpenGraph images
-  const ogImagePath = locale === 'ar' ? '/og/home-og-ar.jpg' : '/og/home-og-en.jpg';
+  // Set locale-specific OpenGraph images with absolute URLs
+  const baseUrl = 'https://promptaat.com';
+  const ogImagePath = locale === 'ar' 
+    ? `${baseUrl}/og/home-og-ar.jpg` 
+    : `${baseUrl}/og/home-og-en.jpg`;
   
   // Define locale-specific metadata
   if (locale === 'ar') {
@@ -25,6 +28,8 @@ export async function generateMetadata({
       openGraph: {
         title: 'برومتات - أكبر مكتبة للموجهات الذكية',
         description: 'في مستقبل يقوده الذكاء الاصطناعي، وقتك ثمين. مع برومتات ستحصل على أكبر مكتبة من الموجهات الجاهزة التي تتيح لك تركيز جهودك على إبداع المحتوى وتحقيق نتائج باهرة بنقرة واحدة.',
+        url: `${baseUrl}/${locale}`,
+        type: 'website',
         images: [
           {
             url: ogImagePath,
@@ -35,6 +40,7 @@ export async function generateMetadata({
         ],
       },
       twitter: {
+        card: 'summary_large_image',
         images: [ogImagePath],
         title: 'برومتات - أكبر مكتبة للموجهات الذكية',
         description: 'في مستقبل يقوده الذكاء الاصطناعي، وقتك ثمين. مع برومتات ستحصل على أكبر مكتبة من الموجهات الجاهزة لتحقيق نتائج باهرة بنقرة واحدة.',
@@ -44,7 +50,13 @@ export async function generateMetadata({
   
   // Default English metadata
   return {
+    title: 'Promptaat | The Largest AI Prompt Library',
+    description: 'In an era where AI is reshaping creativity, crafting effective prompts can be overwhelming. Promptaat\'s vast, engineered collection saves you time—just copy and paste to fuel your ideas, letting you focus on the details that matter.',
     openGraph: {
+      title: 'Promptaat | The Largest AI Prompt Library',
+      description: 'In an era where AI is reshaping creativity, crafting effective prompts can be overwhelming. Promptaat\'s vast, engineered collection saves you time—just copy and paste to fuel your ideas, letting you focus on the details that matter.',
+      url: `${baseUrl}/${locale}`,
+      type: 'website',
       images: [
         {
           url: ogImagePath,
@@ -55,6 +67,9 @@ export async function generateMetadata({
       ],
     },
     twitter: {
+      card: 'summary_large_image',
+      title: 'Promptaat | The Largest AI Prompt Library',
+      description: 'In an era where AI is reshaping creativity, crafting effective prompts can be overwhelming. Promptaat\'s vast collection saves you time with one-click solutions.',
       images: [ogImagePath],
     },
   };
