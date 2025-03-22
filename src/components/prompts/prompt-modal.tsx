@@ -14,6 +14,7 @@ import { PromptDetail, PromptModalProps } from "@/types/prompts"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { ProductStructuredData } from "@/components/seo/product-seo"
+import { ProPromptContent } from "./pro-prompt-content"
 
 export function PromptModal({
   promptId,
@@ -27,6 +28,7 @@ export function PromptModal({
   const [error, setError] = useState<string | null>(null)
   const [isCopied, setIsCopied] = useState(false)
   const [isBookmarking, setIsBookmarking] = useState(false)
+  const [userSubscriptionStatus, setUserSubscriptionStatus] = useState<boolean | null>(null)
   const { toast } = useToast()
   const { data: session } = useSession()
   const router = useRouter()
@@ -81,8 +83,41 @@ export function PromptModal({
     }
   }, [promptId, locale])
 
+  // Check subscription status when session changes
+  useEffect(() => {
+    // If there's a user session and we have a prompt that's Pro, check subscription status
+    if (session?.user && prompt?.isPro) {
+      fetch('/api/user/subscription-status')
+        .then(res => res.json())
+        .then(data => {
+          setUserSubscriptionStatus(data.isSubscribed);
+        })
+        .catch(() => {
+          // Default to false on error
+          setUserSubscriptionStatus(false);
+        });
+    } else if (!session?.user) {
+      // No session means no subscription
+      setUserSubscriptionStatus(false);
+    } else if (prompt && !prompt.isPro) {
+      // Non-Pro prompt, no need to check
+      setUserSubscriptionStatus(true);
+    }
+  }, [session, prompt]);
+
   const handleCopy = useCallback(async () => {
     if (!prompt) return
+    
+    // Check if this is a Pro prompt and user is not subscribed
+    if (prompt.isPro && userSubscriptionStatus === false) {
+      // Show toast explaining why copying is not allowed
+      toast({
+        title: "Pro content",
+        description: "You need a Pro subscription to copy this prompt",
+      })
+      return
+    }
+    
     try {
       // Copy to clipboard
       await navigator.clipboard.writeText(prompt.promptText)
@@ -133,7 +168,7 @@ export function PromptModal({
         variant: "destructive",
       })
     }
-  }, [prompt, promptId, toast])
+  }, [prompt, promptId, toast, userSubscriptionStatus])
 
   const handleShare = async () => {
     if (!prompt) return
@@ -540,27 +575,35 @@ export function PromptModal({
           {/* Prompt Text */}
           <Alert className="mb-4 sm:mb-6">
             <div className="relative">
-              <AlertDescription className="whitespace-pre-wrap font-mono text-sm pr-24">
-                {prompt.promptText}
-              </AlertDescription>
-              <Button
-                className={cn(
-                  "absolute top-0 right-0 mt-2 mr-2 transition-all duration-200",
-                  "h-10 sm:h-8", // Larger touch target on mobile
-                  "min-w-[80px] sm:min-w-[60px]",
-                  isCopied ? "border-accent-green text-accent-green" : "bg-accent-green text-black hover:bg-accent-green/90"
-                )}
-                variant={isCopied ? "outline" : "secondary"}
-                size="sm"
-                onClick={handleCopy}
+              <ProPromptContent
+                isPro={prompt.isPro}
+                isUserSubscribed={userSubscriptionStatus === true}
+                locale={locale}
+                className="w-full"
               >
-                {isCopied ? (
-                  <CheckCircle className="h-3 w-3 mr-2" />
-                ) : (
-                  <Copy className="h-3 w-3 mr-2" />
-                )}
-                {isCopied ? "Copied!" : "Copy"}
-              </Button>
+                <AlertDescription className="whitespace-pre-wrap font-mono text-sm pr-24">
+                  {prompt.promptText}
+                </AlertDescription>
+                <Button
+                  className={cn(
+                    "absolute top-0 right-0 mt-2 mr-2 transition-all duration-200",
+                    "h-10 sm:h-8", // Larger touch target on mobile
+                    "min-w-[80px] sm:min-w-[60px]",
+                    isCopied ? "border-accent-green text-accent-green" : "bg-accent-green text-black hover:bg-accent-green/90"
+                  )}
+                  variant={isCopied ? "outline" : "secondary"}
+                  size="sm"
+                  onClick={handleCopy}
+                  disabled={prompt.isPro && userSubscriptionStatus === false}
+                >
+                  {isCopied ? (
+                    <CheckCircle className="h-3 w-3 mr-2" />
+                  ) : (
+                    <Copy className="h-3 w-3 mr-2" />
+                  )}
+                  {isCopied ? "Copied!" : "Copy"}
+                </Button>
+              </ProPromptContent>
             </div>
           </Alert>
 

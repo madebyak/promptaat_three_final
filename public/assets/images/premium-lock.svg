@@ -1,0 +1,37 @@
+<svg width="128" height="128" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Outer glow circle -->
+  <circle cx="64" cy="64" r="54" fill="url(#paint0_radial)" fill-opacity="0.2"/>
+  
+  <!-- Lock body with gold gradient -->
+  <rect x="38" y="58" width="52" height="42" rx="8" fill="url(#paint1_linear)" stroke="#FFCC00" stroke-width="2"/>
+  
+  <!-- Lock shackle with gold gradient -->
+  <path d="M52 58V42C52 34.268 58.268 28 66 28H62C69.732 28 76 34.268 76 42V58" stroke="url(#paint2_linear)" stroke-width="4" stroke-linecap="round"/>
+  
+  <!-- Crown icon inside lock -->
+  <path d="M50 78L58 70L64 78L70 70L78 78L74 86H54L50 78Z" fill="#FFFFFF"/>
+  
+  <!-- Pro text -->
+  <text x="64" y="102" font-family="Arial, sans-serif" font-size="12" font-weight="bold" text-anchor="middle" fill="white">PRO</text>
+  
+  <!-- Definitions for gradients -->
+  <defs>
+    <!-- Radial gradient for outer glow -->
+    <radialGradient id="paint0_radial" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(64 64) rotate(90) scale(54)">
+      <stop stop-color="#FFD700"/>
+      <stop offset="1" stop-color="#FFD700" stop-opacity="0"/>
+    </radialGradient>
+    
+    <!-- Linear gradient for lock body -->
+    <linearGradient id="paint1_linear" x1="38" y1="58" x2="90" y2="100" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFD700"/>
+      <stop offset="1" stop-color="#B8860B"/>
+    </linearGradient>
+    
+    <!-- Linear gradient for lock shackle -->
+    <linearGradient id="paint2_linear" x1="52" y1="28" x2="76" y2="58" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFD700"/>
+      <stop offset="1" stop-color="#B8860B"/>
+    </linearGradient>
+  </defs>
+</svg>

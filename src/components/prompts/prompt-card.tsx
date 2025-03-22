@@ -13,6 +13,7 @@ import { PromptModal } from "./prompt-modal"
 import { AddToCatalogButton } from "@/components/catalogs/add-to-catalog-button"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
+import { UpgradeButton } from "@/components/common/upgrade-button"
 
 interface PromptCardProps {
   id: string
@@ -51,11 +52,34 @@ export function PromptCard({
   const [isBookmarking, setIsBookmarking] = useState(false)
   const [bookmarkStatus, setBookmarkStatus] = useState(isBookmarked)
   const [copyCount, setCopyCount] = useState(initialCopyCount)
+  const [userSubscriptionStatus, setUserSubscriptionStatus] = useState<boolean | null>(null)
   const prefetched = useRef(false)
   const { toast } = useToast()
   const { data: session } = useSession()
   const router = useRouter()
   
+  // Check subscription status when session changes
+  useEffect(() => {
+    // If there's a user session and the prompt is Pro, check subscription status
+    if (session?.user && isPro) {
+      fetch('/api/user/subscription-status')
+        .then(res => res.json())
+        .then(data => {
+          setUserSubscriptionStatus(data.isSubscribed);
+        })
+        .catch(() => {
+          // Default to false on error
+          setUserSubscriptionStatus(false);
+        });
+    } else if (!session?.user) {
+      // No session means no subscription
+      setUserSubscriptionStatus(false);
+    } else {
+      // Non-Pro prompt, no need to check
+      setUserSubscriptionStatus(true);
+    }
+  }, [session, isPro]);
+
   // Prefetch prompt details when hovering over the card
   const prefetchPromptData = useCallback(() => {
     if (!prefetched.current) {
@@ -109,6 +133,20 @@ export function PromptCard({
   // Memoize the copy handler to prevent unnecessary re-renders
   const handleCopy = useCallback(async (e: React.MouseEvent) => {
     e.stopPropagation()
+    
+    // Check if this is a Pro prompt and user is not subscribed
+    if (isPro && userSubscriptionStatus === false) {
+      // Show toast explaining why copying is not allowed
+      toast({
+        title: "Pro content",
+        description: "You need a Pro subscription to copy this prompt",
+      })
+      
+      // Optional: Open modal to show more details
+      setIsModalOpen(true)
+      return
+    }
+    
     try {
       // Copy to clipboard
       await navigator.clipboard.writeText(preview)
@@ -156,7 +194,7 @@ export function PromptCard({
         variant: "destructive",
       })
     }
-  }, [id, preview, toast])
+  }, [id, preview, toast, isPro, userSubscriptionStatus])
 
   const handleShare = async (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -260,45 +298,53 @@ export function PromptCard({
   return (
     <>
       <Card 
-        className="h-full hover:shadow-md transition-shadow cursor-pointer"
+        className={cn(
+          "transition-all duration-200 h-full flex flex-col",
+          "hover:border-accent-purple/60 hover:shadow-lg hover:shadow-accent-purple/10",
+          "cursor-pointer focus:outline-none focus:ring-2 focus:ring-accent-purple/50"
+        )}
         onClick={() => setIsModalOpen(true)}
+        tabIndex={0}
+        onKeyDown={(e) => {
+          // Open modal on Enter or Space
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            setIsModalOpen(true);
+          }
+        }}
         onMouseEnter={prefetchPromptData}
       >
         <div className="flex flex-col h-full p-4">
-          {/* Top row with badges */}
-          <div className={cn(
-            "flex items-center justify-between gap-2",
-            isRTL && "flex-row-reverse"
-          )}>
-            <div className="flex items-center gap-2">
+          {/* Badge and buttons section */}
+          <div className="flex items-center justify-between">
+            <div>
               {isPro ? (
-                <Badge variant="purple" className="inline-flex items-center gap-1.5 px-2.5 py-1">
+                <Badge variant="purple" className="inline-flex items-center gap-1 px-2">
                   <Crown className="h-3 w-3" />
                   PRO
                 </Badge>
               ) : (
-                <Badge variant="secondary" className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-light-grey-light dark:bg-dark">
+                <Badge variant="secondary" className="inline-flex items-center gap-1 px-2 bg-light-grey-light dark:bg-dark">
                   <Turtle className="h-3 w-3" />
                   Basic
                 </Badge>
               )}
             </div>
-            {/* Right side actions */}
-            <div className="flex items-center gap-2">
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className={cn("h-8 w-8", bookmarkStatus && "text-accent-purple")} 
-                onClick={handleBookmark}
-                disabled={isBookmarking || !session?.user}
-              >
-                {bookmarkStatus ? (
-                  <BookmarkCheck className="h-4 w-4" />
-                ) : (
-                  <Bookmark className="h-4 w-4" />
-                )}
-                <span className="sr-only">{bookmarkStatus ? "Remove bookmark" : "Bookmark"}</span>
-              </Button>
+            <div className="flex items-center">
+              {/* Bookmark Button (conditionally rendered) */}
+              {session?.user && (
+                <Button variant="ghost" size="icon" className={cn(
+                  "h-8 w-8", 
+                  bookmarkStatus && "text-accent-purple"
+                )} onClick={handleBookmark} disabled={isBookmarking}>
+                  {bookmarkStatus ? (
+                    <BookmarkCheck className="h-4 w-4" />
+                  ) : (
+                    <Bookmark className="h-4 w-4" />
+                  )}
+                  <span className="sr-only">{bookmarkStatus ? "Remove from saved" : "Save"}</span>
+                </Button>
+              )}
               <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleShare}>
                 <Share2 className="h-4 w-4" />
                 <span className="sr-only">Share</span>
@@ -344,7 +390,11 @@ export function PromptCard({
             "text-sm text-light-grey line-clamp-3 mb-4",
             isRTL && "text-right"
           )}>
-            {preview}
+            {isPro && userSubscriptionStatus === false ? (
+              <div className="blur-sm select-none">{preview}</div>
+            ) : (
+              preview
+            )}
           </p>
 
           {/* Bottom section */}
@@ -418,22 +468,33 @@ export function PromptCard({
                     variant="outline"
                   />
                 )}
-                <Button
-                  variant={isCopied ? "outline" : "secondary"}
-                  size="sm"
-                  className={cn(
-                    "flex-shrink-0 transition-all duration-200",
-                    isCopied ? "border-accent-green text-accent-green" : "bg-accent-green text-black hover:bg-accent-green/90"
-                  )}
-                  onClick={handleCopy}
-                >
-                  {isCopied ? (
-                    <CheckCircle className={cn("h-3 w-3", isRTL ? "ml-2" : "mr-2")} />
-                  ) : (
-                    <Copy className={cn("h-3 w-3", isRTL ? "ml-2" : "mr-2")} />
-                  )}
-                  {isCopied ? "Copied!" : "Copy"}
-                </Button>
+                {isPro && userSubscriptionStatus === false ? (
+                  <UpgradeButton
+                    locale={locale}
+                    styleVariant="primary"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation() // Prevent card click
+                    }}
+                  />
+                ) : (
+                  <Button
+                    variant={isCopied ? "outline" : "secondary"}
+                    size="sm"
+                    className={cn(
+                      "flex-shrink-0 transition-all duration-200",
+                      isCopied ? "border-accent-green text-accent-green" : "bg-accent-green text-black hover:bg-accent-green/90"
+                    )}
+                    onClick={handleCopy}
+                  >
+                    {isCopied ? (
+                      <CheckCircle className={cn("h-3 w-3", isRTL ? "ml-2" : "mr-2")} />
+                    ) : (
+                      <Copy className={cn("h-3 w-3", isRTL ? "ml-2" : "mr-2")} />
+                    )}
+                    {isCopied ? "Copied!" : "Copy"}
+                  </Button>
+                )}
               </div>
             </div>
           </div>

@@ -118,6 +118,10 @@ const config: Config = {
   				'0%, 100%': { opacity: '0.6' },
   				'50%': { opacity: '1' },
   			},
+  			"pulse-slow": {
+  				'0%, 100%': { opacity: '0.95' },
+  				'50%': { opacity: '1' },
+  			},
   			grow: {
   				'0%': { height: '0' },
   				'100%': { height: '100%' },
@@ -128,6 +132,7 @@ const config: Config = {
   			"accordion-up": "accordion-up 0.2s ease-out",
   			"float": "float 3s ease-in-out infinite",
   			"pulse": "pulse 3s ease-in-out infinite",
+  			"pulse-slow": "pulse-slow 4s ease-in-out infinite",
   			"grow": "grow 1.5s ease-out forwards",
   		}
   	}

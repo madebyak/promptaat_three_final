@@ -131,3 +131,66 @@ export async function handleProContentRequest(
   // User is authorized or content is not premium, proceed with handler
   return await handleAuthorized();
 }
+
+/**
+ * Specifically verifies if a user can access a Pro prompt's full content
+ * If they can't, this function will properly mask the content
+ * @param prompt The prompt object with isPro field and prompt text 
+ * @param userId Optional user ID to check subscription status
+ * @returns Modified prompt with masked content if needed
+ */
+export async function verifyProPromptAccess<T extends { isPro: boolean; promptText?: string; promptTextEn?: string; promptTextAr?: string }>(
+  prompt: T,
+  userId?: string
+): Promise<T> {
+  // If the prompt is not marked as Pro, return it unmodified
+  if (!prompt.isPro) {
+    return prompt;
+  }
+
+  // If there's no user ID, or user doesn't have subscription, mask the prompt text
+  if (!userId) {
+    return maskPromptContent(prompt);
+  }
+
+  // Check if user has an active subscription
+  const hasSubscription = await isUserSubscribed(userId);
+  
+  // If user has subscription, return the full prompt
+  if (hasSubscription) {
+    return prompt;
+  }
+  
+  // Otherwise, mask the prompt text
+  return maskPromptContent(prompt);
+}
+
+/**
+ * Helper function to mask prompt content for non-subscribers
+ * @param prompt Prompt object to mask
+ * @returns Prompt with masked content
+ */
+function maskPromptContent<T extends { promptText?: string; promptTextEn?: string; promptTextAr?: string }>(
+  prompt: T
+): T {
+  const maskedPrompt = { ...prompt };
+  
+  // Get the first 100 characters of the prompt text if it exists
+  if (maskedPrompt.promptText) {
+    const previewText = maskedPrompt.promptText.substring(0, 100);
+    maskedPrompt.promptText = `${previewText}... [Pro content - Subscribe to view full prompt]`;
+  }
+  
+  // Handle multilingual content
+  if (maskedPrompt.promptTextEn) {
+    const previewText = maskedPrompt.promptTextEn.substring(0, 100);
+    maskedPrompt.promptTextEn = `${previewText}... [Pro content - Subscribe to view full prompt]`;
+  }
+  
+  if (maskedPrompt.promptTextAr) {
+    const previewText = maskedPrompt.promptTextAr.substring(0, 100);
+    maskedPrompt.promptTextAr = `${previewText}... [محتوى احترافي - اشترك لعرض المطالبة الكاملة]`;
+  }
+  
+  return maskedPrompt;
+}
