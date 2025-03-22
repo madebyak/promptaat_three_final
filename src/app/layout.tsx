@@ -30,13 +30,9 @@ export const metadata: Metadata = {
   creator: 'Promptaat Team',
   publisher: 'Promptaat',
   icons: {
-    icon: [
-      { url: '/favicon.ico', sizes: 'any' },
-      { url: '/favicon-32px.jpg', sizes: '32x32', type: 'image/jpeg' },
-      { url: '/favicon-16px.jpg', sizes: '16x16', type: 'image/jpeg' }
-    ],
+    icon: '/favicon.ico',
     shortcut: '/favicon.ico',
-    apple: '/favicon-32px.jpg',
+    apple: '/favicon.ico',
   },
   robots: {
     index: true,

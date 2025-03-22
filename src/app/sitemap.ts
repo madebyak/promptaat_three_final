@@ -1,6 +1,6 @@
 import { MetadataRoute } from 'next'
 import { prisma } from '@/lib/prisma/client'
-import type { Category } from '@prisma/client'
+import type { Category, Blog } from '@prisma/client'
 
 // Force dynamic generation to prevent build-time database access
 export const dynamic = 'force-dynamic'
@@ -19,6 +19,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       children: true // Include subcategories
     }
   }) as (Category & { children: Category[] })[]
+
+  // Get blog posts for sitemap
+  const blogs = await prisma.blog.findMany({
+    where: {
+      status: 'published'
+    },
+    select: {
+      slug: true,
+      updatedAt: true
+    }
+  }) as Pick<Blog, 'slug' | 'updatedAt'>[];
 
   const baseUrl = 'https://promptaat.com'
   
@@ -72,6 +83,55 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: 'monthly' as const,
       priority: 0.7,
     },
+    // Resource pages
+    {
+      url: `${baseUrl}/en/resources/benchmark`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly' as const,
+      priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/ar/resources/benchmark`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly' as const,
+      priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/en/about`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly' as const,
+      priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/ar/about`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly' as const,
+      priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/en/blogs`,
+      lastModified: new Date(),
+      changeFrequency: 'daily' as const,
+      priority: 0.9,
+    },
+    {
+      url: `${baseUrl}/ar/blogs`,
+      lastModified: new Date(),
+      changeFrequency: 'daily' as const,
+      priority: 0.9,
+    },
+    {
+      url: `${baseUrl}/en/contact`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly' as const,
+      priority: 0.7,
+    },
+    {
+      url: `${baseUrl}/ar/contact`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly' as const,
+      priority: 0.7,
+    },
   ]
 
   // Category pages - for both English and Arabic
@@ -117,5 +177,23 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     return routes
   })
 
-  return [...staticPages, ...categoryPages]
+  // Blog posts pages
+  const blogPages = blogs.flatMap((blog: Pick<Blog, 'slug' | 'updatedAt'>) => [
+    // English blog post
+    {
+      url: `${baseUrl}/en/blogs/${blog.slug}`,
+      lastModified: blog.updatedAt,
+      changeFrequency: 'monthly' as const,
+      priority: 0.7,
+    },
+    // Arabic blog post
+    {
+      url: `${baseUrl}/ar/blogs/${blog.slug}`,
+      lastModified: blog.updatedAt,
+      changeFrequency: 'monthly' as const,
+      priority: 0.7,
+    }
+  ])
+
+  return [...staticPages, ...categoryPages, ...blogPages]
 }
