@@ -25,6 +25,25 @@ const nextConfig = {
     optimizeCss: true,
     optimizeServerReact: true,
   },
+  // Add headers configuration to fix caching issues
+  async headers() {
+    return [
+      {
+        // Matching all favicon and OpenGraph image requests
+        source: '/(favicon.ico|og/:path*)',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=0, must-revalidate',
+          },
+          {
+            key: 'Pragma',
+            value: 'no-cache',
+          }
+        ],
+      },
+    ];
+  },
   // Configure image domains to allow external images
   images: {
     // Allow images from any domain

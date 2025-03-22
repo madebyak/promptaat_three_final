@@ -83,6 +83,15 @@ export default function RootLayout({
       <head>
         {/* Preload hints for critical CSS */}
         <link rel="preload" href="/globals.css" as="style" />
+        
+        {/* Force the favicon to load properly */}
+        <link rel="icon" href="/favicon.ico" sizes="any" />
+        <link rel="shortcut icon" href="/favicon.ico" />
+        <link rel="apple-touch-icon" href="/favicon.ico" />
+        
+        {/* OpenGraph images preload for better performance */}
+        <link rel="preload" href="/og/home-og-en.jpg" as="image" />
+        <link rel="preload" href="/og/home-og-ar.jpg" as="image" />
       </head>
       <body className={`${geistSans.variable} font-sans antialiased`}>
         <AuthSessionProvider>
