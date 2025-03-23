@@ -29,7 +29,7 @@ export function AuthLayout({
           playsInline
           className="absolute top-0 left-0 w-full h-full object-cover opacity-70"
         >
-          <source src="/web-login-02.mp4" type="video/mp4" />
+          <source src="/web-login-02.webm" type="video/webm" />
         </video>
       </div>
       
