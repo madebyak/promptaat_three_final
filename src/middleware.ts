@@ -3,6 +3,7 @@ import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 import { verifyToken } from "@/lib/auth/token"
 import { isCmsPath } from "../next-intl.config"
+import { profileCompletionMiddleware } from "./middleware/profile-completion"
 
 // Supported locales
 const locales = ["en", "ar"]
@@ -206,6 +207,12 @@ export async function middleware(request: NextRequest) {
       response.cookies.delete("token")
       return response
     }
+  }
+
+  // Integrate profile completion middleware
+  const profileCompletionResponse = await profileCompletionMiddleware(request);
+  if (profileCompletionResponse) {
+    return profileCompletionResponse;
   }
 
   return response
