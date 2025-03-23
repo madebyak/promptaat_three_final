@@ -35,6 +35,9 @@ const authPaths = [
 const profileCompletionExemptPaths = [
   "/auth/profile-completion",
   "/api/auth/complete-profile",
+  "/subscription",
+  "/en/subscription",
+  "/ar/subscription",
 ]
 
 // Enhanced function to handle CMS routes with detailed logging
@@ -210,9 +213,17 @@ export async function middleware(request: NextRequest) {
   }
 
   // Integrate profile completion middleware
-  const profileCompletionResponse = await profileCompletionMiddleware(request);
-  if (profileCompletionResponse) {
-    return profileCompletionResponse;
+  // Skip profile completion middleware for subscription pages
+  if (!pathname.includes('/subscription')) {
+    const profileCompletionResponse = await profileCompletionMiddleware(request);
+    if (profileCompletionResponse) {
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`[Middleware] Profile completion middleware redirecting from: ${pathname}`);
+      }
+      return profileCompletionResponse;
+    }
+  } else if (process.env.NODE_ENV === 'development') {
+    console.log(`[Middleware] Skipping profile completion middleware for subscription page: ${pathname}`);
   }
 
   return response
