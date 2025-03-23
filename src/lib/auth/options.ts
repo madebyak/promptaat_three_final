@@ -1,5 +1,6 @@
 import { NextAuthOptions, User } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
+import GoogleProvider from "next-auth/providers/google";
 import { prisma } from "@/lib/prisma/client";
 import { comparePassword } from "./password-validation";
 import { comparePasswords } from "@/lib/crypto";
@@ -274,6 +275,10 @@ export const authOptions: NextAuthOptions = {
           throw error;
         }
       },
+    }),
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID || '',
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
     }),
   ],
   session: {

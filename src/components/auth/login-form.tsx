@@ -137,28 +137,15 @@ export function LoginForm({ locale = 'en' }: LoginFormProps) {
   const handleGoogleSignIn = async () => {
     try {
       setIsLoading(true);
-      const result = await signIn("google", { 
+      console.log('[Google Login] Initiating Google sign-in');
+      
+      // Use redirect: true to let NextAuth handle the OAuth flow properly
+      await signIn("google", { 
         callbackUrl: `/${locale}`,
-        redirect: false 
+        redirect: true
       });
       
-      // Wait for session establishment
-      const sessionWaitTime = process.env.NODE_ENV === 'production' ? 1500 : 1000;
-      await new Promise(resolve => setTimeout(resolve, sessionWaitTime));
-      
-      // Check if we need to get the user's profile data
-      const session = await fetch("/api/auth/session");
-      const sessionData = await session.json();
-      
-      if (sessionData?.user?.needsProfileCompletion) {
-        // Set a cookie to indicate profile completion is needed
-        document.cookie = "needs_profile_completion=true; path=/; max-age=3600";
-        // Redirect to profile completion page
-        window.location.href = `/${locale}/auth/profile-completion`;
-      } else {
-        // Normal redirect to homepage
-        window.location.href = result?.url || `/${locale}`;
-      }
+      // Note: The code below will not execute since redirect: true will navigate away from this page
     } catch (error) {
       console.error('[Google Login] Error:', error);
       toast({
@@ -166,7 +153,6 @@ export function LoginForm({ locale = 'en' }: LoginFormProps) {
         description: "Failed to sign in with Google",
         variant: "destructive",
       });
-    } finally {
       setIsLoading(false);
     }
   };
