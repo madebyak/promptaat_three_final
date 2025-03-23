@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -36,9 +36,17 @@ const profileCompletionSchema = z.object({
 type ProfileCompletionFormValues = z.infer<typeof profileCompletionSchema>;
 
 export default function ProfileCompletionPage() {
-  const router = useRouter();
+  return (
+    <Suspense fallback={<div className="container flex items-center justify-center min-h-screen py-12">Loading...</div>}>
+      <ProfileCompletionContent />
+    </Suspense>
+  );
+}
+
+function ProfileCompletionContent() {
   const searchParams = useSearchParams();
   const returnUrl = searchParams.get('returnUrl') || '/';
+  const router = useRouter();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -117,7 +125,7 @@ export default function ProfileCompletionPage() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {countries.map((country) => (
+                        {countries.map((country: { code: string; name: string }) => (
                           <SelectItem key={country.code} value={country.code}>
                             {country.name}
                           </SelectItem>
