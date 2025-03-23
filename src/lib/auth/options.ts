@@ -308,21 +308,29 @@ export const authOptions: NextAuthOptions = {
       // For OAuth providers like Google, we want to automatically verify the email
       if (account?.provider === 'google' && profile?.email) {
         try {
-          // Check if user exists
-          const existingUser = await prisma.user.findUnique({
-            where: { email: profile.email },
+          // Check if user exists by email or Google ID
+          const existingUser = await prisma.user.findFirst({
+            where: {
+              OR: [
+                { email: profile.email },
+                { googleId: account.providerAccountId }
+              ]
+            },
           });
 
           if (existingUser) {
-            // Update existing user to ensure email is verified
+            // Update existing user to ensure email is verified and Google ID is linked
             await prisma.user.update({
               where: { id: existingUser.id },
               data: { 
                 emailVerified: true,
+                isActive: true, // Ensure the user is active
                 // Update profile image if available from Google
                 profileImageUrl: (profile as GoogleProfile).picture || existingUser.profileImageUrl,
                 // Store Google ID if not already stored
                 googleId: account.providerAccountId || existingUser.googleId,
+                // Update last login time
+                lastLoginAt: new Date(),
               },
             });
             
@@ -333,21 +341,32 @@ export const authOptions: NextAuthOptions = {
             (user as ExtendedUser).emailVerified = true;
             
           } else {
+            // Prepare user data with all required fields
+            const userData = {
+              email: profile.email,
+              firstName: (profile as GoogleProfile).given_name || 'User',
+              lastName: (profile as GoogleProfile).family_name || 'Name',
+              emailVerified: true,
+              isActive: true, // Explicitly set to active
+              profileImageUrl: (profile as GoogleProfile).picture || '',
+              // Set a placeholder password hash since we won't need it for OAuth
+              passwordHash: 'oauth-login-no-password',
+              // Required field in schema with a default value
+              country: 'Unknown', // Default value, can be updated later by user
+              googleId: account.providerAccountId,
+              role: 'USER', // Explicitly set role
+              lastLoginAt: new Date(),
+            };
+            
+            // Log the user data we're about to create
+            console.log('Creating new Google user with data:', JSON.stringify(userData, null, 2));
+            
             // Create new user with verified email
             const newUser = await prisma.user.create({
-              data: {
-                email: profile.email,
-                firstName: (profile as GoogleProfile).given_name || 'Google',
-                lastName: (profile as GoogleProfile).family_name || 'User',
-                emailVerified: true,
-                profileImageUrl: (profile as GoogleProfile).picture || '',
-                // Set a placeholder password hash since we won't need it for OAuth
-                passwordHash: 'oauth-login-no-password',
-                // Required field in schema
-                country: 'Unknown', // Default value, can be updated later by user
-                googleId: account.providerAccountId,
-              },
+              data: userData,
             });
+            
+            console.log('Successfully created new Google user with ID:', newUser.id);
             
             // Set the user ID to the newly created user
             user.id = newUser.id;
@@ -359,7 +378,16 @@ export const authOptions: NextAuthOptions = {
           return true;
         } catch (error) {
           console.error('Error in Google sign-in callback:', error);
-          return true; // Still allow sign-in even if our DB operations fail
+          console.error('Error details:', {
+            provider: account?.provider,
+            email: profile?.email,
+            profile: JSON.stringify(profile),
+            error: error instanceof Error ? error.message : String(error),
+            stack: error instanceof Error ? error.stack : undefined
+          });
+          // Still allow sign-in even if our DB operations fail
+          // This allows the user to authenticate but might cause issues with missing user data
+          return true;
         }
       }
       
