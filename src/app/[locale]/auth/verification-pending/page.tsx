@@ -7,7 +7,8 @@ import { useToast } from '@/components/ui/use-toast';
 import { useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { Mail, CheckCircle, AlertCircle } from 'lucide-react';
+import { Mail, AlertCircle } from 'lucide-react';
+import { AuthLayout } from '@/components/auth/auth-layout';
 
 export default function VerificationPendingPage() {
   const params = useParams();
@@ -16,7 +17,6 @@ export default function VerificationPendingPage() {
   const email = searchParams.get('email') || '';
   const { toast } = useToast();
   const [resending, setResending] = useState(false);
-  const isRtl = locale === 'ar';
 
   const translations = {
     title: locale === 'ar' ? 'تحقق من بريدك الإلكتروني' : 'Check Your Email',
@@ -54,7 +54,7 @@ export default function VerificationPendingPage() {
         title: translations.successTitle,
         description: translations.successMessage,
       });
-    } catch (error) {
+    } catch {
       toast({
         title: translations.errorTitle,
         description: translations.errorMessage,
@@ -66,55 +66,61 @@ export default function VerificationPendingPage() {
   };
 
   return (
-    <Card className="w-full mx-auto shadow-md border-0">
-      <CardHeader className="space-y-1 text-center">
-        <div className="flex justify-center mb-4">
-          <Mail className="h-12 w-12 text-primary" />
-        </div>
-        <CardTitle className="text-2xl">{translations.title}</CardTitle>
-        <CardDescription className="text-center">
-          {translations.description}
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {email && (
-          <div className="p-4 rounded-md bg-muted flex items-center justify-center flex-col space-y-2">
-            <p className="text-sm text-muted-foreground">{translations.emailSentTo}</p>
-            <p className="font-medium">{email}</p>
+    <AuthLayout
+      locale={locale}
+      heading={locale === 'ar' ? "تحقق من حسابك" : "Verify Your Account"}
+      subheading={locale === 'ar' ? "خطوة أخيرة للبدء" : "One Last Step to Get Started"}
+    >
+      <Card className="w-full mx-auto shadow-md border-0">
+        <CardHeader className="space-y-1 text-center">
+          <div className="flex justify-center mb-4">
+            <Mail className="h-12 w-12 text-primary" />
           </div>
-        )}
-        
-        <div className="p-4 rounded-md bg-yellow-50 border border-yellow-200">
-          <div className="flex items-start">
-            <AlertCircle className="h-5 w-5 text-yellow-500 mr-2 mt-0.5" />
-            <div className="text-sm text-yellow-700">
-              {locale === 'ar' 
-                ? 'تحقق من صندوق البريد الوارد وصندوق البريد العشوائي. قد يستغرق وصول البريد الإلكتروني بضع دقائق.'
-                : 'Check both your inbox and spam folder. The email may take a few minutes to arrive.'}
+          <CardTitle className="text-2xl">{translations.title}</CardTitle>
+          <CardDescription className="text-center">
+            {translations.description}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {email && (
+            <div className="p-4 rounded-md bg-muted flex items-center justify-center flex-col space-y-2">
+              <p className="text-sm text-muted-foreground">{translations.emailSentTo}</p>
+              <p className="font-medium">{email}</p>
+            </div>
+          )}
+          
+          <div className="p-4 rounded-md bg-yellow-50 border border-yellow-200 dark:bg-yellow-900/30 dark:border-yellow-800">
+            <div className="flex items-start">
+              <AlertCircle className="h-5 w-5 text-yellow-500 mr-2 mt-0.5" />
+              <div className="text-sm text-yellow-700 dark:text-yellow-300">
+                {locale === 'ar' 
+                  ? 'تحقق من صندوق البريد الوارد وصندوق البريد العشوائي. قد يستغرق وصول البريد الإلكتروني بضع دقائق.'
+                  : 'Check both your inbox and spam folder. The email may take a few minutes to arrive.'}
+              </div>
             </div>
           </div>
-        </div>
-      </CardContent>
-      <CardFooter className="flex flex-col space-y-4">
-        <div className="text-center w-full">
-          <p className="text-sm text-muted-foreground mb-2">{translations.didntReceive}</p>
-          <Button 
-            onClick={handleResendEmail} 
-            disabled={resending || !email} 
-            variant="outline" 
-            className="w-full"
-          >
-            {resending ? translations.resending : translations.resendEmail}
-          </Button>
-        </div>
-        <div className="w-full">
-          <Link href={`/${locale}/auth/login`} passHref>
-            <Button variant="ghost" className="w-full">
-              {translations.backToLogin}
+        </CardContent>
+        <CardFooter className="flex flex-col space-y-4">
+          <div className="text-center w-full">
+            <p className="text-sm text-muted-foreground mb-2">{translations.didntReceive}</p>
+            <Button 
+              onClick={handleResendEmail} 
+              disabled={resending || !email} 
+              variant="outline" 
+              className="w-full"
+            >
+              {resending ? translations.resending : translations.resendEmail}
             </Button>
-          </Link>
-        </div>
-      </CardFooter>
-    </Card>
+          </div>
+          <div className="w-full">
+            <Link href={`/${locale}/auth/login`} passHref>
+              <Button variant="ghost" className="w-full">
+                {translations.backToLogin}
+              </Button>
+            </Link>
+          </div>
+        </CardFooter>
+      </Card>
+    </AuthLayout>
   );
 }

@@ -1,3 +1,6 @@
+# Promptaat Robots.txt
+# Last updated: 2023-03-23
+
 User-agent: *
 Allow: /
 
@@ -6,6 +9,12 @@ Disallow: /*/auth/login
 Disallow: /*/auth/register
 Disallow: /*/auth/forgot-password
 Disallow: /*/auth/reset-password
+Disallow: /*/auth/verify
+Disallow: /*/auth/verification-pending
+Disallow: /*/auth/profile-completion
+Disallow: /*/auth/error
+Disallow: /*/auth/forgot-password/reset-link-sent
+Disallow: /*/auth/reset-password/*
 Disallow: /*/account
 Disallow: /*/profile
 Disallow: /*/settings
@@ -13,9 +22,21 @@ Disallow: /*/my-prompts
 Disallow: /*/cms
 Disallow: /api/
 
-# Allow important pages
+# Allow important pages with higher crawl priority
 Allow: /*/category/
 Allow: /*/pricing
+Allow: /*/about
+Allow: /*/contact
+Allow: /*/blog
+Allow: /*/faq
+Allow: /*/terms
+Allow: /*/privacy
+
+# Crawl delay to prevent server overload
+Crawl-delay: 5
 
 # Sitemap
 Sitemap: https://promptaat.com/sitemap.xml
+
+# Host
+Host: promptaat.com

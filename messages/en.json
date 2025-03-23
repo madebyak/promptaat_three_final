@@ -17,6 +17,18 @@
     "name": "Name",
     "email": "Email"
   },
+  "ProfileCompletion": {
+    "title": "Complete Your Profile",
+    "subtitle": "Please provide the following information to complete your profile",
+    "firstName": "First Name",
+    "lastName": "Last Name",
+    "country": "Country",
+    "pleaseSelect": "Please select a country",
+    "submit": "Complete Profile",
+    "submitting": "Submitting...",
+    "successMessage": "Profile updated successfully",
+    "errorMessage": "Failed to update profile"
+  },
   "CMS": {
     "title": "Admin Dashboard",
     "description": "Manage your website content"

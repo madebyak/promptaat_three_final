@@ -1,5 +1,4 @@
 import { ImageResponse } from 'next/og';
-import { NextRequest } from 'next/server';
 
 // Export dynamic settings for OpenGraph images
 export const runtime = 'edge';
@@ -13,12 +12,13 @@ export const contentType = 'image/jpeg';
 export default async function Image({ params }: { params: { locale: string } }) {
   try {
     // Determine which image to load based on locale
-    const imagePath = params.locale === 'ar' 
-      ? new URL('/public/og/home-og-ar.jpg', import.meta.url)
-      : new URL('/public/og/home-og-en.jpg', import.meta.url);
+    const imageUrl = params.locale === 'ar' 
+      ? '/og/home-og-ar.jpg'
+      : '/og/home-og-en.jpg';
       
-    // Load the pre-generated image
-    const image = await fetch(imagePath).then(res => res.arrayBuffer());
+    // For edge runtime, we need to fetch the image from the public directory
+    const imageResponse = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}${imageUrl}`);
+    const image = await imageResponse.arrayBuffer();
       
     // Return the response as an ImageResponse for optimal handling
     return new ImageResponse(
@@ -31,13 +31,11 @@ export default async function Image({ params }: { params: { locale: string } }) 
           />
         </div>
       ),
-      {
-        width: 1200,
-        height: 630,
-      }
+      { ...size }
     );
-  } catch (error) {
-    // Fallback text response if image fails to load
+  } catch (e) {
+    console.error('Error generating OpenGraph image:', e);
+    // Return a fallback image
     return new ImageResponse(
       (
         <div

@@ -10,7 +10,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { Label } from "@/components/ui/label"
 import { FiLock, FiArrowLeft } from "react-icons/fi"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { cn } from "@/lib/utils"
 import { Spinner } from "@/components/ui/spinner"
 import Link from "next/link"
 
@@ -57,6 +57,10 @@ export function ResetPasswordForm({ token, locale = 'en' }: ResetPasswordFormPro
     passwordsDoNotMatch: locale === 'ar'
       ? 'كلمات المرور غير متطابقة'
       : 'Passwords do not match',
+    privacyPolicy: locale === 'ar' ? 'سياسة الخصوصية' : 'Privacy Policy',
+    termsOfService: locale === 'ar' ? 'شروط الخدمة' : 'Terms and Conditions',
+    refundPolicy: locale === 'ar' ? 'سياسة الاسترداد' : 'Refund Policy',
+    allRightsReserved: locale === 'ar' ? 'جميع الحقوق محفوظة لبرومبتات' : 'All rights reserved to Promptaat',
   };
 
   const schema = z.object({
@@ -126,96 +130,113 @@ export function ResetPasswordForm({ token, locale = 'en' }: ResetPasswordFormPro
   };
 
   return (
-    <Card className="w-full shadow-md">
-      <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl font-bold text-center">{translations.title}</CardTitle>
-        <CardDescription className="text-center">{translations.subtitle}</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="password" className={`text-sm font-medium ${isRtl ? 'text-right block' : ''}`}>
-              {translations.password}
-            </Label>
-            <div className="relative">
-              <div className={`absolute inset-y-0 ${isRtl ? 'right-0 pr-3' : 'left-0 pl-3'} flex items-center pointer-events-none text-muted-foreground`}>
-                <FiLock className="h-5 w-5" aria-hidden="true" />
-              </div>
-              <Input
-                id="password"
-                {...register("password")}
-                type="password"
-                placeholder={translations.passwordPlaceholder}
-                disabled={isLoading}
-                className={`${isRtl ? 'text-right pr-10' : 'pl-10'}`}
-                dir={isRtl ? "rtl" : "ltr"}
-                aria-label={translations.password}
-                aria-invalid={!!errors.password}
-                aria-describedby={errors.password ? "password-error" : undefined}
-              />
+    <div className="w-full">
+      <div className="mb-8">
+        <h1 className={cn("text-3xl font-bold", isRtl && "text-right")}>{translations.title}</h1>
+        <p className={cn("text-muted-foreground mt-2", isRtl && "text-right")}>{translations.subtitle}</p>
+      </div>
+      
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+        <div className="space-y-2">
+          <Label htmlFor="password" className={`text-sm font-medium ${isRtl ? 'text-right block' : ''}`}>
+            {translations.password}
+          </Label>
+          <div className="relative">
+            <div className={`absolute inset-y-0 ${isRtl ? 'right-0 pr-3' : 'left-0 pl-3'} flex items-center pointer-events-none text-muted-foreground`}>
+              <FiLock className="h-5 w-5" aria-hidden="true" />
             </div>
-            {errors.password && (
-              <p id="password-error" className={`text-sm text-destructive ${isRtl ? 'text-right' : ''}`} role="alert">
-                {errors.password.message}
-              </p>
-            )}
+            <Input
+              id="password"
+              {...register("password")}
+              type="password"
+              placeholder={translations.passwordPlaceholder}
+              disabled={isLoading}
+              className={`${isRtl ? 'text-right pr-10' : 'pl-10'} h-12 text-base`}
+              dir={isRtl ? "rtl" : "ltr"}
+              aria-label={translations.password}
+              aria-invalid={!!errors.password}
+              aria-describedby={errors.password ? "password-error" : undefined}
+            />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="confirmPassword" className={`text-sm font-medium ${isRtl ? 'text-right block' : ''}`}>
-              {translations.confirmPassword}
-            </Label>
-            <div className="relative">
-              <div className={`absolute inset-y-0 ${isRtl ? 'right-0 pr-3' : 'left-0 pl-3'} flex items-center pointer-events-none text-muted-foreground`}>
-                <FiLock className="h-5 w-5" aria-hidden="true" />
-              </div>
-              <Input
-                id="confirmPassword"
-                {...register("confirmPassword")}
-                type="password"
-                placeholder={translations.confirmPasswordPlaceholder}
-                disabled={isLoading}
-                className={`${isRtl ? 'text-right pr-10' : 'pl-10'}`}
-                dir={isRtl ? "rtl" : "ltr"}
-                aria-label={translations.confirmPassword}
-                aria-invalid={!!errors.confirmPassword}
-                aria-describedby={errors.confirmPassword ? "confirm-password-error" : undefined}
-              />
+          {errors.password && (
+            <p id="password-error" className={`text-sm text-destructive mt-1 ${isRtl ? 'text-right' : ''}`} role="alert">
+              {errors.password.message}
+            </p>
+          )}
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="confirmPassword" className={`text-sm font-medium ${isRtl ? 'text-right block' : ''}`}>
+            {translations.confirmPassword}
+          </Label>
+          <div className="relative">
+            <div className={`absolute inset-y-0 ${isRtl ? 'right-0 pr-3' : 'left-0 pl-3'} flex items-center pointer-events-none text-muted-foreground`}>
+              <FiLock className="h-5 w-5" aria-hidden="true" />
             </div>
-            {errors.confirmPassword && (
-              <p id="confirm-password-error" className={`text-sm text-destructive ${isRtl ? 'text-right' : ''}`} role="alert">
-                {errors.confirmPassword.message}
-              </p>
-            )}
+            <Input
+              id="confirmPassword"
+              {...register("confirmPassword")}
+              type="password"
+              placeholder={translations.confirmPasswordPlaceholder}
+              disabled={isLoading}
+              className={`${isRtl ? 'text-right pr-10' : 'pl-10'} h-12 text-base`}
+              dir={isRtl ? "rtl" : "ltr"}
+              aria-label={translations.confirmPassword}
+              aria-invalid={!!errors.confirmPassword}
+              aria-describedby={errors.confirmPassword ? "confirm-password-error" : undefined}
+            />
           </div>
-          <Button 
-            type="submit" 
-            className="w-full" 
-            disabled={isLoading}
-            aria-label={isLoading ? translations.resetting : translations.resetPassword}
-          >
-            {isLoading ? (
-              <span className="flex items-center justify-center gap-2">
-                <Spinner size="sm" />
-                {translations.resetting}
-              </span>
-            ) : (
-              translations.resetPassword
-            )}
-          </Button>
-        </form>
-      </CardContent>
-      <CardFooter>
-        <div className="w-full flex justify-center">
+          {errors.confirmPassword && (
+            <p id="confirm-password-error" className={`text-sm text-destructive mt-1 ${isRtl ? 'text-right' : ''}`} role="alert">
+              {errors.confirmPassword.message}
+            </p>
+          )}
+        </div>
+        <Button 
+          type="submit" 
+          className="w-full h-12 text-base" 
+          disabled={isLoading}
+          aria-label={isLoading ? translations.resetting : translations.resetPassword}
+        >
+          {isLoading ? (
+            <span className="flex items-center justify-center gap-2">
+              <Spinner size="sm" />
+              {translations.resetting}
+            </span>
+          ) : (
+            translations.resetPassword
+          )}
+        </Button>
+      </form>
+      
+      <div className="mt-8">
+        <p className={cn("text-center text-sm text-muted-foreground", isRtl && "text-right")}>
           <Link 
             href={`/${locale}/auth/login`} 
-            className={`text-sm text-primary hover:underline flex items-center gap-2 ${isRtl ? 'flex-row-reverse' : ''}`}
+            className={`text-primary font-medium hover:underline flex items-center gap-2 justify-center ${isRtl ? 'flex-row-reverse' : ''}`}
             aria-label={translations.backToLogin}
           >
             <FiArrowLeft className="h-4 w-4" aria-hidden="true" />
             {translations.backToLogin}
           </Link>
+        </p>
+      </div>
+      
+      <div className="mt-12 pt-6 border-t border-border">
+        <div className="flex flex-wrap justify-center gap-x-5 gap-y-2 text-xs text-muted-foreground">
+          <Link href={`/${locale}/privacy`} className="hover:underline">
+            {translations.privacyPolicy}
+          </Link>
+          <Link href={`/${locale}/terms`} className="hover:underline">
+            {translations.termsOfService}
+          </Link>
+          <Link href={`/${locale}/refund`} className="hover:underline">
+            {translations.refundPolicy}
+          </Link>
         </div>
-      </CardFooter>
-    </Card>
+        <p className="mt-4 text-center text-xs text-muted-foreground">
+          {new Date().getFullYear()} - {translations.allRightsReserved}
+        </p>
+      </div>
+    </div>
   );
 }

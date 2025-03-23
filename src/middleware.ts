@@ -30,6 +30,12 @@ const authPaths = [
   "/ar/auth/"
 ]
 
+// Paths that are exempt from profile completion check
+const profileCompletionExemptPaths = [
+  "/auth/profile-completion",
+  "/api/auth/complete-profile",
+]
+
 // Enhanced function to handle CMS routes with detailed logging
 async function handleCmsRoutes(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
@@ -162,6 +168,20 @@ export async function middleware(request: NextRequest) {
           console.log(`[Middleware] Authenticated user redirected from auth page to: ${url}`);
         }
         return NextResponse.redirect(url)
+      }
+      
+      // Check for profile completion status if we have NextAuth session
+      // Only perform this check for authenticated users visiting non-exempt routes
+      const needsProfileCompletionCookie = request.cookies.get("needs_profile_completion")
+      const needsProfileCompletion = needsProfileCompletionCookie && needsProfileCompletionCookie.value === "true"
+      const isProfileCompletionExempt = profileCompletionExemptPaths.some(path => pathname.includes(path))
+      
+      if (needsProfileCompletion && !isProfileCompletionExempt) {
+        const profileCompletionUrl = new URL(`/${locale}/auth/profile-completion`, request.url)
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`[Middleware] User needs profile completion, redirecting to: ${profileCompletionUrl}`);
+        }
+        return NextResponse.redirect(profileCompletionUrl)
       }
     } else {
       // If not authenticated and trying to access protected pages, redirect to login

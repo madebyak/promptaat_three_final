@@ -120,7 +120,7 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    async signIn({ user, account, profile }) {
+    async signIn({ account, profile }) {
       // Only allow sign in if email is verified for Google accounts
       if (account?.provider === "google" && profile && 'email_verified' in profile) {
         return Boolean(profile.email_verified);
@@ -199,10 +199,13 @@ export const authOptions: NextAuthOptions = {
         
         // Use the defined type
         const user = session.user as ExtendedUser;
+        
         user.id = token.id as string;
-        user.role = token.role as string;
+        user.email = token.email;
+        user.name = token.name;
+        user.image = token.picture as string;
         user.isAdmin = token.isAdmin as boolean;
-        user.image = token.picture as string | undefined;
+        user.role = token.role as string;
         user.emailVerified = token.emailVerified as boolean;
         user.firstName = token.firstName as string;
         user.lastName = token.lastName as string;

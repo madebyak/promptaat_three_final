@@ -23,7 +23,7 @@ interface PromptCardProps {
   copyCount: number
   categories: Category[]
   tools: Tool[]
-  keywords: string[]
+  keywords?: string[]
   isRTL?: boolean
   locale?: string
   isBookmarked?: boolean
@@ -39,6 +39,7 @@ export function PromptCard({
   copyCount: initialCopyCount,
   categories,
   tools: initialTools,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   keywords,
   isRTL = false,
   locale = 'en',
@@ -386,16 +387,21 @@ export function PromptCard({
           </div>
 
           {/* Preview text */}
-          <p className={cn(
-            "text-sm text-light-grey line-clamp-3 mb-4",
-            isRTL && "text-right"
-          )}>
-            {isPro && userSubscriptionStatus === false ? (
-              <div className="blur-sm select-none">{preview}</div>
-            ) : (
-              preview
-            )}
-          </p>
+          {isPro && userSubscriptionStatus === false ? (
+            <div className={cn(
+              "text-sm text-light-grey line-clamp-3 mb-4 blur-sm select-none",
+              isRTL && "text-right"
+            )}>
+              {preview}
+            </div>
+          ) : (
+            <p className={cn(
+              "text-sm text-light-grey line-clamp-3 mb-4",
+              isRTL && "text-right"
+            )}>
+              {preview}
+            </p>
+          )}
 
           {/* Bottom section */}
           <div className="mt-auto">

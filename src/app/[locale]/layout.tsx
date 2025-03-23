@@ -1,7 +1,7 @@
 import React from 'react';
 import { AbstractIntlMessages } from 'next-intl';
 import { ClientLocaleLayout } from '@/components/layout/client-locale-layout';
-import { Metadata } from 'next';
+import { Metadata, Viewport } from 'next';
 
 /**
  * Generate metadata based on locale
@@ -11,8 +11,8 @@ export async function generateMetadata({
 }: { 
   params: { locale: string } 
 }): Promise<Metadata> {
-  // Get the locale from params
-  const locale = params.locale;
+  // Get the locale from params - using Promise.resolve to ensure it's treated as async
+  const locale = await Promise.resolve(params.locale);
   
   // Set locale-specific OpenGraph images with absolute URLs
   const baseUrl = 'https://promptaat.com';
@@ -50,11 +50,11 @@ export async function generateMetadata({
   
   // Default English metadata
   return {
-    title: 'Promptaat | The Largest AI Prompt Library',
-    description: 'In an era where AI is reshaping creativity, crafting effective prompts can be overwhelming. Promptaat\'s vast, engineered collection saves you time—just copy and paste to fuel your ideas, letting you focus on the details that matter.',
+    title: 'Promptaat - The Largest AI Prompt Library',
+    description: 'In an AI-driven future, your time is valuable. Access the largest library of ready-to-use prompts, freeing you to focus on creating amazing content and achieving exceptional results with a single click.',
     openGraph: {
-      title: 'Promptaat | The Largest AI Prompt Library',
-      description: 'In an era where AI is reshaping creativity, crafting effective prompts can be overwhelming. Promptaat\'s vast, engineered collection saves you time—just copy and paste to fuel your ideas, letting you focus on the details that matter.',
+      title: 'Promptaat - The Largest AI Prompt Library',
+      description: 'In an AI-driven future, your time is valuable. Access the largest library of ready-to-use prompts, freeing you to focus on creating amazing content and achieving exceptional results with a single click.',
       url: `${baseUrl}/${locale}`,
       type: 'website',
       images: [
@@ -62,17 +62,30 @@ export async function generateMetadata({
           url: ogImagePath,
           width: 1200,
           height: 630,
-          alt: 'Promptaat | The Largest AI Prompt Library',
+          alt: 'Promptaat - The Largest AI Prompt Library',
         },
       ],
     },
     twitter: {
       card: 'summary_large_image',
-      title: 'Promptaat | The Largest AI Prompt Library',
-      description: 'In an era where AI is reshaping creativity, crafting effective prompts can be overwhelming. Promptaat\'s vast collection saves you time with one-click solutions.',
       images: [ogImagePath],
+      title: 'Promptaat - The Largest AI Prompt Library',
+      description: 'In an AI-driven future, your time is valuable. Access the largest library of ready-to-use prompts for exceptional results with a single click.',
     },
   };
+}
+
+/**
+ * Define viewport metadata
+ */
+export const viewport: Viewport = {
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
+    { media: '(prefers-color-scheme: dark)', color: '#09090b' },
+  ],
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
 }
 
 /**

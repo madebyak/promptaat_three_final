@@ -1,11 +1,21 @@
-import React from "react";
-import { ResetPasswordForm } from "@/components/auth/ResetPasswordForm";
+"use client";
 
-export default function ResetPasswordPage({
-  params,
-}: {
-  params: Promise<{ locale: string; token: string }>;
-}) {
-  const { locale, token } = React.use(params);
-  return <ResetPasswordForm token={token} locale={locale} />;
+import { ResetPasswordForm } from "@/components/auth/reset-password-form";
+import { AuthLayout } from "@/components/auth/auth-layout";
+import { useParams } from "next/navigation";
+
+export default function ResetPasswordTokenPage() {
+  const params = useParams();
+  const locale = params.locale as string;
+  const token = params.token as string;
+  
+  return (
+    <AuthLayout 
+      locale={locale}
+      heading={locale === 'ar' ? "إعادة تعيين كلمة المرور" : "Reset Password"}
+      subheading={locale === 'ar' ? "استعد حسابك" : "Reclaim Your Account"}
+    >
+      <ResetPasswordForm token={token} locale={locale} />
+    </AuthLayout>
+  );
 }

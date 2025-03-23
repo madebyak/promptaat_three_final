@@ -1,6 +1,7 @@
 "use client";
 
 import { ResetPasswordForm } from '@/components/auth/reset-password-form';
+import { AuthLayout } from '@/components/auth/auth-layout';
 import { useParams, useSearchParams } from 'next/navigation';
 
 export default function ResetPasswordPage() {
@@ -10,6 +11,12 @@ export default function ResetPasswordPage() {
   const token = searchParams.get('token') || '';
   
   return (
-    <ResetPasswordForm locale={locale} token={token} />
+    <AuthLayout 
+      locale={locale}
+      heading={locale === 'ar' ? "إعادة تعيين كلمة المرور" : "Reset Password"}
+      subheading={locale === 'ar' ? "استعد حسابك" : "Reclaim Your Account"}
+    >
+      <ResetPasswordForm locale={locale} token={token} />
+    </AuthLayout>
   );
 }
