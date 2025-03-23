@@ -35,6 +35,17 @@ const BYPASS_PATHS = [
   '/ar/subscription',
   '/subscription',
   
+  // Checkout pages - critical for payment flow
+  '/checkout',
+  '/en/checkout',
+  '/ar/checkout',
+  '/checkout/success',
+  '/en/checkout/success',
+  '/ar/checkout/success',
+  '/checkout/cancel',
+  '/en/checkout/cancel',
+  '/ar/checkout/cancel',
+  
   // Add any other critical paths here
 ];
 

@@ -115,6 +115,7 @@ export function CheckoutButton({
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "x-locale": locale, // Pass locale information to the API
         },
         credentials: "include", // Critical for sending cookies
         body: JSON.stringify({

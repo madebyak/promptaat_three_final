@@ -144,8 +144,10 @@ export async function POST(req: NextRequest) {
     }
 
     // Create the checkout session URLs
-    const successUrl = absoluteUrl(`/checkout/success?session_id={CHECKOUT_SESSION_ID}`);
-    const cancelUrl = absoluteUrl(`/checkout/cancel`);
+    // Include the locale prefix in the success and cancel URLs
+    const locale = req.headers.get('x-locale') || 'en'; // Default to English if no locale header
+    const successUrl = absoluteUrl(`/${locale}/checkout/success?session_id={CHECKOUT_SESSION_ID}`);
+    const cancelUrl = absoluteUrl(`/${locale}/checkout/cancel`);
 
     console.log("Creating checkout session with:", {
       customerId,

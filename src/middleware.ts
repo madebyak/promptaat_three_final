@@ -38,6 +38,15 @@ const profileCompletionExemptPaths = [
   "/subscription",
   "/en/subscription",
   "/ar/subscription",
+  "/checkout",
+  "/en/checkout",
+  "/ar/checkout",
+  "/checkout/success",
+  "/en/checkout/success",
+  "/ar/checkout/success",
+  "/checkout/cancel",
+  "/en/checkout/cancel",
+  "/ar/checkout/cancel",
 ]
 
 // Enhanced function to handle CMS routes with detailed logging
@@ -226,10 +235,8 @@ export async function middleware(request: NextRequest) {
     console.log(`[Middleware] Skipping profile completion middleware for subscription page: ${pathname}`);
   }
 
-  return response
+  return response;
 }
-
-
 
 export const config = {
   matcher: [
