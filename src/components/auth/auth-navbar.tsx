@@ -28,7 +28,7 @@ export function AuthNavbar({ locale = 'en' }: AuthNavbarProps) {
   return (
     <header role="banner">
       <nav 
-        className="fixed top-0 left-0 right-0 z-20 py-4 px-6 md:px-10 flex justify-between items-center bg-background/80 backdrop-blur-sm"
+        className="fixed top-0 left-0 right-0 z-20 py-4 px-6 md:px-10 flex justify-between items-center bg-background"
         aria-label={translations.navAriaLabel}
       >
         <div className="flex items-center">
