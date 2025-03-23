@@ -4,6 +4,15 @@ import GoogleProvider from "next-auth/providers/google";
 import { prisma } from "@/lib/prisma/client";
 import { comparePassword } from "./password-validation";
 import { comparePasswords } from "@/lib/crypto";
+import { Profile } from "next-auth";
+
+// Define extended profile type for Google profile data
+interface GoogleProfile extends Profile {
+  picture?: string;
+  given_name?: string;
+  family_name?: string;
+  email_verified?: boolean;
+}
 
 // Fallback secret for development and testing
 // In production, this should be set as an environment variable
@@ -295,6 +304,67 @@ export const authOptions: NextAuthOptions = {
     newUser: "/cms/dashboard", // Redirect to dashboard after registration
   },
   callbacks: {
+    async signIn({ user, account, profile }) {
+      // For OAuth providers like Google, we want to automatically verify the email
+      if (account?.provider === 'google' && profile?.email) {
+        try {
+          // Check if user exists
+          const existingUser = await prisma.user.findUnique({
+            where: { email: profile.email },
+          });
+
+          if (existingUser) {
+            // Update existing user to ensure email is verified
+            await prisma.user.update({
+              where: { id: existingUser.id },
+              data: { 
+                emailVerified: true,
+                // Update profile image if available from Google
+                profileImageUrl: (profile as GoogleProfile).picture || existingUser.profileImageUrl,
+                // Store Google ID if not already stored
+                googleId: account.providerAccountId || existingUser.googleId,
+              },
+            });
+            
+            // Set the user ID to the existing user
+            user.id = existingUser.id;
+            
+            // Set custom property for session
+            (user as ExtendedUser).emailVerified = true;
+            
+          } else {
+            // Create new user with verified email
+            const newUser = await prisma.user.create({
+              data: {
+                email: profile.email,
+                firstName: (profile as GoogleProfile).given_name || 'Google',
+                lastName: (profile as GoogleProfile).family_name || 'User',
+                emailVerified: true,
+                profileImageUrl: (profile as GoogleProfile).picture || '',
+                // Set a placeholder password hash since we won't need it for OAuth
+                passwordHash: 'oauth-login-no-password',
+                // Required field in schema
+                country: 'Unknown', // Default value, can be updated later by user
+                googleId: account.providerAccountId,
+              },
+            });
+            
+            // Set the user ID to the newly created user
+            user.id = newUser.id;
+            
+            // Set custom property for session
+            (user as ExtendedUser).emailVerified = true;
+          }
+          
+          return true;
+        } catch (error) {
+          console.error('Error in Google sign-in callback:', error);
+          return true; // Still allow sign-in even if our DB operations fail
+        }
+      }
+      
+      return true;
+    },
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
