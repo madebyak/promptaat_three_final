@@ -41,7 +41,7 @@ import {
   DialogHeader, 
   DialogTitle 
 } from "@/components/ui/dialog";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge, type BadgeProps } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { 
@@ -58,7 +58,8 @@ import {
   Check,
   X,
   Filter,
-  BookmarkIcon
+  BookmarkIcon,
+  AlertCircle
 } from "lucide-react";
 import { 
   fetchUsers, 
@@ -98,7 +99,7 @@ export default function UsersManagement() {
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all");
   const [subscriptionFilter, setSubscriptionFilter] = useState<"all" | "subscribed" | "none">("all");
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
-  const [bulkActionOpen, setBulkActionOpen] = useState(false);
+  const [bulkActionsDialogOpen, setBulkActionsDialogOpen] = useState(false);
   const [resetPasswordDialog, setResetPasswordDialog] = useState<{ 
     isOpen: boolean; 
     userId: string | null; 
@@ -117,6 +118,10 @@ export default function UsersManagement() {
     user: null
   });
   
+  const [deleteConfirmDialogOpen, setDeleteConfirmDialogOpen] = useState(false);
+  const [currentUser, setCurrentUser] = useState<UserData | null>(null);
+  const [loading, setLoading] = useState(false);
+
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
 
   // Fetch users with pagination and search
@@ -199,6 +204,92 @@ export default function UsersManagement() {
         description: "Failed to reset user password",
         variant: "destructive",
       });
+    }
+  };
+
+  // Handle user deletion
+  const handleDeleteUser = async (userId: string, userEmail: string) => {
+    setLoading(true);
+    
+    try {
+      const response = await fetch(`/api/cms/users/${userId}/delete`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "Failed to delete user");
+      }
+
+      // Show success notification
+      toast({
+        title: "User deleted",
+        description: `User ${userEmail} has been permanently deleted.`,
+      });
+      
+      // Refresh the user list
+      refetch();
+      
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      toast({
+        variant: "destructive",
+        title: "Error deleting user",
+        description: error instanceof Error ? error.message : "An unexpected error occurred",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle bulk actions
+  const handleBulkAction = async (action: "activate" | "deactivate" | "delete") => {
+    if (selectedUsers.length === 0) return;
+    
+    setLoading(true);
+    
+    try {
+      const response = await fetch("/api/cms/users/bulk-actions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          action,
+          userIds: selectedUsers,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to perform bulk action");
+      }
+
+      // Show success notification
+      const actionName = action === "activate" ? "activated" : action === "deactivate" ? "deactivated" : "deleted";
+      
+      toast({
+        title: `${actionName.charAt(0).toUpperCase() + actionName.slice(1)} ${selectedUsers.length} users`,
+        description: `Successfully ${actionName} ${selectedUsers.length} users.`,
+      });
+      
+      // Clear selection and refresh data
+      setSelectedUsers([]);
+      refetch();
+      
+      // Close the dialog
+      setBulkActionsDialogOpen(false);
+      
+    } catch (error) {
+      console.error(`Error performing bulk ${action}:`, error);
+      toast({
+        variant: "destructive",
+        title: `Error performing bulk ${action}`,
+        description: error instanceof Error ? error.message : "An unexpected error occurred",
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -354,37 +445,6 @@ export default function UsersManagement() {
     }
   };
 
-  // Handle bulk activation/deactivation
-  const handleBulkStatusChange = async (activate: boolean) => {
-    if (selectedUsers.length === 0) return;
-
-    try {
-      // Create an array of promises for each user status update
-      const updatePromises = selectedUsers.map(userId => 
-        updateUserStatus(userId, activate)
-      );
-
-      // Wait for all promises to resolve
-      await Promise.all(updatePromises);
-
-      toast({
-        title: `${activate ? 'Activated' : 'Deactivated'} ${selectedUsers.length} users`,
-        description: `Successfully ${activate ? 'activated' : 'deactivated'} ${selectedUsers.length} users.`,
-      });
-
-      // Clear selection and refetch data
-      setSelectedUsers([]);
-      setBulkActionOpen(false);
-      refetch();
-    } catch {
-      toast({
-        title: "Error",
-        description: "Failed to update user status",
-        variant: "destructive",
-      });
-    }
-  };
-
   return (
     <div className="space-y-6">
       {isError && (
@@ -452,7 +512,7 @@ export default function UsersManagement() {
                 <Button 
                   variant="default" 
                   size="sm"
-                  onClick={() => setBulkActionOpen(true)}
+                  onClick={() => setBulkActionsDialogOpen(true)}
                 >
                   Bulk Actions
                 </Button>
@@ -654,6 +714,15 @@ export default function UsersManagement() {
                               <DropdownMenuItem onClick={() => handleViewUserDetails(user)}>
                                 <Filter className="mr-2 h-4 w-4" />
                                 <span>View Details</span>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                className="text-destructive focus:text-destructive"
+                                onClick={() => {
+                                  setDeleteConfirmDialogOpen(true);
+                                  setCurrentUser(user);
+                                }}
+                              >
+                                Delete permanently
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
@@ -901,7 +970,7 @@ export default function UsersManagement() {
       </Dialog>
 
       {/* Bulk Actions Dialog */}
-      <Dialog open={bulkActionOpen} onOpenChange={setBulkActionOpen}>
+      <Dialog open={bulkActionsDialogOpen} onOpenChange={setBulkActionsDialogOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Bulk Actions</DialogTitle>
@@ -912,29 +981,101 @@ export default function UsersManagement() {
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <h4 className="font-medium">Status Actions</h4>
-              <div className="flex space-x-2">
+              <div className="grid grid-cols-2 gap-2">
                 <Button 
-                  variant="outline" 
-                  onClick={() => handleBulkStatusChange(true)}
-                  className="flex-1"
+                  onClick={() => handleBulkAction("activate")}
+                  disabled={loading}
+                  variant="outline"
                 >
-                  <Check className="mr-2 h-4 w-4" />
-                  Activate All
+                  {loading ? <Spinner className="mr-2 h-4 w-4" /> : null}
+                  Activate Users
                 </Button>
                 <Button 
-                  variant="outline" 
-                  onClick={() => handleBulkStatusChange(false)}
-                  className="flex-1"
+                  onClick={() => handleBulkAction("deactivate")}
+                  disabled={loading}
+                  variant="outline"
                 >
-                  <X className="mr-2 h-4 w-4" />
-                  Deactivate All
+                  {loading ? <Spinner className="mr-2 h-4 w-4" /> : null}
+                  Deactivate Users
                 </Button>
               </div>
             </div>
+            
+            <div className="space-y-2">
+              <h4 className="font-medium">Danger Zone</h4>
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Caution</AlertTitle>
+                <AlertDescription>
+                  Permanent deletion cannot be undone. All user data will be permanently removed.
+                </AlertDescription>
+              </Alert>
+              <Button
+                onClick={() => {
+                  // Show a confirm dialog before proceeding
+                  if (window.confirm(`Are you sure you want to permanently delete ${selectedUsers.length} users? This action cannot be undone.`)) {
+                    handleBulkAction("delete");
+                  }
+                }}
+                disabled={loading}
+                variant="destructive"
+                className="w-full"
+              >
+                {loading ? <Spinner className="mr-2 h-4 w-4" /> : null}
+                Delete Users Permanently
+              </Button>
+            </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setBulkActionOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setBulkActionsDialogOpen(false)}
+              disabled={loading}
+            >
               Cancel
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteConfirmDialogOpen} onOpenChange={setDeleteConfirmDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirm Permanent Deletion</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to permanently delete {currentUser?.email}? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Warning</AlertTitle>
+              <AlertDescription>
+                All user data including prompts, subscriptions, and activity will be permanently removed.
+              </AlertDescription>
+            </Alert>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setDeleteConfirmDialogOpen(false)}
+              disabled={loading}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                if (currentUser) {
+                  handleDeleteUser(currentUser.id, currentUser.email);
+                  setDeleteConfirmDialogOpen(false);
+                }
+              }}
+              disabled={loading}
+            >
+              {loading ? <Spinner className="mr-2 h-4 w-4" /> : null}
+              Delete Permanently
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -199,6 +199,49 @@ export function SubscriptionManagementPanel({
     }
   };
 
+  // Handle subscription creation
+  const handleCreateSubscription = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch(`/api/cms/users/${user.id}/subscription/create`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          plan: subscriptionPlan,
+          interval: subscriptionInterval,
+          days: extensionDays,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to create subscription");
+      }
+
+      toast({
+        title: "Subscription created",
+        description: "The subscription has been successfully created.",
+      });
+
+      // Call the callback if provided
+      if (onSubscriptionUpdated) {
+        onSubscriptionUpdated();
+      }
+    } catch (error) {
+      console.error("Error creating subscription:", error);
+      toast({
+        title: "Creation failed",
+        description: error instanceof Error ? error.message : "An error occurred while creating the subscription",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Handle sync with Stripe
   const handleSyncWithStripe = async () => {
     if (!user.subscription?.stripeSubscriptionId) {
@@ -259,13 +302,75 @@ export function SubscriptionManagementPanel({
   if (!user.subscription) {
     return (
       <div className="space-y-4 mt-2 p-4 border rounded-md">
-        <p className="text-sm text-muted-foreground">This user has no subscription.</p>
+        <h3 className="text-sm font-medium">Create Manual Subscription</h3>
+        <p className="text-sm text-muted-foreground">
+          This user does not have an active subscription. Create a manual subscription below.
+        </p>
+        
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="new-subscription-plan">Plan</Label>
+            <Select
+              value={subscriptionPlan}
+              onValueChange={setSubscriptionPlan}
+            >
+              <SelectTrigger id="new-subscription-plan">
+                <SelectValue placeholder="Select plan" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="basic">Basic</SelectItem>
+                <SelectItem value="pro">Pro</SelectItem>
+                <SelectItem value="team">Team</SelectItem>
+                <SelectItem value="enterprise">Enterprise</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="new-subscription-interval">Interval</Label>
+            <Select
+              value={subscriptionInterval}
+              onValueChange={setSubscriptionInterval}
+            >
+              <SelectTrigger id="new-subscription-interval">
+                <SelectValue placeholder="Select interval" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="monthly">Monthly</SelectItem>
+                <SelectItem value="quarterly">Quarterly</SelectItem>
+                <SelectItem value="yearly">Yearly</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        
+        <div className="space-y-2">
+          <Label htmlFor="new-subscription-duration">Duration</Label>
+          <Select
+            value={String(extensionDays)}
+            onValueChange={(value) => setExtensionDays(Number(value))}
+          >
+            <SelectTrigger id="new-subscription-duration" className="w-full">
+              <SelectValue placeholder="Select duration" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="3">3 days</SelectItem>
+              <SelectItem value="7">7 days</SelectItem>
+              <SelectItem value="14">14 days</SelectItem>
+              <SelectItem value="30">30 days</SelectItem>
+              <SelectItem value="90">90 days</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        
         <Button 
-          variant="outline"
-          disabled
+          onClick={handleCreateSubscription} 
+          disabled={loading}
           className="w-full"
         >
-          Create Manual Subscription
+          {loading && <Spinner className="mr-2 h-4 w-4" />}
+          <Clock className="mr-2 h-4 w-4" />
+          Create Subscription
         </Button>
       </div>
     );
@@ -387,13 +492,21 @@ export function SubscriptionManagementPanel({
         <div className="grid grid-cols-2 gap-4">
           <div>
             <Label htmlFor="extension-days">Days to Add</Label>
-            <Input
-              id="extension-days"
-              type="number"
-              min="1"
-              value={extensionDays}
-              onChange={(e) => setExtensionDays(parseInt(e.target.value) || 30)}
-            />
+            <Select
+              value={String(extensionDays)}
+              onValueChange={(value) => setExtensionDays(Number(value))}
+            >
+              <SelectTrigger id="extension-days">
+                <SelectValue placeholder="Select duration" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="3">3 days</SelectItem>
+                <SelectItem value="7">7 days</SelectItem>
+                <SelectItem value="14">14 days</SelectItem>
+                <SelectItem value="30">30 days</SelectItem>
+                <SelectItem value="90">90 days</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <div className="flex items-end">
             <div className="flex items-center h-10 space-x-2">

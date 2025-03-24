@@ -12,6 +12,7 @@ import {
   LogOut,
   Wrench,
   Clock,
+  LineChart,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -27,6 +28,11 @@ export function SidebarNav({ onLogout }: SidebarNavProps) {
       title: "Dashboard",
       href: "/cms/dashboard",
       icon: <BarChart3 className="mr-2 h-4 w-4" />,
+    },
+    {
+      title: "Analytics",
+      href: "/cms/analytics",
+      icon: <LineChart className="mr-2 h-4 w-4" />,
     },
     {
       title: "Categories",
