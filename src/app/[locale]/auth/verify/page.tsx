@@ -38,12 +38,37 @@ export default function VerifyPage() {
       }
       
       try {
+        // Check if we have already processed this token in this session
+        const processedToken = sessionStorage.getItem('processed_verification_token');
+        if (processedToken === token) {
+          // Token already processed, show success
+          setVerificationStatus('success');
+          
+          // Show success toast
+          toast({
+            title: translations.success,
+            description: locale === 'ar' 
+              ? 'يمكنك الآن تسجيل الدخول إلى حسابك' 
+              : 'You can now log in to your account',
+          });
+          
+          // Redirect to login after 3 seconds
+          setTimeout(() => {
+            router.push(`/${locale}/auth/login`);
+          }, 3000);
+          
+          return;
+        }
+        
         const response = await fetch(`/api/auth/verify?token=${token}`);
+        const result = await response.json();
         
         if (!response.ok) {
-          const error = await response.json();
-          throw new Error(error.error || translations.error);
+          throw new Error(result.error || translations.error);
         }
+        
+        // Store the processed token in session storage
+        sessionStorage.setItem('processed_verification_token', token);
         
         setVerificationStatus('success');
         
@@ -61,6 +86,7 @@ export default function VerifyPage() {
         }, 3000);
         
       } catch (error) {
+        console.error("Verification error:", error);
         setVerificationStatus('error');
         setErrorMessage(error instanceof Error ? error.message : translations.error);
         

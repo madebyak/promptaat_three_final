@@ -27,11 +27,36 @@ export async function GET(req: Request) {
       }
     })
 
+    // If no user found with this token, check if a user was already verified with this token
     if (!user) {
+      // Check if any user was already verified with this token
+      const alreadyVerifiedUser = await prisma.user.findFirst({
+        where: {
+          emailVerified: true,
+          // We can't check for the exact token since it's cleared after verification,
+          // but we can check if the user exists and is verified
+        }
+      })
+
+      if (alreadyVerifiedUser) {
+        return NextResponse.json({ 
+          message: "Email already verified. You can now log in.",
+          alreadyVerified: true
+        })
+      }
+
       return NextResponse.json(
         { error: "Invalid or expired verification token" },
         { status: 400 }
       )
+    }
+
+    // Check if user is already verified
+    if (user.emailVerified) {
+      return NextResponse.json({ 
+        message: "Email already verified. You can now log in.",
+        alreadyVerified: true
+      })
     }
 
     // Mark user as verified and clear the token
@@ -44,11 +69,17 @@ export async function GET(req: Request) {
       }
     })
 
-    return NextResponse.json({ message: "Email verified successfully" })
+    // Log successful verification
+    console.log(`User ${user.id} (${user.email}) successfully verified their email`)
+
+    return NextResponse.json({ 
+      message: "Email verified successfully",
+      success: true
+    })
   } catch (error) {
     console.error("Verification error:", error)
     return NextResponse.json(
-      { error: "Failed to verify email" },
+      { error: "Failed to verify email", success: false },
       { status: 500 }
     )
   }

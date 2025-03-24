@@ -11,7 +11,13 @@ export function VerifyRedirect() {
   useEffect(() => {
     // Default to English locale, but could detect from browser settings
     const locale = 'en';
-    router.replace(`/${locale}/auth/verify${token ? `?token=${token}` : ''}`);
+    
+    // Ensure the token is properly encoded in the URL
+    const encodedToken = token ? encodeURIComponent(token) : '';
+    const redirectUrl = `/${locale}/auth/verify${encodedToken ? `?token=${encodedToken}` : ''}`;
+    
+    console.log('Redirecting to verification page:', redirectUrl);
+    router.replace(redirectUrl);
   }, [router, token]);
 
   return null;
