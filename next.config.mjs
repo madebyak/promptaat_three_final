@@ -18,16 +18,33 @@ const nextConfig = {
     ignoreDuringBuilds: true,
   },
   compiler: {
-    removeConsole: process.env.NODE_ENV === 'production',
+    removeConsole: false, // Keep console logs for debugging
   },
   // Enable image optimization
   experimental: {
     optimizeCss: true,
-    optimizeServerReact: true,
   },
   // Add headers configuration to fix caching issues
   async headers() {
     return [
+      {
+        // Matching all API routes
+        source: '/api/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'no-store, no-cache, must-revalidate, proxy-revalidate',
+          },
+          {
+            key: 'Pragma',
+            value: 'no-cache',
+          },
+          {
+            key: 'Expires',
+            value: '0',
+          }
+        ],
+      },
       {
         // Matching all favicon and OpenGraph image requests
         source: '/(favicon.ico|og/:path*)',
@@ -42,6 +59,24 @@ const nextConfig = {
           }
         ],
       },
+      {
+        // Add CORS headers for all routes
+        source: '/:path*',
+        headers: [
+          {
+            key: 'Access-Control-Allow-Origin',
+            value: '*',
+          },
+          {
+            key: 'Access-Control-Allow-Methods',
+            value: 'GET, POST, PUT, DELETE, OPTIONS',
+          },
+          {
+            key: 'Access-Control-Allow-Headers',
+            value: 'X-Requested-With, Content-Type, Authorization',
+          }
+        ],
+      },
     ];
   },
   // Configure image domains to allow external images
@@ -51,36 +86,35 @@ const nextConfig = {
       {
         protocol: 'https',
         hostname: '**',
-        pathname: '/**',
       },
       {
         protocol: 'http',
         hostname: '**',
-        pathname: '/**',
-      }
+      },
     ],
-    // Keep the domains for backward compatibility
-    domains: [
-      's3-us-west-2.amazonaws.com',
-      'via.placeholder.com',
-      'placehold.co',
-      'encrypted-tbn0.gstatic.com'
-    ],
-    // Optimize images
-    formats: ['image/avif', 'image/webp'],
     minimumCacheTTL: 60,
   },
   // Don't force trailing slashes to prevent redirect loops
   trailingSlash: false,
-  // Explicitly handle CMS routes
+  // Explicitly handle CMS routes and add proper rewrites
   async rewrites() {
     return [
       {
         source: '/cms/:path*',
         destination: '/cms/:path*',
       },
+      // Add rewrites for home page to ensure proper loading
+      {
+        source: '/',
+        destination: '/en',
+        locale: false,
+      },
     ];
   },
+  // Add proper asset prefix for production
+  assetPrefix: process.env.NODE_ENV === 'production' ? 'https://www.promptaat.com' : undefined,
+  // Increase the output file tracing to include all files
+  output: 'standalone',
 };
 
 export default withNextIntl(nextConfig);
