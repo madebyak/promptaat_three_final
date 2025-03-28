@@ -17,6 +17,7 @@ import { ProductStructuredData } from "@/components/seo/product-seo"
 import { ProPromptContent } from "./pro-prompt-content"
 import { useTranslations } from "next-intl"
 import {
+  Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
@@ -423,47 +424,51 @@ export function PromptModal({
             <div className="flex space-x-2">
               {session?.user ? (
                 <TooltipProvider>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className={cn("h-8 w-8 transition-all duration-200 rounded-full bg-white/90 dark:bg-black-main/90 shadow-sm",
-                        prompt.isBookmarked ? "text-accent-purple border-accent-purple border" : "border border-light-grey hover:border-accent-purple/60",
-                        isBookmarking && "animate-pulse")} 
-                      onClick={toggleBookmark}
-                      disabled={isBookmarking}
-                    >
-                      {prompt.isBookmarked ? (
-                        <BookmarkCheck className={cn("h-4 w-4 text-accent-purple transition-transform", isBookmarking && "scale-110")} />
-                      ) : (
-                        <Bookmark className={cn("h-4 w-4 transition-transform", isBookmarking && "scale-110")} />
-                      )}
-                      <span className="sr-only">{prompt.isBookmarked ? t('removeBookmark') : t('bookmark')}</span>
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom">
-                    {prompt.isBookmarked ? t('removeBookmark') : t('bookmark')}
-                  </TooltipContent>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className={cn("h-8 w-8 transition-all duration-200 rounded-full bg-white/90 dark:bg-black-main/90 shadow-sm",
+                          prompt.isBookmarked ? "text-accent-purple border-accent-purple border" : "border border-light-grey hover:border-accent-purple/60",
+                          isBookmarking && "animate-pulse")} 
+                        onClick={toggleBookmark}
+                        disabled={isBookmarking}
+                      >
+                        {prompt.isBookmarked ? (
+                          <BookmarkCheck className={cn("h-4 w-4 text-accent-purple transition-transform", isBookmarking && "scale-110")} />
+                        ) : (
+                          <Bookmark className={cn("h-4 w-4 transition-transform", isBookmarking && "scale-110")} />
+                        )}
+                        <span className="sr-only">{prompt.isBookmarked ? t('removeBookmark') : t('bookmark')}</span>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom">
+                      {prompt.isBookmarked ? t('removeBookmark') : t('bookmark')}
+                    </TooltipContent>
+                  </Tooltip>
                 </TooltipProvider>
               ) : (
                 <TooltipProvider>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className={cn("h-8 w-8 transition-all duration-200 rounded-full bg-white/90 dark:bg-black-main/90 shadow-sm border border-light-grey")} 
-                      onClick={() => {
-                        onClose();  // Close modal first
-                        router.push(`/${locale}/auth/login`);
-                      }}
-                    >
-                      <Bookmark className="h-4 w-4" />
-                      <span className="sr-only">{t('signInToBookmark')}</span>
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom">
-                    {t('signInToBookmark')}
-                  </TooltipContent>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className={cn("h-8 w-8 transition-all duration-200 rounded-full bg-white/90 dark:bg-black-main/90 shadow-sm border border-light-grey")} 
+                        onClick={() => {
+                          onClose();  // Close modal first
+                          router.push(`/${locale}/auth/login`);
+                        }}
+                      >
+                        <Bookmark className="h-4 w-4" />
+                        <span className="sr-only">{t('signInToBookmark')}</span>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom">
+                      {t('signInToBookmark')}
+                    </TooltipContent>
+                  </Tooltip>
                 </TooltipProvider>
               )}
             </div>

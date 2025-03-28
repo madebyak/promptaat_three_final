@@ -16,6 +16,7 @@ import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { UpgradeButton } from "@/components/common/upgrade-button"
 import {
+  Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
@@ -324,40 +325,44 @@ export function PromptCard({
               {/* Bookmark Button (conditionally rendered) */}
               {session?.user ? (
                 <TooltipProvider>
-                  <TooltipTrigger asChild>
-                    <Button variant="ghost" size="icon" className={cn(
-                      "h-8 w-8 transition-all duration-200 rounded-full bg-white/90 dark:bg-black-main/90 shadow-sm", 
-                      bookmarkStatus ? "text-accent-purple border-accent-purple border" : "border border-light-grey hover:border-accent-purple/60",
-                      isBookmarking && "animate-pulse"
-                    )} onClick={handleBookmark} disabled={isBookmarking}>
-                      {bookmarkStatus ? (
-                        <BookmarkCheck className={cn("h-4 w-4 text-accent-purple transition-transform", isBookmarking && "scale-110")} />
-                      ) : (
-                        <Bookmark className={cn("h-4 w-4 transition-transform", isBookmarking && "scale-110")} />
-                      )}
-                      <span className="sr-only">{bookmarkStatus ? t('removeBookmark') : t('bookmark')}</span>
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom">
-                    {bookmarkStatus ? t('removeBookmark') : t('bookmark')}
-                  </TooltipContent>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button variant="ghost" size="icon" className={cn(
+                        "h-8 w-8 transition-all duration-200 rounded-full bg-white/90 dark:bg-black-main/90 shadow-sm", 
+                        bookmarkStatus ? "text-accent-purple border-accent-purple border" : "border border-light-grey hover:border-accent-purple/60",
+                        isBookmarking && "animate-pulse"
+                      )} onClick={handleBookmark} disabled={isBookmarking}>
+                        {bookmarkStatus ? (
+                          <BookmarkCheck className={cn("h-4 w-4 text-accent-purple transition-transform", isBookmarking && "scale-110")} />
+                        ) : (
+                          <Bookmark className={cn("h-4 w-4 transition-transform", isBookmarking && "scale-110")} />
+                        )}
+                        <span className="sr-only">{bookmarkStatus ? t('removeBookmark') : t('bookmark')}</span>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom">
+                      {bookmarkStatus ? t('removeBookmark') : t('bookmark')}
+                    </TooltipContent>
+                  </Tooltip>
                 </TooltipProvider>
               ) : (
                 <TooltipProvider>
-                  <TooltipTrigger asChild>
-                    <Button variant="ghost" size="icon" className={cn(
-                      "h-8 w-8 transition-all duration-200 rounded-full bg-white/90 dark:bg-black-main/90 shadow-sm border border-light-grey",
-                    )} onClick={(e) => {
-                      e.stopPropagation();
-                      router.push(`/${locale}/auth/login`);
-                    }}>
-                      <Bookmark className="h-4 w-4" />
-                      <span className="sr-only">{t('signInToBookmark')}</span>
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom">
-                    {t('signInToBookmark')}
-                  </TooltipContent>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button variant="ghost" size="icon" className={cn(
+                        "h-8 w-8 transition-all duration-200 rounded-full bg-white/90 dark:bg-black-main/90 shadow-sm border border-light-grey",
+                      )} onClick={(e) => {
+                        e.stopPropagation();
+                        router.push(`/${locale}/auth/login`);
+                      }}>
+                        <Bookmark className="h-4 w-4" />
+                        <span className="sr-only">{t('signInToBookmark')}</span>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom">
+                      {t('signInToBookmark')}
+                    </TooltipContent>
+                  </Tooltip>
                 </TooltipProvider>
               )}
             </div>
