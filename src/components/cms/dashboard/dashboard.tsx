@@ -161,7 +161,7 @@ export default function Dashboard({ admin }: DashboardProps) {
       </div>
       
       {/* Main content area */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
         {/* Popular Prompts Card */}
         <div className="lg:col-span-2">
           <PopularPrompts 

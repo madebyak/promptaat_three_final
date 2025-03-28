@@ -15,7 +15,9 @@ export default getRequestConfig(async ({locale}) => {
     }
     
     // For regular routes, use the locale from the URL
+    // Always explicitly return the locale to avoid next-intl warning
     return {
+      locale, // Explicitly return the locale here
       messages: (await import(`../messages/${locale}.json`)).default
     };
   } catch (error) {

@@ -166,6 +166,11 @@ export async function middleware(request: NextRequest) {
   const isProtectedPath = protectedPaths.some((p) => pathname.includes(p))
   const isAuthPath = authPaths.some((p) => pathname.startsWith(p))
 
+  // Log path type in development mode
+  if (process.env.NODE_ENV === 'development') {
+    console.log(`[Middleware] Path type: isProtectedPath=${isProtectedPath}, isAuthPath=${isAuthPath}`);
+  }
+
   try {
     // Check for either token-based auth OR NextAuth session
     if (token || hasNextAuthSession) {

@@ -57,9 +57,7 @@ ehthumbs.db
 Thumbs.db
 
 # Development directories
-/data-entry/
-/data-entry-backup/
-/Debugging-features/
-
-# Local Netlify folder
-.netlify
+/data-entry
+/data-entry-backup
+/Debugging-features
+/netlify

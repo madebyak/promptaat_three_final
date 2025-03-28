@@ -6,7 +6,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/components/ui/use-toast"
-import { Crown, Turtle, Copy, BarChart2, Calendar, Bookmark, BookmarkCheck, Share2, CheckCircle } from "lucide-react"
+import { Crown, Turtle, Copy, BarChart2, Calendar, Bookmark, BookmarkCheck, CheckCircle } from "lucide-react"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
 import { format } from "date-fns"
@@ -15,6 +15,12 @@ import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { ProductStructuredData } from "@/components/seo/product-seo"
 import { ProPromptContent } from "./pro-prompt-content"
+import { useTranslations } from "next-intl"
+import {
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 
 export function PromptModal({
   promptId,
@@ -32,6 +38,7 @@ export function PromptModal({
   const { toast } = useToast()
   const { data: session } = useSession()
   const router = useRouter()
+  const t = useTranslations('Prompts')
 
   const fetchPromptDetails = useCallback(async () => {
     try {
@@ -112,8 +119,8 @@ export function PromptModal({
     if (prompt.isPro && userSubscriptionStatus === false) {
       // Show toast explaining why copying is not allowed
       toast({
-        title: "Pro content",
-        description: "You need a Pro subscription to copy this prompt",
+        title: t('proContent'),
+        description: t('proSubscriptionRequired'),
       })
       return
     }
@@ -157,53 +164,25 @@ export function PromptModal({
       }
       
       toast({
-        title: "Success",
-        description: "Prompt copied to clipboard",
+        title: t('copySuccess'),
+        description: t('promptCopied'),
       })
     } catch (err) {
       console.error('Error copying prompt:', err)
       toast({
-        title: "Error",
-        description: "Failed to copy prompt",
+        title: t('copyError'),
+        description: t('copyErrorDescription'),
         variant: "destructive",
       })
     }
-  }, [prompt, promptId, toast, userSubscriptionStatus])
-
-  const handleShare = async () => {
-    if (!prompt) return
-    try {
-      const shareData = {
-        title: prompt.title,
-        text: prompt.promptText,
-        url: `${window.location.origin}/prompts/${promptId}`,
-      }
-      
-      if (navigator.share && navigator.canShare(shareData)) {
-        await navigator.share(shareData)
-      } else {
-        await navigator.clipboard.writeText(shareData.url)
-        toast({
-          title: "Success",
-          description: "Link copied to clipboard",
-        })
-      }
-    } catch (err) {
-      console.error('Error sharing prompt:', err)
-      toast({
-        title: "Error",
-        description: "Failed to share prompt",
-        variant: "destructive",
-      })
-    }
-  }
+  }, [prompt, promptId, toast, userSubscriptionStatus, t])
 
   const toggleBookmark = useCallback(async () => {
     if (!prompt || !session?.user) {
       if (!session?.user) {
         toast({
-          title: "Authentication required",
-          description: "Please sign in to bookmark prompts",
+          title: t('authenticationRequired'),
+          description: t('signInToBookmark'),
           variant: "destructive",
         })
         router.push(`/${locale}/auth/login`)
@@ -236,10 +215,10 @@ export function PromptModal({
       } : null)
 
       toast({
-        title: prompt.isBookmarked ? "Removed from bookmarks" : "Added to bookmarks",
+        title: prompt.isBookmarked ? t('removedFromBookmarks') : t('addedToBookmarks'),
         description: prompt.isBookmarked 
-          ? "Prompt has been removed from your bookmarks" 
-          : "Prompt has been added to your bookmarks",
+          ? t('promptRemovedFromBookmarks') 
+          : t('promptAddedToBookmarks'),
       })
 
       // Refresh the page to update other components that might display this prompt
@@ -247,14 +226,14 @@ export function PromptModal({
     } catch (error) {
       console.error('Error toggling bookmark:', error)
       toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to update bookmark",
+        title: t('error'),
+        description: error instanceof Error ? error.message : t('failedToUpdateBookmark'),
         variant: "destructive",
       })
     } finally {
       setIsBookmarking(false)
     }
-  }, [prompt, promptId, session, router, toast, locale])
+  }, [prompt, promptId, session, router, toast, locale, t])
   
   // Listen for bookmark updates from other components
   useEffect(() => {
@@ -267,8 +246,8 @@ export function PromptModal({
           ...prev,
           isBookmarked,
           bookmarkCount: isBookmarked 
-            ? (prev.bookmarkCount || 0) + 1 
-            : Math.max(0, (prev.bookmarkCount || 0) - 1)
+            ? (prompt.bookmarkCount || 0) + 1 
+            : Math.max(0, (prompt.bookmarkCount || 0) - 1)
         } : null)
       }
     }
@@ -385,10 +364,9 @@ export function PromptModal({
                 className="w-full h-auto"
               />
             </div>
-            <h3 className="text-xl font-bold mb-2 text-primary">Only for Pro Members</h3>
+            <h3 className="text-xl font-bold mb-2 text-primary">{t('onlyForProMembers')}</h3>
             <p className="text-muted-foreground mb-6 max-w-md">
-              Unlock this premium prompt and many more by upgrading to our Pro plan. 
-              Get access to exclusive content and advanced features.
+              {t('unlockPremiumPrompt')}
             </p>
             <Button 
               onClick={() => {
@@ -398,12 +376,12 @@ export function PromptModal({
               className="bg-accent-green hover:bg-accent-green/90 text-black font-medium px-6"
             >
               <Crown className="mr-2 h-4 w-4" />
-              Go Pro
+              {t('goPro')}
             </Button>
           </div>
         ) : (
           <div className="flex items-center justify-center p-8 text-destructive">
-            {error || 'Failed to load prompt'}
+            {error || t('failedToLoadPrompt')}
           </div>
         )}
       </DialogContent>
@@ -442,29 +420,53 @@ export function PromptModal({
         <div className="relative">
           {/* Header Actions */}
           <div className="absolute right-2 top-2 flex items-center gap-2">
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className={cn("h-8 w-8", prompt.isBookmarked && "text-accent-purple")}
-              onClick={toggleBookmark}
-              disabled={isBookmarking || !session?.user}
-            >
-              {prompt.isBookmarked ? (
-                <BookmarkCheck className="h-4 w-4" />
+            <div className="flex space-x-2">
+              {session?.user ? (
+                <TooltipProvider>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className={cn("h-8 w-8 transition-all duration-200 rounded-full bg-white/90 dark:bg-black-main/90 shadow-sm",
+                        prompt.isBookmarked ? "text-accent-purple border-accent-purple border" : "border border-light-grey hover:border-accent-purple/60",
+                        isBookmarking && "animate-pulse")} 
+                      onClick={toggleBookmark}
+                      disabled={isBookmarking}
+                    >
+                      {prompt.isBookmarked ? (
+                        <BookmarkCheck className={cn("h-4 w-4 text-accent-purple transition-transform", isBookmarking && "scale-110")} />
+                      ) : (
+                        <Bookmark className={cn("h-4 w-4 transition-transform", isBookmarking && "scale-110")} />
+                      )}
+                      <span className="sr-only">{prompt.isBookmarked ? t('removeBookmark') : t('bookmark')}</span>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">
+                    {prompt.isBookmarked ? t('removeBookmark') : t('bookmark')}
+                  </TooltipContent>
+                </TooltipProvider>
               ) : (
-                <Bookmark className="h-4 w-4" />
+                <TooltipProvider>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className={cn("h-8 w-8 transition-all duration-200 rounded-full bg-white/90 dark:bg-black-main/90 shadow-sm border border-light-grey")} 
+                      onClick={() => {
+                        onClose();  // Close modal first
+                        router.push(`/${locale}/auth/login`);
+                      }}
+                    >
+                      <Bookmark className="h-4 w-4" />
+                      <span className="sr-only">{t('signInToBookmark')}</span>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">
+                    {t('signInToBookmark')}
+                  </TooltipContent>
+                </TooltipProvider>
               )}
-              <span className="sr-only">{prompt.isBookmarked ? "Remove bookmark" : "Bookmark"}</span>
-            </Button>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="h-8 w-8" 
-              onClick={handleShare}
-            >
-              <Share2 className="h-4 w-4" />
-              <span className="sr-only">Share</span>
-            </Button>
+            </div>
           </div>
 
           {/* Badge and Title section */}
@@ -473,12 +475,12 @@ export function PromptModal({
               {prompt.isPro ? (
                 <Badge variant="purple" className="inline-flex items-center gap-1.5 px-2.5 py-1">
                   <Crown className="h-3 w-3" />
-                  PRO
+                  {t('pro')}
                 </Badge>
               ) : (
-                <Badge variant="secondary" className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-light-grey-light dark:bg-dark">
+                <Badge variant="outline" className="inline-flex items-center gap-1.5 px-2.5 py-1">
                   <Turtle className="h-3 w-3" />
-                  Basic
+                  {t('basic')}
                 </Badge>
               )}
             </div>
@@ -544,7 +546,7 @@ export function PromptModal({
           {/* Description */}
           <div className="mb-4 sm:mb-6">
             <h3 className="text-sm font-medium text-muted-foreground mb-2">
-              Description
+              {t('promptDescription')}
             </h3>
             <p className={cn(
               "text-base sm:text-sm leading-relaxed",
@@ -558,16 +560,16 @@ export function PromptModal({
           <div className="flex flex-wrap items-center gap-3 sm:gap-6 mb-4 sm:mb-6 text-sm text-muted-foreground">
             <div className="flex items-center gap-1.5">
               <BarChart2 className="h-4 w-4" />
-              <span>Copied {prompt.copyCount} times</span>
+              <span>{t('copy')} {prompt.copyCount} {t('times')}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <Calendar className="h-4 w-4" />
-              <span>Created {format(new Date(prompt.createdAt), 'MMM d, yyyy')}</span>
+              <span>{t('created')} {format(new Date(prompt.createdAt), 'MMM d, yyyy')}</span>
             </div>
             {prompt.updatedAt !== prompt.createdAt && (
               <div className="flex items-center gap-1.5">
                 <Calendar className="h-4 w-4" />
-                <span>Updated {format(new Date(prompt.updatedAt), 'MMM d, yyyy')}</span>
+                <span>{t('updated')} {format(new Date(prompt.updatedAt), 'MMM d, yyyy')}</span>
               </div>
             )}
           </div>
@@ -601,7 +603,7 @@ export function PromptModal({
                   ) : (
                     <Copy className="h-3 w-3 mr-2" />
                   )}
-                  {isCopied ? "Copied!" : "Copy"}
+                  {isCopied ? t('copied') : t('copy')}
                 </Button>
               </ProPromptContent>
             </div>

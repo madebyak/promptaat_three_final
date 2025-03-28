@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/components/ui/use-toast"
-import { Crown, Bookmark, BookmarkCheck, Share2, Copy, Turtle, BarChart2, CheckCircle } from "lucide-react"
+import { useTranslations } from "next-intl"
+import { Crown, Bookmark, BookmarkCheck, Copy, Turtle, BarChart2, CheckCircle } from "lucide-react"
 import Image from "next/image"
 import { Category, Tool } from "@/types/prompts"
 import { cn } from "@/lib/utils"
@@ -14,6 +15,11 @@ import { AddToCatalogButton } from "@/components/catalogs/add-to-catalog-button"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { UpgradeButton } from "@/components/common/upgrade-button"
+import {
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 
 interface PromptCardProps {
   id: string
@@ -58,7 +64,8 @@ export function PromptCard({
   const { toast } = useToast()
   const { data: session } = useSession()
   const router = useRouter()
-  
+  const t = useTranslations('Prompts')
+
   // Check subscription status when session changes
   useEffect(() => {
     // If there's a user session and the prompt is Pro, check subscription status
@@ -197,24 +204,6 @@ export function PromptCard({
     }
   }, [id, preview, toast, isPro, userSubscriptionStatus])
 
-  const handleShare = async (e: React.MouseEvent) => {
-    e.stopPropagation()
-    try {
-      await navigator.share({
-        title,
-        text: preview,
-        url: window.location.href,
-      })
-    } catch (err) {
-      console.error('Share error:', err);
-      toast({
-        title: "Error",
-        description: "Failed to share prompt",
-        variant: "destructive",
-      })
-    }
-  }
-
   // Update local state when prop changes
   useEffect(() => {
     setBookmarkStatus(isBookmarked);
@@ -333,23 +322,44 @@ export function PromptCard({
             </div>
             <div className="flex items-center">
               {/* Bookmark Button (conditionally rendered) */}
-              {session?.user && (
-                <Button variant="ghost" size="icon" className={cn(
-                  "h-8 w-8", 
-                  bookmarkStatus && "text-accent-purple"
-                )} onClick={handleBookmark} disabled={isBookmarking}>
-                  {bookmarkStatus ? (
-                    <BookmarkCheck className="h-4 w-4" />
-                  ) : (
-                    <Bookmark className="h-4 w-4" />
-                  )}
-                  <span className="sr-only">{bookmarkStatus ? "Remove from saved" : "Save"}</span>
-                </Button>
+              {session?.user ? (
+                <TooltipProvider>
+                  <TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" className={cn(
+                      "h-8 w-8 transition-all duration-200 rounded-full bg-white/90 dark:bg-black-main/90 shadow-sm", 
+                      bookmarkStatus ? "text-accent-purple border-accent-purple border" : "border border-light-grey hover:border-accent-purple/60",
+                      isBookmarking && "animate-pulse"
+                    )} onClick={handleBookmark} disabled={isBookmarking}>
+                      {bookmarkStatus ? (
+                        <BookmarkCheck className={cn("h-4 w-4 text-accent-purple transition-transform", isBookmarking && "scale-110")} />
+                      ) : (
+                        <Bookmark className={cn("h-4 w-4 transition-transform", isBookmarking && "scale-110")} />
+                      )}
+                      <span className="sr-only">{bookmarkStatus ? t('removeBookmark') : t('bookmark')}</span>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">
+                    {bookmarkStatus ? t('removeBookmark') : t('bookmark')}
+                  </TooltipContent>
+                </TooltipProvider>
+              ) : (
+                <TooltipProvider>
+                  <TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" className={cn(
+                      "h-8 w-8 transition-all duration-200 rounded-full bg-white/90 dark:bg-black-main/90 shadow-sm border border-light-grey",
+                    )} onClick={(e) => {
+                      e.stopPropagation();
+                      router.push(`/${locale}/auth/login`);
+                    }}>
+                      <Bookmark className="h-4 w-4" />
+                      <span className="sr-only">{t('signInToBookmark')}</span>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">
+                    {t('signInToBookmark')}
+                  </TooltipContent>
+                </TooltipProvider>
               )}
-              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleShare}>
-                <Share2 className="h-4 w-4" />
-                <span className="sr-only">Share</span>
-              </Button>
             </div>
           </div>
 
@@ -387,21 +397,62 @@ export function PromptCard({
           </div>
 
           {/* Preview text */}
-          {isPro && userSubscriptionStatus === false ? (
-            <div className={cn(
-              "text-sm text-light-grey line-clamp-3 mb-4 blur-sm select-none",
-              isRTL && "text-right"
-            )}>
-              {preview}
-            </div>
-          ) : (
-            <p className={cn(
-              "text-sm text-light-grey line-clamp-3 mb-4",
-              isRTL && "text-right"
-            )}>
-              {preview}
-            </p>
-          )}
+          <div className="relative mb-4">
+            {/* Regular preview for non-Pro prompts or subscribed users */}
+            {(!isPro || userSubscriptionStatus !== false) ? (
+              <p className={cn(
+                "text-sm text-light-grey line-clamp-3",
+                isRTL && "text-right"
+              )}>
+                {preview}
+              </p>
+            ) : (
+              /* Gradient fade effect for Pro prompts for non-subscribers */
+              <div className="relative">
+                {/* First line or portion shown normally */}
+                <p className={cn(
+                  "text-sm text-light-grey line-clamp-1 mb-1",
+                  isRTL && "text-right"
+                )}>
+                  {preview.split('\n')[0] || preview.substring(0, 60)}
+                </p>
+                
+                {/* Gradient overlay with upgrade button */}
+                <div className="relative">
+                  {/* Hidden text (for proper spacing) */}
+                  <p className={cn(
+                    "text-sm text-light-grey opacity-0 select-none line-clamp-2",
+                    isRTL && "text-right"
+                  )}>
+                    {preview}
+                  </p>
+                  
+                  {/* Gradient overlay */}
+                  <div className={cn(
+                    "absolute inset-0 flex items-center",
+                    isRTL 
+                      ? "bg-gradient-to-l from-transparent via-background/70 to-background" 
+                      : "bg-gradient-to-b from-transparent via-background/70 to-background"
+                  )}>
+                    <div className={cn(
+                      "px-4",
+                      isRTL ? "ml-auto mr-0" : "ml-0 mr-auto"
+                    )}>
+                      <UpgradeButton
+                        locale={locale}
+                        styleVariant="primary"
+                        size="sm"
+                        className="px-6"
+                        onClick={(e) => {
+                          e.stopPropagation() // Prevent card click
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
 
           {/* Bottom section */}
           <div className="mt-auto">
@@ -475,14 +526,9 @@ export function PromptCard({
                   />
                 )}
                 {isPro && userSubscriptionStatus === false ? (
-                  <UpgradeButton
-                    locale={locale}
-                    styleVariant="primary"
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation() // Prevent card click
-                    }}
-                  />
+                  <span className="text-xs text-muted-foreground">
+                    {locale === "ar" ? "محتوى مميز" : "Premium content"}
+                  </span>
                 ) : (
                   <Button
                     variant={isCopied ? "outline" : "secondary"}

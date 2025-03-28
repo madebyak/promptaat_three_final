@@ -252,6 +252,25 @@ model AuditLog {
   @@map("audit_logs")
 }
 
+model FeatureRequest {
+  id          String    @id @default(uuid())
+  name        String
+  email       String
+  accountId   String?   @map("account_id")
+  requestType String    @map("request_type") // 'feature' or 'prompt'
+  title       String
+  category    String
+  description String     @db.Text
+  useCase     String?    @map("use_case") @db.Text
+  priority    String     // 'low', 'medium', 'high'
+  status      String     // 'pending', 'in_review', 'approved', 'rejected', 'completed'
+  adminNotes  String?    @map("admin_notes") @db.Text
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @updatedAt @map("updated_at")
+
+  @@map("feature_requests")
+}
+
 model AdminSetting {
   id          String   @id @default(uuid())
   key         String   @unique
