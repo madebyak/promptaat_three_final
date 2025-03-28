@@ -350,7 +350,12 @@
     "copyError": "خطأ",
     "copyErrorDescription": "فشل في نسخ البروميت",
     "error": "خطأ",
-    "failedToUpdateBookmark": "فشل في تحديث حالة الحفظ"
+    "failedToUpdateBookmark": "فشل في تحديث حالة الحفظ",
+    "goPro": "الترقية للاشتراك",
+    "loginRequired": "تسجيل الدخول مطلوب",
+    "loginToCopy": "يرجى تسجيل الدخول لنسخ البروميتات",
+    "proContent": "محتوى احترافي",
+    "proSubscriptionRequired": "تحتاج إلى اشتراك احترافي لنسخ هذا البروميت"
   },
   "ProContent": {
     "proContent": "محتوى احترافي",

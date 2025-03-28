@@ -350,7 +350,12 @@
     "copyError": "Error",
     "copyErrorDescription": "Failed to copy prompt",
     "error": "Error",
-    "failedToUpdateBookmark": "Failed to update bookmark status"
+    "failedToUpdateBookmark": "Failed to update bookmark status",
+    "goPro": "Go Pro",
+    "loginRequired": "Login Required",
+    "loginToCopy": "Please log in to copy prompts",
+    "proContent": "Pro Content",
+    "proSubscriptionRequired": "You need a Pro subscription to copy this prompt"
   },
   "ProContent": {
     "proContent": "Pro Content",

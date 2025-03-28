@@ -36,6 +36,7 @@ export function PromptModal({
   const [isCopied, setIsCopied] = useState(false)
   const [isBookmarking, setIsBookmarking] = useState(false)
   const [userSubscriptionStatus, setUserSubscriptionStatus] = useState<boolean | null>(null)
+  const [showProToAll, setShowProToAll] = useState(false)
   const { toast } = useToast()
   const { data: session } = useSession()
   const router = useRouter()
@@ -113,11 +114,41 @@ export function PromptModal({
     }
   }, [session, prompt]);
 
+  // Fetch system setting for showing PRO prompts to all users
+  useEffect(() => {
+    async function fetchShowProToAllSetting() {
+      try {
+        const response = await fetch(`/api/system-settings?key=showProToAll`);
+        if (response.ok) {
+          const data = await response.json();
+          setShowProToAll(data.value === "true");
+        }
+      } catch (error) {
+        console.error("Error fetching showProToAll setting:", error);
+      }
+    }
+    
+    fetchShowProToAllSetting();
+  }, []);
+
   const handleCopy = useCallback(async () => {
     if (!prompt) return
     
+    // Check if user is logged in
+    if (!session?.user) {
+      // Show toast explaining why copying is not allowed
+      toast({
+        title: t('loginRequired'),
+        description: t('loginToCopy'),
+      })
+      
+      // Redirect to login page
+      router.push(`/${locale}/auth/login`)
+      return
+    }
+    
     // Check if this is a Pro prompt and user is not subscribed
-    if (prompt.isPro && userSubscriptionStatus === false) {
+    if (prompt.isPro && userSubscriptionStatus === false && !showProToAll) {
       // Show toast explaining why copying is not allowed
       toast({
         title: t('proContent'),
@@ -176,7 +207,7 @@ export function PromptModal({
         variant: "destructive",
       })
     }
-  }, [prompt, promptId, toast, userSubscriptionStatus, t])
+  }, [prompt, promptId, toast, userSubscriptionStatus, t, session, router, locale, showProToAll])
 
   const toggleBookmark = useCallback(async () => {
     if (!prompt || !session?.user) {
@@ -429,7 +460,8 @@ export function PromptModal({
                       <Button
                         variant="ghost"
                         size="icon"
-                        className={cn("h-8 w-8 transition-all duration-200 rounded-full bg-white/90 dark:bg-black-main/90 shadow-sm",
+                        className={cn("h-8 w-8 transition-all duration-200",
+                          "bg-white/90 dark:bg-black-main/90 shadow-sm",
                           prompt.isBookmarked ? "text-accent-purple border-accent-purple border" : "border border-light-grey hover:border-accent-purple/60",
                           isBookmarking && "animate-pulse")} 
                         onClick={toggleBookmark}
@@ -455,7 +487,8 @@ export function PromptModal({
                       <Button
                         variant="ghost"
                         size="icon"
-                        className={cn("h-8 w-8 transition-all duration-200 rounded-full bg-white/90 dark:bg-black-main/90 shadow-sm border border-light-grey")} 
+                        className={cn("h-8 w-8 transition-all duration-200",
+                          "bg-white/90 dark:bg-black-main/90 shadow-sm border border-light-grey")} 
                         onClick={() => {
                           onClose();  // Close modal first
                           router.push(`/${locale}/auth/login`);
@@ -601,7 +634,7 @@ export function PromptModal({
                   variant={isCopied ? "outline" : "secondary"}
                   size="sm"
                   onClick={handleCopy}
-                  disabled={prompt.isPro && userSubscriptionStatus === false}
+                  disabled={prompt.isPro && userSubscriptionStatus === false && !showProToAll}
                 >
                   {isCopied ? (
                     <CheckCircle className="h-3 w-3 mr-2" />

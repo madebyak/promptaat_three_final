@@ -61,6 +61,7 @@ export function PromptCard({
   const [bookmarkStatus, setBookmarkStatus] = useState(isBookmarked)
   const [copyCount, setCopyCount] = useState(initialCopyCount)
   const [userSubscriptionStatus, setUserSubscriptionStatus] = useState<boolean | null>(null)
+  const [showProToAll, setShowProToAll] = useState(false);
   const prefetched = useRef(false)
   const { toast } = useToast()
   const { data: session } = useSession()
@@ -69,10 +70,10 @@ export function PromptCard({
 
   // Check subscription status when session changes
   useEffect(() => {
-    // If there's a user session and the prompt is Pro, check subscription status
-    if (session?.user && isPro) {
-      fetch('/api/user/subscription-status')
-        .then(res => res.json())
+    if (isPro && session?.user) {
+      // Only check subscription if the prompt is Pro and user is logged in
+      fetch(`/api/users/subscription-status`)
+        .then(response => response.json())
         .then(data => {
           setUserSubscriptionStatus(data.isSubscribed);
         })
@@ -83,11 +84,28 @@ export function PromptCard({
     } else if (!session?.user) {
       // No session means no subscription
       setUserSubscriptionStatus(false);
-    } else {
+    } else if (!isPro) {
       // Non-Pro prompt, no need to check
       setUserSubscriptionStatus(true);
     }
   }, [session, isPro]);
+
+  // Fetch system setting for showing PRO prompts to all users
+  useEffect(() => {
+    async function fetchShowProToAllSetting() {
+      try {
+        const response = await fetch(`/api/system-settings?key=showProToAll`);
+        if (response.ok) {
+          const data = await response.json();
+          setShowProToAll(data.value === "true");
+        }
+      } catch (error) {
+        console.error("Error fetching showProToAll setting:", error);
+      }
+    }
+    
+    fetchShowProToAllSetting();
+  }, []);
 
   // Prefetch prompt details when hovering over the card
   const prefetchPromptData = useCallback(() => {
@@ -141,18 +159,28 @@ export function PromptCard({
 
   // Memoize the copy handler to prevent unnecessary re-renders
   const handleCopy = useCallback(async (e: React.MouseEvent) => {
-    e.stopPropagation()
+    e.stopPropagation() // Prevent card click
     
-    // Check if this is a Pro prompt and user is not subscribed
-    if (isPro && userSubscriptionStatus === false) {
+    // Check if user is logged in
+    if (!session?.user) {
+      // Show toast explaining why copying is not allowed
+      toast({
+        title: "Login required",
+        description: "Please log in to copy prompts",
+      })
+      
+      // Redirect to login page
+      router.push(`/${locale}/auth/login`)
+      return
+    }
+    
+    // Check if this is a Pro prompt and user is not subscribed and showProToAll is disabled
+    if (isPro && userSubscriptionStatus === false && !showProToAll) {
       // Show toast explaining why copying is not allowed
       toast({
         title: "Pro content",
         description: "You need a Pro subscription to copy this prompt",
       })
-      
-      // Optional: Open modal to show more details
-      setIsModalOpen(true)
       return
     }
     
@@ -203,7 +231,7 @@ export function PromptCard({
         variant: "destructive",
       })
     }
-  }, [id, preview, toast, isPro, userSubscriptionStatus])
+  }, [id, isPro, preview, session, toast, userSubscriptionStatus, router, locale, showProToAll])
 
   // Update local state when prop changes
   useEffect(() => {
@@ -403,8 +431,8 @@ export function PromptCard({
 
           {/* Preview text */}
           <div className="relative mb-4">
-            {/* Regular preview for non-Pro prompts or subscribed users */}
-            {(!isPro || userSubscriptionStatus !== false) ? (
+            {/* Regular preview for non-Pro prompts, subscribed users, or when showProToAll is enabled */}
+            {(!isPro || userSubscriptionStatus !== false || showProToAll) ? (
               <p className={cn(
                 "text-sm text-light-grey line-clamp-3",
                 isRTL && "text-right"
@@ -412,7 +440,7 @@ export function PromptCard({
                 {preview}
               </p>
             ) : (
-              /* Gradient fade effect for Pro prompts for non-subscribers */
+              /* Gradient fade effect for Pro prompts for non-subscribers when showProToAll is disabled */
               <div className="relative">
                 {/* First line or portion shown normally */}
                 <p className={cn(
@@ -449,9 +477,11 @@ export function PromptCard({
                         size="sm"
                         className="px-6"
                         onClick={(e) => {
-                          e.stopPropagation() // Prevent card click
+                          e.stopPropagation();
                         }}
-                      />
+                      >
+                        {t('goPro')}
+                      </UpgradeButton>
                     </div>
                   </div>
                 </div>
@@ -530,7 +560,7 @@ export function PromptCard({
                     variant="outline"
                   />
                 )}
-                {isPro && userSubscriptionStatus === false ? (
+                {isPro && userSubscriptionStatus === false && !showProToAll ? (
                   <span className="text-xs text-muted-foreground">
                     {locale === "ar" ? "محتوى مميز" : "Premium content"}
                   </span>

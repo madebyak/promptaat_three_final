@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Crown, Sparkles } from "lucide-react";
 import Image from "next/image";
@@ -23,13 +23,41 @@ export function ProPromptContent({
   className,
 }: ProPromptContentProps) {
   const t = useTranslations('ProContent');
+  const [showProToAll, setShowProToAll] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   
-  // If the prompt is not Pro or the user is subscribed, simply show the content
-  if (!isPro || isUserSubscribed) {
+  // Fetch the system setting for showing PRO prompts to all users
+  useEffect(() => {
+    async function fetchShowProToAllSetting() {
+      try {
+        const response = await fetch(`/api/system-settings?key=showProToAll`);
+        if (response.ok) {
+          const data = await response.json();
+          setShowProToAll(data.value === "true");
+        }
+      } catch (error) {
+        console.error("Error fetching showProToAll setting:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    
+    fetchShowProToAllSetting();
+  }, []);
+  
+  // Show loading state while fetching the setting
+  if (isLoading) {
+    return <div className={className}>{children}</div>;
+  }
+  
+  // If the prompt is not Pro, the user is subscribed, or the system setting is enabled,
+  // simply show the content
+  if (!isPro || isUserSubscribed || showProToAll) {
     return <div className={className}>{children}</div>;
   }
 
-  // For Pro prompts where user is not subscribed, show premium overlay
+  // For Pro prompts where user is not subscribed and system setting is disabled,
+  // show premium overlay
   return (
     <div className={cn("relative overflow-hidden rounded-lg", className)}>
       {/* First portion of content visible */}
@@ -49,84 +77,74 @@ export function ProPromptContent({
         <div className="absolute top-4 right-4 bg-[#6926ea]/10 border border-[#6926ea]/30 rounded-full px-3 py-1 flex items-center">
           <Crown className="h-3.5 w-3.5 text-[#6926ea] mr-1.5" />
           <span className="text-xs font-medium text-[#6926ea]">
-            {t('proContent')}
+            {locale === 'ar' ? 'محتوى مميز' : 'PRO Content'}
           </span>
         </div>
         
-        {/* Lock illustration */}
-        <div className="relative w-48 h-48 mb-6">
-          <Image 
-            src="/lock-illustration.svg" 
-            alt={t('premiumContent')}
-            width={192}
-            height={192}
-            className="object-contain"
-          />
+        {/* Premium icon */}
+        <div className="mb-4 bg-[#6926ea]/10 p-3 rounded-full">
+          <Sparkles className="h-6 w-6 text-[#6926ea]" />
         </div>
         
-        {/* Title with sparkles icon */}
-        <div className="flex items-center justify-center mb-2">
-          <Sparkles className="h-5 w-5 text-[#0f6cf4] mr-2" />
-          <h3 className="text-xl font-semibold text-primary">
-            {t('exclusiveProContent')}
-          </h3>
-        </div>
+        {/* Title */}
+        <h3 className="text-xl font-semibold text-center mb-2">
+          {t('proContentTitle')}
+        </h3>
         
-        {/* Description with value proposition */}
-        <p className="text-center text-muted-foreground mb-6 max-w-sm">
-          {t('subscribeDescription')}
+        {/* Description */}
+        <p className="text-center text-muted-foreground mb-6 max-w-md">
+          {t('proContentDescription')}
         </p>
         
-        {/* CTA button with animation */}
-        <div className={cn(
-          "animate-pulse-slow w-full",
-          locale === "ar" ? "text-right" : "text-left"
-        )}>
-          <UpgradeButton 
-            locale={locale} 
-            styleVariant="primary" 
-            size="lg"
-            className={cn(
-              "shadow-md shadow-[#0f6cf4]/20 font-medium px-8",
-              locale === "ar" ? "float-right" : "float-left"
-            )}
-          />
+        {/* Upgrade button */}
+        <UpgradeButton styleVariant="primary" size="lg" locale={locale}>
+          {t('upgradeButton')}
+        </UpgradeButton>
+        
+        {/* Features list */}
+        <div className="mt-8 w-full max-w-md">
+          <h4 className="text-sm font-medium mb-3 text-center">
+            {t('proFeaturesTitle')}
+          </h4>
+          
+          <ul className="space-y-2">
+            {[
+              t('proFeature1'),
+              t('proFeature2'),
+              t('proFeature3'),
+            ].map((feature, index) => (
+              <li key={index} className="flex items-start">
+                <div className="mr-2 mt-1 bg-[#6926ea]/10 rounded-full p-0.5">
+                  <svg
+                    className="h-3.5 w-3.5 text-[#6926ea]"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M5 13l4 4L19 7"
+                    />
+                  </svg>
+                </div>
+                <span className="text-sm">{feature}</span>
+              </li>
+            ))}
+          </ul>
         </div>
         
-        {/* Benefits list */}
-        <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-3 w-full max-w-md text-sm">
-          <div className="flex items-start">
-            <div className="bg-[#4bd51b]/10 rounded-full p-1 mr-2 mt-0.5">
-              <Crown className="h-3 w-3 text-[#4bd51b]" />
-            </div>
-            <span className="text-muted-foreground">
-              {t('benefitProPrompts')}
-            </span>
-          </div>
-          <div className="flex items-start">
-            <div className="bg-[#0f6cf4]/10 rounded-full p-1 mr-2 mt-0.5">
-              <Crown className="h-3 w-3 text-[#0f6cf4]" />
-            </div>
-            <span className="text-muted-foreground">
-              {t('benefitMonthlyUpdates')}
-            </span>
-          </div>
-          <div className="flex items-start">
-            <div className="bg-[#6926ea]/10 rounded-full p-1 mr-2 mt-0.5">
-              <Crown className="h-3 w-3 text-[#6926ea]" />
-            </div>
-            <span className="text-muted-foreground">
-              {t('benefitExpertContent')}
-            </span>
-          </div>
-          <div className="flex items-start">
-            <div className="bg-[#4bd51b]/10 rounded-full p-1 mr-2 mt-0.5">
-              <Crown className="h-3 w-3 text-[#4bd51b]" />
-            </div>
-            <span className="text-muted-foreground">
-              {t('benefitPrioritySupport')}
-            </span>
-          </div>
+        {/* Satisfaction guarantee */}
+        <div className="mt-6 flex items-center justify-center text-xs text-muted-foreground">
+          <Image
+            src="/images/satisfaction-guarantee.svg"
+            alt="Satisfaction Guarantee"
+            width={16}
+            height={16}
+            className="mr-1.5"
+          />
+          {t('satisfactionGuarantee')}
         </div>
       </div>
     </div>

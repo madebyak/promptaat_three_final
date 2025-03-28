@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth/next";
 import { NextRequest, NextResponse } from "next/server";
 import { authOptions } from "@/lib/auth";
 import { isUserSubscribed } from "@/lib/subscription";
+import { getSystemSetting } from "@/lib/settings";
 
 /**
  * Middleware utility that checks if a user has an active subscription
@@ -23,6 +24,13 @@ export async function withSubscriptionGuard<T>(
     errorStatus = 403,
     allowUnauthorized = false,
   } = options;
+
+  // Check if PRO content is available to all users
+  const showProToAll = await getSystemSetting("showProToAll", "false");
+  if (showProToAll === "true") {
+    // If PRO content is available to all, allow access
+    return await handler();
+  }
 
   // Get user session
   const session = await getServerSession(authOptions);
@@ -70,6 +78,13 @@ export async function verifyProContentAccess(
 ): Promise<{ isAuthorized: boolean; userId?: string }> {
   // If content is not premium, always allow access
   if (!isPro) {
+    return { isAuthorized: true };
+  }
+  
+  // Check if PRO content is available to all users
+  const showProToAll = await getSystemSetting("showProToAll", "false");
+  if (showProToAll === "true") {
+    // If PRO content is available to all, allow access
     return { isAuthorized: true };
   }
 
@@ -145,6 +160,13 @@ export async function verifyProPromptAccess<T extends { isPro: boolean; promptTe
 ): Promise<T> {
   // If the prompt is not marked as Pro, return it unmodified
   if (!prompt.isPro) {
+    return prompt;
+  }
+
+  // Check if PRO content is available to all users
+  const showProToAll = await getSystemSetting("showProToAll", "false");
+  if (showProToAll === "true") {
+    // If PRO content is available to all, return the full prompt
     return prompt;
   }
 

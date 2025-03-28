@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Spinner } from "@/components/ui/spinner";
+import { SystemSettings } from "@/components/cms/settings/system-settings";
 
 interface SettingsManagementProps {
   admin: {
@@ -197,20 +198,7 @@ export default function SettingsManagement({ admin }: SettingsManagementProps) {
         </TabsContent>
         
         <TabsContent value="system" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>System Settings</CardTitle>
-              <CardDescription>
-                Configure system settings
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="p-4 text-center">
-                <p>System settings functionality will be implemented here.</p>
-                <p className="text-sm text-gray-500 mt-2">Coming soon!</p>
-              </div>
-            </CardContent>
-          </Card>
+          <SystemSettings />
         </TabsContent>
       </Tabs>
     </div>
